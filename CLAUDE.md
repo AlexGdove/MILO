@@ -7,3 +7,5 @@
 - **Каждое изменение делать в новой ветке** от `main` (`feat/`, `fix/`, `chore/`, `refactor/`, `docs/`), затем merge `--no-ff` в `main`.
 - Перед merge: `npm run lint && npm run typecheck && npm run build` без ошибок.
 - UI-тексты на русском.
+- AI-скилы проекта — в `.claude/skills/` (инвентаризация: `docs/skills-inventory.md`). Перед задачей выбирать релевантные (React/TS, Zustand, тесты, git, CI); скилы не разрешают менять стек или ставить зависимости без одобрения.
+- Тесты: Vitest + React Testing Library (не Jest).
