@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { persistStorage, storageKey } from './storage';
+import { LEGACY_STORAGE_PREFIX, persistStorage, STORAGE_PREFIX, storageKey } from './storage';
 
 const getStorage = () => {
   if (!persistStorage) throw new Error('persistStorage не создан');
@@ -9,7 +9,7 @@ const getStorage = () => {
 
 describe('storageKey', () => {
   it('добавляет префикс приложения', () => {
-    expect(storageKey('products')).toBe('calorie-tracker:products');
+    expect(storageKey('products')).toBe('milo:products');
   });
 });
 
@@ -57,5 +57,53 @@ describe('persistStorage', () => {
     ).resolves.toBeUndefined();
     expect(await storage.getItem('k')).toBeNull();
     await expect(Promise.resolve().then(() => storage.removeItem('k'))).resolves.toBeUndefined();
+  });
+});
+
+describe('миграция со старого префикса', () => {
+  const raw = JSON.stringify({ state: { products: [{ id: 'p1' }] }, version: 0 });
+  const raw2 = JSON.stringify({ state: { products: [{ id: 'p2' }] }, version: 1 });
+
+  it('переносит данные со старого ключа и удаляет его', async () => {
+    localStorage.setItem('calorie-tracker:products', raw);
+    const item = await getStorage().getItem(storageKey('products'));
+    expect(item).toEqual(JSON.parse(raw));
+    expect(localStorage.getItem('milo:products')).toEqual(raw);
+    expect(localStorage.getItem('calorie-tracker:products')).toBeNull();
+  });
+
+  it('новый ключ важнее старого', async () => {
+    localStorage.setItem('milo:products', raw2);
+    localStorage.setItem('calorie-tracker:products', raw);
+    const item = await getStorage().getItem(storageKey('products'));
+    expect(item).toEqual(JSON.parse(raw2));
+    expect(localStorage.getItem('calorie-tracker:products')).toEqual(raw);
+  });
+
+  it('не мигрирует ключи без префикса MILO', async () => {
+    localStorage.setItem('calorie-tracker:other', raw);
+    const item = await getStorage().getItem('other');
+    expect(item).toBeNull();
+    expect(localStorage.getItem('calorie-tracker:other')).toEqual(raw);
+  });
+
+  it('возвращает null, если данных нет ни под каким ключом', async () => {
+    const item = await getStorage().getItem(storageKey('products'));
+    expect(item).toBeNull();
+  });
+
+  it('при ошибке записи возвращает старые данные и не удаляет их', async () => {
+    localStorage.setItem('calorie-tracker:products', raw);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('full', 'QuotaExceededError');
+    });
+    const item = await getStorage().getItem(storageKey('products'));
+    expect(item).toEqual(JSON.parse(raw));
+    expect(localStorage.getItem('calorie-tracker:products')).toEqual(raw);
+  });
+
+  it('префиксы ключей', () => {
+    expect(STORAGE_PREFIX).toBe('milo:');
+    expect(LEGACY_STORAGE_PREFIX).toBe('calorie-tracker:');
   });
 });
