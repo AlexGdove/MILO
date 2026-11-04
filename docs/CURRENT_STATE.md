@@ -4,11 +4,11 @@
 
 ## Git
 
-- Шаг 3 (`feat/design-tokens`) влит в `dev` с разрешения пользователя (2026-11-04); далее — шаг 4 (`feat/brand-assets`).
-- `dev` — последний коммит: merge ветки `feat/design-tokens`; актуальный хэш — `git log -1 --oneline dev`. Ранее: `66af012` (шаги 0, 1, 2, тесты, правила Git и делегирования). Актуальный хэш: `git log -1 --oneline dev`.
+- Шаги 3 и 4 влиты в `dev` с разрешения пользователя (2026-11-04); далее — шаг 6 (`feat/product-units`).
+- `dev` — последний коммит: merge ветки `feat/brand-assets`; актуальный хэш — `git log -1 --oneline dev`. Ранее: `66af012` (шаги 0, 1, 2, тесты, правила Git и делегирования).
 - `main` → `dba56c8` (состояние до введения правил `main`/`dev`; с тех пор не менялся).
 - Удалённого репозитория нет, push не выполнялся, CI нет.
-- Рабочие ветки (все влиты, не удалялись — удаление только с разрешения): `chore/monorepo-setup`, `chore/frontend-init`, `chore/eslint-setup`, `feat/pwa`, `feat/shared-ui`, `feat/products`, `feat/diary`, `feat/dashboard`, `chore/skills-setup` (влиты в `main` до введения правил); `test/vitest-setup`, `docs/git-rules`, `docs/ai-delegation`, `docs/milo-foundation`, `chore/rename-milo`, `docs/session-context`, `feat/design-tokens` (влиты в `dev`).
+- Рабочие ветки (все влиты, не удалялись — удаление только с разрешения): `chore/monorepo-setup`, `chore/frontend-init`, `chore/eslint-setup`, `feat/pwa`, `feat/shared-ui`, `feat/products`, `feat/diary`, `feat/dashboard`, `chore/skills-setup` (влиты в `main` до введения правил); `test/vitest-setup`, `docs/git-rules`, `docs/ai-delegation`, `docs/milo-foundation`, `chore/rename-milo`, `docs/session-context`, `feat/design-tokens`, `feat/brand-assets` (влиты в `dev`).
 
 ## Что работает в приложении
 
@@ -17,13 +17,11 @@ PWA (офлайн, установка), мобильная вёрстка, ни�
 - Справочник продуктов: 10 стартовых, добавление/редактирование/удаление, КБЖУ на 100 г, остаток **в граммах**, поиск, фильтр «В наличии».
 - Дневник: приёмы пищи (завтрак/обед/ужин/перекус) по дням, расчёт КБЖУ, списание с остатка (не больше, чем есть; можно отключить), возврат при удалении записи.
 - Сводка дня (кольцо калорий, полосы БЖУ), переключение дней, дневная цель, карточка установки приложения.
-- Название — MILO (title, manifest, theme-color `#2F3BD9`); данные в `localStorage` под `milo:*` с переносом со старых ключей.
+- Айдентика MILO: знак и логотип, палитра «Орбита», шрифты Onest и Unbounded, светлая и тёмная тема, иконки PWA и фавиконы (title, manifest, theme-color `#2F3BD9`); данные в `localStorage` под `milo:*` с переносом со старых ключей.
 
 ## Чего ещё нет (по плану)
 
-- Иконки PWA и фавиконы MILO (шаг 4) — пока старые зелёные.
 - Единицы мл/шт, минимальный остаток, кладовая, список покупок, рецепты, готовка.
-- `favicon.ico` (браузер запрашивает его на не-HTML страницах — 404).
 
 ## Структура фронтенда (FSD)
 

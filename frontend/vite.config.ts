@@ -10,7 +10,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon-64.png', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'favicon.svg', 'favicon-64.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'MILO — питание, кладовая, рецепты и покупки',
         short_name: 'MILO',
