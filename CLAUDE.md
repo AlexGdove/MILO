@@ -2,6 +2,13 @@
 
 Продукт и бренд: `docs/product.md`, `docs/brand.md` (MILO — Meal Intelligence & Lifestyle Organizer).
 
+## Начало каждой сессии
+
+1. Прочитать этот файл, затем `docs/CURRENT_STATE.md`, `docs/TASKS.md`, `docs/DECISIONS.md`, `docs/ROADMAP.md`.
+2. Проверить `git branch --show-current` и `git status`; сверить с `CURRENT_STATE.md`.
+3. Продолжать с последнего зафиксированного состояния. Не начинать заново и не пересматривать решения из `DECISIONS.md` без запроса пользователя; открытые вопросы из `TASKS.md` не считать решёнными.
+4. В конце сессии (или по просьбе) обновить `CURRENT_STATE.md`, `TASKS.md`, при новых решениях — `DECISIONS.md`, при изменении плана — `ROADMAP.md`.
+
 - Монорепо на npm workspaces: `frontend/` (React PWA), `backend/`, `mobile/` (пока заготовки).
 - Фронтенд строго по FSD: `app → pages → widgets → features → entities → shared`, импорт слайсов только через `index.ts`, алиас `@/` = `frontend/src`.
 - Стили — CSS Modules + CSS-переменные из `frontend/src/app/styles/variables.css`. Mobile-first.
