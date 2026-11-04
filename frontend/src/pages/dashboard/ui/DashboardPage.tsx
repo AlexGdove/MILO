@@ -9,7 +9,7 @@ export const DashboardPage = () => {
   const date = useSelectedDate();
 
   return (
-    <PageLayout title="Калории" actions={<DateSwitcher />}>
+    <PageLayout title="Сегодня" actions={<DateSwitcher />}>
       <DailySummary date={date} />
       <AddMealEntryButton
         date={date}

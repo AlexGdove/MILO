@@ -18,6 +18,32 @@ beforeEach(() => {
 });
 
 describe('useProductStore', () => {
+  it('после переименования в MILO поднимает продукты пользователя из старого ключа хранилища', async () => {
+    const saved = {
+      id: 'legacy-1',
+      name: 'Гречка домашняя',
+      per100g: { kcal: 313, protein: 12.6, fat: 3.3, carbs: 62.1 },
+      stock: 750,
+      createdAt: 1,
+    };
+    // Пользователь после обновления: есть только старый ключ. Сброс стора в beforeEach
+    // через setState уже записал стартовый набор в новый ключ — убираем его.
+    localStorage.clear();
+    localStorage.setItem(
+      'calorie-tracker:products',
+      JSON.stringify({ state: { products: [saved] }, version: 1 }), // версия persist стора продуктов
+    );
+    expect(localStorage.getItem('milo:products')).toBeNull();
+
+    await useProductStore.persist.rehydrate();
+
+    expect(state().products).toEqual([saved]);
+    expect(localStorage.getItem('calorie-tracker:products')).toBeNull();
+    expect(JSON.parse(localStorage.getItem('milo:products') ?? 'null')?.state.products).toEqual([
+      saved,
+    ]);
+  });
+
   it('при первом запуске содержит стартовый набор продуктов', () => {
     expect(selectProducts(state()).map((p) => p.name)).toEqual(SEED_PRODUCTS.map((p) => p.name));
     expect(new Set(state().products.map((p) => p.id)).size).toBe(SEED_PRODUCTS.length);
