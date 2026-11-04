@@ -1,4 +1,6 @@
-# Правила проекта
+# Правила проекта MILO
+
+Продукт и бренд: `docs/product.md`, `docs/brand.md` (MILO — Meal Intelligence & Lifestyle Organizer).
 
 - Монорепо на npm workspaces: `frontend/` (React PWA), `backend/`, `mobile/` (пока заготовки).
 - Фронтенд строго по FSD: `app → pages → widgets → features → entities → shared`, импорт слайсов только через `index.ts`, алиас `@/` = `frontend/src`.
