@@ -1,4 +1,4 @@
-import type { Product } from '@/entities/product';
+import type { Product } from '../model/types';
 
 export const filterProducts = (products: Product[], query: string): Product[] => {
   const normalized = query.trim().toLocaleLowerCase('ru-RU');

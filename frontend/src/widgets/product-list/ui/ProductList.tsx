@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
-import { ProductCard, selectProducts, useProductStore } from '@/entities/product';
+import { filterProducts, ProductCard, selectProducts, useProductStore } from '@/entities/product';
 import { EditProductButton } from '@/features/manage-product';
-import { filterProducts, ProductSearch } from '@/features/search-products';
+import { ProductSearch } from '@/features/search-products';
 import { cn } from '@/shared/lib';
 import { EmptyState } from '@/shared/ui';
 
