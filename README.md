@@ -5,6 +5,7 @@ Meal Intelligence & Lifestyle Organizer — питание, кладовая, р
 - Продукт и план развития: [docs/product.md](docs/product.md)
 - Бренд и дизайн-система: [docs/brand.md](docs/brand.md)
 - AI-скилы проекта: [docs/skills-inventory.md](docs/skills-inventory.md)
+- Состояние и планы: [CURRENT_STATE](docs/CURRENT_STATE.md) · [TASKS](docs/TASKS.md) · [ROADMAP](docs/ROADMAP.md) · [DECISIONS](docs/DECISIONS.md)
 
 ## Структура
 
