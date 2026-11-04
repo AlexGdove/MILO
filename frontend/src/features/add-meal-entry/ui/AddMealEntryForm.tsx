@@ -3,14 +3,16 @@ import { useState, type FormEvent } from 'react';
 import { MEAL_TYPES, useMealEntryStore, type MealType } from '@/entities/meal-entry';
 import { filterProducts, selectProducts, useProductStore, type Product } from '@/entities/product';
 import {
-  cn,
+  formatAmount,
   formatGrams,
   formatKcal,
   nutrientsForGrams,
   parseNumber,
+  toGrams,
   type IsoDate,
+  type Unit,
 } from '@/shared/lib';
-import { Button, Input } from '@/shared/ui';
+import { Button, Input, SegmentedControl } from '@/shared/ui';
 
 import styles from './AddMealEntryForm.module.css';
 
@@ -20,6 +22,20 @@ interface AddMealEntryFormProps {
   onDone: () => void;
 }
 
+const AMOUNT_LABEL: Record<Unit, string> = {
+  g: 'Вес, г',
+  ml: 'Объём, мл',
+  pcs: 'Количество, шт',
+};
+
+const AMOUNT_ERROR: Record<Unit, string> = {
+  g: 'Введите вес больше 0',
+  ml: 'Введите объём больше 0',
+  pcs: 'Введите количество больше 0',
+};
+
+const DEFAULT_AMOUNT: Record<Unit, string> = { g: '100', ml: '100', pcs: '1' };
+
 export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntryFormProps) => {
   const products = useProductStore(selectProducts);
   const adjustStock = useProductStore((state) => state.adjustStock);
@@ -27,30 +43,34 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
 
   const [query, setQuery] = useState('');
   const [product, setProduct] = useState<Product | null>(null);
-  const [gramsInput, setGramsInput] = useState('100');
+  const [amountInput, setAmountInput] = useState('100');
   const [mealType, setMealType] = useState<MealType>(initialMealType);
   const [deductStock, setDeductStock] = useState(false);
 
-  const grams = parseNumber(gramsInput);
-  const isGramsValid = grams !== null && grams > 0;
+  const amount = parseNumber(amountInput);
+  const isAmountValid = amount !== null && amount > 0;
 
   const selectProduct = (selected: Product) => {
     setProduct(selected);
+    setAmountInput(DEFAULT_AMOUNT[selected.unit]);
     setDeductStock(selected.stock > 0);
   };
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    if (!product || !isGramsValid) return;
+    if (!product || !isAmountValid) return;
 
-    const deducted = deductStock ? Math.min(grams, product.stock) : 0;
+    // Списываем не больше, чем есть; количество — в единице продукта
+    const deducted = deductStock ? Math.min(amount, product.stock) : 0;
     addEntry({
       date,
       mealType,
-      productId: product.id,
+      source: { type: 'product', id: product.id },
       productName: product.name,
       per100g: product.per100g,
-      grams,
+      amount,
+      unit: product.unit,
+      grams: toGrams(amount, product.unit, product.pieceWeight),
       stockDeducted: deducted,
     });
     if (deducted > 0) adjustStock(product.id, -deducted);
@@ -77,28 +97,34 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
               <button type="button" className={styles.option} onClick={() => selectProduct(item)}>
                 <span className={styles.optionName}>{item.name}</span>
                 <span className={styles.optionMeta}>
-                  {formatKcal(item.per100g.kcal)} ккал/100 г
-                  {item.stock > 0 && ` · есть ${formatGrams(item.stock)} г`}
+                  {formatKcal(item.per100g.kcal)} ккал/{item.unit === 'ml' ? '100 мл' : '100 г'}
+                  {item.stock > 0 && ` · есть ${formatAmount(item.stock, item.unit)}`}
                 </span>
               </button>
             </li>
           ))}
           {found.length === 0 && (
-            <li className={styles.empty}>Продукт не найден — добавьте его на вкладке «Продукты»</li>
+            <li className={styles.empty}>Продукт не найден — добавьте его на вкладке «Кладовая»</li>
           )}
         </ul>
       </div>
     );
   }
 
-  const preview = nutrientsForGrams(product.per100g, isGramsValid ? grams : 0);
+  const grams = isAmountValid ? toGrams(amount, product.unit, product.pieceWeight) : 0;
+  const preview = nutrientsForGrams(product.per100g, grams);
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
       <div className={styles.selected}>
         <div>
           <p className={styles.optionName}>{product.name}</p>
-          <p className={styles.optionMeta}>{formatKcal(product.per100g.kcal)} ккал / 100 г</p>
+          <p className={styles.optionMeta}>
+            {formatKcal(product.per100g.kcal)} ккал / {product.unit === 'ml' ? '100 мл' : '100 г'}
+            {product.unit === 'pcs' && product.pieceWeight
+              ? ` · 1 шт ≈ ${formatGrams(product.pieceWeight)} г`
+              : ''}
+          </p>
         </div>
         <Button variant="ghost" size="small" onClick={() => setProduct(null)}>
           Изменить
@@ -106,31 +132,19 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
       </div>
 
       <Input
-        label="Вес, г"
+        label={AMOUNT_LABEL[product.unit]}
         inputMode="decimal"
-        value={gramsInput}
-        onChange={(event) => setGramsInput(event.target.value)}
-        error={isGramsValid ? undefined : 'Введите вес больше 0'}
+        value={amountInput}
+        onChange={(event) => setAmountInput(event.target.value)}
+        error={isAmountValid ? undefined : AMOUNT_ERROR[product.unit]}
       />
 
-      <fieldset className={styles.meals}>
-        <legend className={styles.legend}>Приём пищи</legend>
-        {MEAL_TYPES.map((item) => (
-          <label
-            key={item.value}
-            className={cn(styles.chip, mealType === item.value && styles.chipActive)}
-          >
-            <input
-              type="radio"
-              name="mealType"
-              value={item.value}
-              checked={mealType === item.value}
-              onChange={() => setMealType(item.value)}
-            />
-            {item.label}
-          </label>
-        ))}
-      </fieldset>
+      <SegmentedControl
+        legend="Приём пищи"
+        options={MEAL_TYPES}
+        value={mealType}
+        onChange={setMealType}
+      />
 
       {product.stock > 0 && (
         <label className={styles.checkbox}>
@@ -139,7 +153,7 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
             checked={deductStock}
             onChange={(event) => setDeductStock(event.target.checked)}
           />
-          Списать с остатков (есть {formatGrams(product.stock)} г)
+          Списать с остатков (есть {formatAmount(product.stock, product.unit)})
         </label>
       )}
 
@@ -148,7 +162,7 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
         {formatGrams(preview.fat)} · У {formatGrams(preview.carbs)}
       </p>
 
-      <Button type="submit" fullWidth disabled={!isGramsValid}>
+      <Button type="submit" fullWidth disabled={!isAmountValid}>
         Добавить
       </Button>
     </form>

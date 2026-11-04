@@ -13,7 +13,9 @@ const addCheesecakes = (stock: number) =>
   useProductStore.getState().addProduct({
     name: 'Сырники',
     per100g: { kcal: 220, protein: 15.5, fat: 9, carbs: 20 },
+    unit: 'g',
     stock,
+    minStock: 0,
   });
 
 const renderForm = () => {
@@ -62,8 +64,10 @@ describe('AddMealEntryForm', () => {
     expect(entry).toMatchObject({
       date: DATE,
       mealType: 'lunch',
-      productId: product.id,
+      source: { type: 'product', id: product.id },
       productName: 'Сырники',
+      amount: 200,
+      unit: 'g',
       grams: 200,
       stockDeducted: 200,
     });
@@ -132,5 +136,40 @@ describe('AddMealEntryForm', () => {
     await user.type(screen.getByRole('searchbox', { name: 'Найти продукт' }), 'ананас');
 
     expect(screen.getByText(/Продукт не найден/)).toBeInTheDocument();
+  });
+
+  it('для штучного продукта считает КБЖУ по весу штуки и списывает штуки', async () => {
+    const user = userEvent.setup();
+    const eggs = useProductStore.getState().addProduct({
+      name: 'Яйца деревенские',
+      per100g: { kcal: 157, protein: 12.7, fat: 11.5, carbs: 0.7 },
+      unit: 'pcs',
+      pieceWeight: 55,
+      stock: 10,
+      minStock: 0,
+    });
+    renderForm();
+
+    await user.type(screen.getByRole('searchbox', { name: 'Найти продукт' }), 'деревен');
+    await user.click(screen.getByRole('button', { name: /Яйца деревенские/ }));
+
+    const amount = screen.getByLabelText('Количество, шт');
+    expect(amount).toHaveValue('1');
+    await user.clear(amount);
+    await user.type(amount, '2');
+    // 2 шт × 55 г = 110 г → 157 × 1,1 = 172,7 ккал
+    expect(screen.getByText('173 ккал')).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /есть 10 шт/ })).toBeChecked();
+
+    await user.click(screen.getByRole('button', { name: 'Добавить' }));
+
+    expect(useMealEntryStore.getState().entries[0]).toMatchObject({
+      source: { type: 'product', id: eggs.id },
+      amount: 2,
+      unit: 'pcs',
+      grams: 110,
+      stockDeducted: 2,
+    });
+    expect(selectProductById(eggs.id)(useProductStore.getState())?.stock).toBe(8);
   });
 });

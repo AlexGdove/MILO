@@ -4,6 +4,8 @@ export { parseNumber } from './number';
 export { persistStorage, storageKey } from './storage';
 export { formatDayLabel, fromIsoDate, shiftIsoDate, todayIsoDate, toIsoDate } from './date';
 export type { IsoDate } from './date';
+export { formatAmount, isUnit, roundAmount, toGrams, unitLabel, UNITS } from './units';
+export type { Unit } from './units';
 export {
   EMPTY_NUTRIENTS,
   formatGrams,

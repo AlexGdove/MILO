@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { formatGrams, formatKcal } from '@/shared/lib';
+import { formatAmount, formatGrams, formatKcal } from '@/shared/lib';
 
 import styles from './MealEntryRow.module.css';
 import { entryNutrients } from '../model/store';
@@ -19,7 +19,7 @@ export const MealEntryRow = ({ entry, actions }: MealEntryRowProps) => {
       <div className={styles.info}>
         <p className={styles.name}>{entry.productName}</p>
         <p className={styles.details}>
-          {formatGrams(entry.grams)} г · Б {formatGrams(nutrients.protein)} · Ж{' '}
+          {formatAmount(entry.amount, entry.unit)} · Б {formatGrams(nutrients.protein)} · Ж{' '}
           {formatGrams(nutrients.fat)} · У {formatGrams(nutrients.carbs)}
         </p>
       </div>

@@ -6,4 +6,5 @@ export { MiloLogo, MiloMark } from './Logo/Logo';
 export { Modal } from './Modal/Modal';
 export { PageLayout } from './PageLayout/PageLayout';
 export { ProgressRing } from './ProgressRing/ProgressRing';
+export { SegmentedControl } from './SegmentedControl/SegmentedControl';
 export { Skeleton } from './Skeleton/Skeleton';

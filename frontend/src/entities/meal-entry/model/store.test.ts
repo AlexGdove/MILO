@@ -8,9 +8,11 @@ import type { MealEntryDraft } from './types';
 const makeDraft = (overrides: Partial<MealEntryDraft> = {}): MealEntryDraft => ({
   date: '2026-11-04',
   mealType: 'lunch',
-  productId: 'p1',
+  source: { type: 'product', id: 'p1' },
   productName: 'Сырники',
   per100g: { kcal: 220, protein: 15.5, fat: 9, carbs: 20 },
+  amount: 200,
+  unit: 'g',
   grams: 200,
   stockDeducted: 0,
   ...overrides,
@@ -60,6 +62,7 @@ describe('расчёт КБЖУ записей', () => {
       makeDraft({
         productName: 'Банан',
         per100g: { kcal: 96, protein: 1.5, fat: 0.5, carbs: 21 },
+        amount: 120,
         grams: 120,
       }),
     );

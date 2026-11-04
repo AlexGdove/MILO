@@ -7,15 +7,15 @@ interface RemoveMealEntryButtonProps {
   entry: MealEntry;
 }
 
-/** Удаляет запись и возвращает списанные граммы на остаток продукта. */
+/** Удаляет запись и возвращает списанное количество на остаток продукта. */
 export const RemoveMealEntryButton = ({ entry }: RemoveMealEntryButtonProps) => {
   const removeEntry = useMealEntryStore((state) => state.removeEntry);
   const adjustStock = useProductStore((state) => state.adjustStock);
 
   const handleRemove = () => {
     const removed = removeEntry(entry.id);
-    if (removed && removed.stockDeducted > 0) {
-      adjustStock(removed.productId, removed.stockDeducted);
+    if (removed && removed.source.type === 'product' && removed.stockDeducted > 0) {
+      adjustStock(removed.source.id, removed.stockDeducted);
     }
   };
 
