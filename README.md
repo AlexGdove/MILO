@@ -1,6 +1,10 @@
-# Calorie Tracker
+# MILO
 
-Подсчёт калорий и учёт продуктов. Mobile-first PWA на React, в будущем — мобильное приложение.
+Meal Intelligence & Lifestyle Organizer — питание, кладовая, рецепты и покупки в одном приложении. Mobile-first PWA на React, в будущем — мобильное приложение.
+
+- Продукт и план развития: [docs/product.md](docs/product.md)
+- Бренд и дизайн-система: [docs/brand.md](docs/brand.md)
+- AI-скилы проекта: [docs/skills-inventory.md](docs/skills-inventory.md)
 
 ## Структура
 
