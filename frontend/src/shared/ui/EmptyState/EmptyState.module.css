@@ -6,7 +6,7 @@
 
 .title {
   margin-bottom: var(--space-1);
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   color: var(--color-text);
 }
 

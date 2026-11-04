@@ -5,6 +5,6 @@
 }
 
 .title {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
 }

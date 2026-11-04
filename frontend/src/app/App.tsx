@@ -1,4 +1,8 @@
-import { AppRouter } from './providers';
+import { AppRouter, ErrorBoundary } from './providers';
 import './styles/global.css';
 
-export const App = () => <AppRouter />;
+export const App = () => (
+  <ErrorBoundary>
+    <AppRouter />
+  </ErrorBoundary>
+);

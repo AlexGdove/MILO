@@ -10,9 +10,9 @@ interface DailySummaryProps {
 }
 
 const MACROS = [
-  { key: 'protein', label: 'Белки', color: 'var(--color-protein)' },
-  { key: 'fat', label: 'Жиры', color: 'var(--color-fat)' },
-  { key: 'carbs', label: 'Углеводы', color: 'var(--color-carbs)' },
+  { key: 'protein', label: 'Белки', color: 'var(--color-macro-protein)' },
+  { key: 'fat', label: 'Жиры', color: 'var(--color-macro-fat)' },
+  { key: 'carbs', label: 'Углеводы', color: 'var(--color-macro-carbs)' },
 ] as const;
 
 const ratio = (value: number, goal: number) => (goal > 0 ? value / goal : 0);

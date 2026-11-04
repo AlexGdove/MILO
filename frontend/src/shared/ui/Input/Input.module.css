@@ -6,32 +6,48 @@
 }
 
 .label {
-  font-size: var(--font-size-sm);
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
 
 .input {
   width: 100%;
-  min-height: 44px;
+  min-height: var(--control-height);
   padding: 0 var(--space-3);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
-  /* 16px — чтобы iOS не зумил поле при фокусе */
-  font-size: 16px;
+  font-size: var(--text-input);
+  transition:
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+
+.input:hover:not(:disabled):not(:focus) {
+  border-color: var(--color-text-muted);
 }
 
 .input:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-soft);
+  box-shadow: 0 0 0 var(--focus-ring-width) var(--color-primary-soft);
 }
 
-.invalid {
+.input:disabled {
+  opacity: var(--opacity-disabled);
+  cursor: not-allowed;
+}
+
+.input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.invalid,
+.invalid:hover:not(:disabled):not(:focus) {
   border-color: var(--color-danger);
 }
 
 .error {
-  font-size: var(--font-size-sm);
+  font-size: var(--text-sm);
   color: var(--color-danger);
 }

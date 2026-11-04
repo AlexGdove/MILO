@@ -1,64 +1,253 @@
+/*
+ * Дизайн-токены MILO (docs/brand.md).
+ * Слой 1 — примитивы (--milo-*): сырые значения палитры. Компоненты их НЕ используют.
+ * Слой 2 — семантические токены: роли (--color-*, --text-*, --space-*, ...). Компоненты используют только их.
+ * Тёмная тема переопределяет только семантические цвета и тени: по prefers-color-scheme
+ * и явно через [data-theme="dark"] (переключателя в UI пока нет).
+ */
+
 :root {
-  --color-bg: #f5f7f6;
-  --color-surface: #ffffff;
-  --color-surface-muted: #eef2f0;
-  --color-text: #111827;
-  --color-text-muted: #6b7280;
-  --color-border: #e5e7eb;
-  --color-primary: #16a34a;
-  --color-primary-hover: #15803d;
-  --color-primary-soft: #dcfce7;
-  --color-on-primary: #ffffff;
-  --color-danger: #dc2626;
-  --color-danger-soft: #fee2e2;
-  --color-warning: #d97706;
+  /* ---------- Примитивы: палитра «Орбита» ---------- */
+  --milo-ultra-50: #eef0ff;
+  --milo-ultra-100: #dee1ff;
+  --milo-ultra-200: #c3c8ff;
+  --milo-ultra-300: #9ea6ff;
+  --milo-ultra-400: #6f7bff;
+  --milo-ultra-500: #4a56f0;
+  --milo-ultra-600: #2f3bd9;
+  --milo-ultra-700: #2530b0;
+  --milo-ultra-800: #1d2688;
+  --milo-ultra-900: #171b36;
 
-  --color-protein: #2563eb;
-  --color-fat: #d97706;
-  --color-carbs: #9333ea;
+  --milo-mint-100: #ddf7ec;
+  --milo-mint-300: #6fe3b9;
+  --milo-mint-500: #3ccb9a;
+  --milo-mint-700: #1f8a66;
+  --milo-mint-800: #116b4d;
+  --milo-mint-900: #10291f;
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-full: 999px;
+  --milo-amber-100: #fff0d6;
+  --milo-amber-400: #ffb84d;
+  --milo-amber-700: #955a00;
+  --milo-amber-900: #33260f;
 
+  --milo-lavender-400: #9b8cff;
+
+  --milo-red-100: #ffe4e1;
+  --milo-red-300: #ff8a80;
+  --milo-red-600: #b42a29;
+  --milo-red-900: #3b1414;
+
+  /* Нейтрали с холодным (ультрамариновым) оттенком */
+  --milo-white: #ffffff;
+  --milo-mist-50: #f4f5fa;
+  --milo-mist-100: #eceef5;
+  --milo-mist-200: #e1e3ef;
+  --milo-graphite-500: #5e6280;
+  --milo-graphite-900: #12131c;
+  --milo-space-200: #9599b8;
+  --milo-space-300: #eceefe;
+  --milo-space-700: #262a42;
+  --milo-space-800: #1d2033;
+  --milo-space-850: #151726;
+  --milo-space-900: #0b0c14;
+
+  /* ---------- Семантика: цвета (светлая тема) ---------- */
+  --color-bg: var(--milo-mist-50);
+  --color-surface: var(--milo-white);
+  --color-surface-muted: var(--milo-mist-100);
+  --color-border: var(--milo-mist-200);
+  --color-overlay: rgb(11 12 20 / 0.45);
+
+  --color-text: var(--milo-graphite-900);
+  --color-text-muted: var(--milo-graphite-500);
+  --color-on-primary: var(--milo-white);
+
+  --color-primary: var(--milo-ultra-600);
+  --color-primary-hover: var(--milo-ultra-700);
+  --color-primary-pressed: var(--milo-ultra-800);
+  --color-primary-soft: var(--milo-ultra-50);
+
+  /* Мята — только подсказки и инсайты */
+  --color-accent: var(--milo-mint-500);
+  --color-accent-soft: var(--milo-mint-100);
+  --color-on-accent-soft: var(--milo-mint-800);
+
+  --color-success: var(--milo-mint-800);
+  --color-success-soft: var(--milo-mint-100);
+  --color-warning: var(--milo-amber-700);
+  --color-warning-soft: var(--milo-amber-100);
+  --color-danger: var(--milo-red-600);
+  --color-danger-soft: var(--milo-red-100);
+  --color-info: var(--milo-ultra-600);
+  --color-info-soft: var(--milo-ultra-50);
+
+  --color-macro-protein: var(--milo-ultra-400);
+  --color-macro-fat: var(--milo-amber-400);
+  --color-macro-carbs: var(--milo-lavender-400);
+
+  --focus-ring-color: var(--milo-ultra-500);
+
+  /* ---------- Типографика ---------- */
+  --font-body: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Unbounded', 'Onest', system-ui, sans-serif;
+
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-md: 15px;
+  --text-input: 16px; /* не меньше 16px — iOS не зумит поле при фокусе */
+  --text-lg: 18px;
+  --text-xl: 22px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+
+  --leading-tight: 1.15;
+  --leading-normal: 1.4;
+
+  --tracking-wordmark: 0.02em;
+
+  /* ---------- Отступы (сетка 4 px) ---------- */
+  --space-0-5: 2px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  --space-7: 40px;
+  --space-8: 48px;
 
-  --font-size-sm: 13px;
-  --font-size-md: 15px;
-  --font-size-lg: 18px;
-  --font-size-xl: 24px;
+  /* ---------- Радиусы ---------- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 999px;
 
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 8px rgb(0 0 0 / 0.04);
-  --shadow-sheet: 0 -8px 32px rgb(0 0 0 / 0.16);
+  /* ---------- Линии и фокус ---------- */
+  --border-width: 1px;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+  --focus-ring: var(--focus-ring-width) solid var(--focus-ring-color);
 
+  /* ---------- Тени и высота ---------- */
+  --shadow-1: 0 1px 2px rgb(18 19 28 / 0.06), 0 1px 3px rgb(18 19 28 / 0.04);
+  --shadow-2: 0 4px 12px rgb(18 19 28 / 0.08);
+  --shadow-3: 0 -8px 32px rgb(18 19 28 / 0.18);
+
+  /* ---------- Размеры элементов ---------- */
+  --control-height: 44px; /* минимальная зона касания */
+  --control-height-sm: 34px;
+  --icon-button-size: 36px;
+  --icon-button-size-sm: 32px;
+  --checkbox-size: 18px;
+  --icon-size: 24px;
+  --progress-thickness: 6px;
+  --stat-min-width: 64px;
+  --date-label-min-width: 96px;
+
+  /* ---------- Движение ---------- */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 400ms;
+  --duration-pulse: 1200ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+
+  /* ---------- Состояния ---------- */
+  --opacity-disabled: 0.45;
+
+  /* ---------- Раскладка ---------- */
   --app-max-width: 520px;
   --bottom-nav-height: 64px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #0b0f0d;
-    --color-surface: #151a17;
-    --color-surface-muted: #1d2420;
-    --color-text: #f3f4f6;
-    --color-text-muted: #9ca3af;
-    --color-border: #2a312d;
-    --color-primary: #22c55e;
-    --color-primary-hover: #16a34a;
-    --color-primary-soft: #14301f;
-    --color-on-primary: #052e14;
-    --color-danger: #f87171;
-    --color-danger-soft: #3b1414;
-    --color-protein: #60a5fa;
-    --color-fat: #fbbf24;
-    --color-carbs: #c084fc;
-    --shadow-card: none;
+  :root:not([data-theme='light']) {
+    --color-bg: var(--milo-space-900);
+    --color-surface: var(--milo-space-850);
+    --color-surface-muted: var(--milo-space-800);
+    --color-border: var(--milo-space-700);
+    --color-overlay: rgb(0 0 0 / 0.6);
+
+    --color-text: var(--milo-space-300);
+    --color-text-muted: var(--milo-space-200);
+    --color-on-primary: var(--milo-space-900);
+
+    --color-primary: var(--milo-ultra-400);
+    --color-primary-hover: var(--milo-ultra-300);
+    --color-primary-pressed: var(--milo-ultra-200);
+    --color-primary-soft: var(--milo-ultra-900);
+
+    --color-accent-soft: var(--milo-mint-900);
+    --color-on-accent-soft: var(--milo-mint-300);
+
+    --color-success: var(--milo-mint-500);
+    --color-success-soft: var(--milo-mint-900);
+    --color-warning: var(--milo-amber-400);
+    --color-warning-soft: var(--milo-amber-900);
+    --color-danger: var(--milo-red-300);
+    --color-danger-soft: var(--milo-red-900);
+    --color-info: var(--milo-ultra-300);
+    --color-info-soft: var(--milo-ultra-900);
+
+    --color-macro-protein: var(--milo-ultra-300);
+
+    --focus-ring-color: var(--milo-ultra-300);
+
+    --shadow-1: none;
+    --shadow-2: 0 4px 12px rgb(0 0 0 / 0.4);
+    --shadow-3: 0 -8px 32px rgb(0 0 0 / 0.5);
+
+    color-scheme: dark;
   }
+}
+
+/* Явный выбор тёмной темы (для будущего переключателя) — те же значения */
+:root[data-theme='dark'] {
+  --color-bg: var(--milo-space-900);
+  --color-surface: var(--milo-space-850);
+  --color-surface-muted: var(--milo-space-800);
+  --color-border: var(--milo-space-700);
+  --color-overlay: rgb(0 0 0 / 0.6);
+
+  --color-text: var(--milo-space-300);
+  --color-text-muted: var(--milo-space-200);
+  --color-on-primary: var(--milo-space-900);
+
+  --color-primary: var(--milo-ultra-400);
+  --color-primary-hover: var(--milo-ultra-300);
+  --color-primary-pressed: var(--milo-ultra-200);
+  --color-primary-soft: var(--milo-ultra-900);
+
+  --color-accent-soft: var(--milo-mint-900);
+  --color-on-accent-soft: var(--milo-mint-300);
+
+  --color-success: var(--milo-mint-500);
+  --color-success-soft: var(--milo-mint-900);
+  --color-warning: var(--milo-amber-400);
+  --color-warning-soft: var(--milo-amber-900);
+  --color-danger: var(--milo-red-300);
+  --color-danger-soft: var(--milo-red-900);
+  --color-info: var(--milo-ultra-300);
+  --color-info-soft: var(--milo-ultra-900);
+
+  --color-macro-protein: var(--milo-ultra-300);
+
+  --focus-ring-color: var(--milo-ultra-300);
+
+  --shadow-1: none;
+  --shadow-2: 0 4px 12px rgb(0 0 0 / 0.4);
+  --shadow-3: 0 -8px 32px rgb(0 0 0 / 0.5);
+
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
 }
