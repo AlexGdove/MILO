@@ -69,4 +69,4 @@
 
 - Токены, шрифты, знак (`shared/ui/Logo`: `MiloMark`, `MiloLogo`) внедрены в ветке `feat/design-tokens`. Цвета знака берутся из `--color-primary` / `--color-on-primary` / `--color-accent`, поэтому светлая и тёмная версии переключаются автоматически.
 - Для контраста WCAG AA (≥ 4.5:1) семантические цвета состояний скорректированы относительно первоначальных оттенков: danger `#B42A29`, warning `#955A00`, success в светлой теме `#116B4D`; в тёмной теме `--color-primary-soft` = `#171B36`. Основная палитра бренда не менялась.
-- Иконки PWA, фавиконы — ветка `feat/brand-assets` (ещё не сделано).
+- Иконки PWA и фавиконы генерирует `frontend/scripts/generate-icons.mjs` (`npm run icons -w frontend`, без зависимостей, сглаживание 4×4): `pwa-192/512`, `maskable-512` и `apple-touch-icon` (фон на весь квадрат, столбики в безопасной зоне, масштаб 0.8), `favicon-64.png`, `favicon.ico` (16/32/48). `favicon.svg` переключается на тёмную версию знака через `prefers-color-scheme`.
