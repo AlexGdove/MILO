@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
 
 import type { ProductDraft } from '@/entities/product';
-import { parseNumber } from '@/shared/lib';
-import { Button, Input } from '@/shared/ui';
+import { parseNumber, unitLabel, UNITS, type Unit } from '@/shared/lib';
+import { Button, Input, SegmentedControl } from '@/shared/ui';
 
 import styles from './ProductForm.module.css';
 
@@ -13,7 +13,8 @@ interface ProductFormProps {
   onDelete?: () => void;
 }
 
-type FieldName = 'name' | 'kcal' | 'protein' | 'fat' | 'carbs' | 'stock';
+type NumericField = 'kcal' | 'protein' | 'fat' | 'carbs' | 'pieceWeight' | 'stock' | 'minStock';
+type FieldName = 'name' | NumericField;
 type FormValues = Record<FieldName, string>;
 
 const toValues = (draft?: ProductDraft): FormValues => ({
@@ -22,30 +23,41 @@ const toValues = (draft?: ProductDraft): FormValues => ({
   protein: draft ? String(draft.per100g.protein) : '',
   fat: draft ? String(draft.per100g.fat) : '',
   carbs: draft ? String(draft.per100g.carbs) : '',
+  pieceWeight: draft?.pieceWeight ? String(draft.pieceWeight) : '',
   stock: draft ? String(draft.stock) : '0',
+  minStock: draft ? String(draft.minStock) : '0',
 });
 
-const NUMERIC_FIELDS: Array<{ name: Exclude<FieldName, 'name'>; label: string }> = [
-  { name: 'kcal', label: 'Ккал / 100 г' },
+/** Для жидкостей КБЖУ вводится на 100 мл, для остальных — на 100 г (в том числе для штучных). */
+const per100Label = (unit: Unit) => (unit === 'ml' ? '100 мл' : '100 г');
+
+const MACRO_FIELDS: Array<{ name: 'protein' | 'fat' | 'carbs'; label: string }> = [
   { name: 'protein', label: 'Белки, г' },
   { name: 'fat', label: 'Жиры, г' },
   { name: 'carbs', label: 'Углеводы, г' },
 ];
 
-const validate = (values: FormValues) => {
+const validate = (values: FormValues, unit: Unit) => {
   const errors: Partial<Record<FieldName, string>> = {};
   if (!values.name.trim()) errors.name = 'Введите название';
-  for (const field of [...NUMERIC_FIELDS.map((f) => f.name), 'stock'] as const) {
+  const nonNegative: NumericField[] = ['kcal', 'protein', 'fat', 'carbs', 'stock', 'minStock'];
+  for (const field of nonNegative) {
     const value = parseNumber(values[field]);
     if (value === null || value < 0) errors[field] = 'Число ≥ 0';
+  }
+  if (unit === 'pcs') {
+    const weight = parseNumber(values.pieceWeight);
+    if (weight === null || weight <= 0) errors.pieceWeight = 'Укажите вес одной штуки';
   }
   return errors;
 };
 
 export const ProductForm = ({ initial, submitLabel, onSubmit, onDelete }: ProductFormProps) => {
   const [values, setValues] = useState<FormValues>(() => toValues(initial));
+  const [unit, setUnit] = useState<Unit>(initial?.unit ?? 'g');
   const [submitted, setSubmitted] = useState(false);
-  const errors = submitted ? validate(values) : {};
+  const errors = submitted ? validate(values, unit) : {};
+  const unitShort = unitLabel(unit);
 
   const setField = (field: FieldName) => (value: string) =>
     setValues((prev) => ({ ...prev, [field]: value }));
@@ -53,9 +65,9 @@ export const ProductForm = ({ initial, submitLabel, onSubmit, onDelete }: Produc
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     setSubmitted(true);
-    if (Object.keys(validate(values)).length > 0) return;
+    if (Object.keys(validate(values, unit)).length > 0) return;
 
-    const num = (field: FieldName) => parseNumber(values[field]) ?? 0;
+    const num = (field: NumericField) => parseNumber(values[field]) ?? 0;
     onSubmit({
       name: values.name.trim(),
       per100g: {
@@ -64,7 +76,10 @@ export const ProductForm = ({ initial, submitLabel, onSubmit, onDelete }: Produc
         fat: num('fat'),
         carbs: num('carbs'),
       },
+      unit,
+      ...(unit === 'pcs' ? { pieceWeight: num('pieceWeight') } : {}),
       stock: num('stock'),
+      minStock: num('minStock'),
     });
   };
 
@@ -77,8 +92,28 @@ export const ProductForm = ({ initial, submitLabel, onSubmit, onDelete }: Produc
         error={errors.name}
         autoComplete="off"
       />
+      <SegmentedControl legend="Единица учёта" options={UNITS} value={unit} onChange={setUnit} />
+      {unit === 'ml' && (
+        <p className={styles.hint}>Для расчёта калорий 1 мл считается равным 1 г.</p>
+      )}
+      {unit === 'pcs' && (
+        <Input
+          label="Вес одной штуки, г"
+          inputMode="decimal"
+          value={values.pieceWeight}
+          onChange={(e) => setField('pieceWeight')(e.target.value)}
+          error={errors.pieceWeight}
+        />
+      )}
       <div className={styles.grid}>
-        {NUMERIC_FIELDS.map((field) => (
+        <Input
+          label={`Ккал / ${per100Label(unit)}`}
+          inputMode="decimal"
+          value={values.kcal}
+          onChange={(e) => setField('kcal')(e.target.value)}
+          error={errors.kcal}
+        />
+        {MACRO_FIELDS.map((field) => (
           <Input
             key={field.name}
             label={field.label}
@@ -88,14 +123,25 @@ export const ProductForm = ({ initial, submitLabel, onSubmit, onDelete }: Produc
             error={errors[field.name]}
           />
         ))}
+        <Input
+          label={`В наличии, ${unitShort}`}
+          inputMode="decimal"
+          value={values.stock}
+          onChange={(e) => setField('stock')(e.target.value)}
+          error={errors.stock}
+        />
+        <Input
+          label={`Мин. остаток, ${unitShort}`}
+          inputMode="decimal"
+          value={values.minStock}
+          onChange={(e) => setField('minStock')(e.target.value)}
+          error={errors.minStock}
+        />
       </div>
-      <Input
-        label="В наличии, г"
-        inputMode="decimal"
-        value={values.stock}
-        onChange={(e) => setField('stock')(e.target.value)}
-        error={errors.stock}
-      />
+      <p className={styles.hint}>
+        Если остаток станет меньше минимального, продукт будет отмечен как заканчивающийся. 0 — не
+        отслеживать.
+      </p>
       <Button type="submit" fullWidth>
         {submitLabel}
       </Button>

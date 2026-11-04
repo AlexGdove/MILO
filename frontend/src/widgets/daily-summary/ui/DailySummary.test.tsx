@@ -12,9 +12,11 @@ const addEntry = (grams: number, date = DATE) =>
   useMealEntryStore.getState().addEntry({
     date,
     mealType: 'lunch',
-    productId: 'p1',
+    source: { type: 'product', id: 'p1' },
     productName: 'Сырники',
     per100g: { kcal: 220, protein: 15.5, fat: 9, carbs: 20 },
+    amount: grams,
+    unit: 'g',
     grams,
     stockDeducted: 0,
   });

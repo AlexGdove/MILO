@@ -12,6 +12,7 @@ import {
   type Nutrients,
 } from '@/shared/lib';
 
+import { MEAL_ENTRIES_STORAGE_VERSION, migrateMealEntries } from './migrations';
 import type { MealEntry, MealEntryDraft } from './types';
 
 interface MealEntryState {
@@ -37,7 +38,13 @@ export const useMealEntryStore = create<MealEntryState>()(
         return entry;
       },
     }),
-    { name: storageKey('meal-entries'), storage: persistStorage, version: 1 },
+    {
+      name: storageKey('meal-entries'),
+      storage: persistStorage,
+      version: MEAL_ENTRIES_STORAGE_VERSION,
+      migrate: migrateMealEntries,
+      partialize: (state) => ({ entries: state.entries }),
+    },
   ),
 );
 

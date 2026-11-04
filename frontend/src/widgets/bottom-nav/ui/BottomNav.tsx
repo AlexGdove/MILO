@@ -16,7 +16,7 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { to: ROUTES.dashboard, label: 'Сегодня', icon: <HomeIcon /> },
   { to: ROUTES.diary, label: 'Дневник', icon: <DiaryIcon /> },
-  { to: ROUTES.products, label: 'Продукты', icon: <ProductsIcon /> },
+  { to: ROUTES.pantry, label: 'Кладовая', icon: <ProductsIcon /> },
   { to: ROUTES.profile, label: 'Профиль', icon: <ProfileIcon /> },
 ];
 

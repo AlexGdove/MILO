@@ -8,7 +8,9 @@ import { filterProducts } from '../lib/filterProducts';
 const draft: ProductDraft = {
   name: 'Сырники',
   per100g: { kcal: 220, protein: 15.5, fat: 9, carbs: 20 },
+  unit: 'g',
   stock: 500,
+  minStock: 0,
 };
 
 const state = () => useProductStore.getState();
@@ -18,7 +20,7 @@ beforeEach(() => {
 });
 
 describe('useProductStore', () => {
-  it('после переименования в MILO поднимает продукты пользователя из старого ключа хранилища', async () => {
+  it('после переименования в MILO поднимает продукты пользователя из старого ключа и мигрирует v1 → v2', async () => {
     const saved = {
       id: 'legacy-1',
       name: 'Гречка домашняя',
@@ -37,11 +39,13 @@ describe('useProductStore', () => {
 
     await useProductStore.persist.rehydrate();
 
-    expect(state().products).toEqual([saved]);
+    // v1 хранил остаток в граммах: миграция добавляет единицу «г» и нулевой минимальный остаток
+    const migrated = { ...saved, unit: 'g', minStock: 0 };
+    expect(state().products).toEqual([migrated]);
     expect(localStorage.getItem('calorie-tracker:products')).toBeNull();
-    expect(JSON.parse(localStorage.getItem('milo:products') ?? 'null')?.state.products).toEqual([
-      saved,
-    ]);
+    const stored = JSON.parse(localStorage.getItem('milo:products') ?? 'null');
+    expect(stored?.state.products).toEqual([migrated]);
+    expect(stored?.version).toBe(2);
   });
 
   it('при первом запуске содержит стартовый набор продуктов', () => {
@@ -73,6 +77,17 @@ describe('useProductStore', () => {
     expect(state().products[1]).toEqual(other);
   });
 
+  it('вес штуки хранится только у штучных продуктов', () => {
+    const eggs = state().addProduct({ ...draft, unit: 'pcs', pieceWeight: 55 });
+    expect(eggs.pieceWeight).toBe(55);
+
+    state().updateProduct(eggs.id, { ...draft, unit: 'g', pieceWeight: 55 });
+    expect(selectProductById(eggs.id)(state())).not.toHaveProperty('pieceWeight');
+
+    const flour = state().addProduct({ ...draft, unit: 'g', pieceWeight: 30 });
+    expect(flour).not.toHaveProperty('pieceWeight');
+  });
+
   it('removeProduct удаляет продукт', () => {
     const created = state().addProduct(draft);
     state().removeProduct(created.id);
@@ -98,6 +113,12 @@ describe('useProductStore', () => {
       const { id } = state().addProduct({ ...draft, stock: 100 });
       state().adjustStock(id, -0.4);
       expect(selectProductById(id)(state())?.stock).toBe(100);
+    });
+
+    it('штучный остаток округляется до десятых', () => {
+      const { id } = state().addProduct({ ...draft, unit: 'pcs', pieceWeight: 55, stock: 6 });
+      state().adjustStock(id, -1.26);
+      expect(selectProductById(id)(state())?.stock).toBe(4.7);
     });
 
     it('не трогает другие продукты и игнорирует неизвестный id', () => {
