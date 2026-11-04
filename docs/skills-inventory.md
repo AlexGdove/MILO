@@ -1,6 +1,6 @@
 # Инвентаризация AI-скилов MILO
 
-Проверено: 2026-11-04. Проектные скилы лежат в `.claude/skills/` и подхватываются Claude Code при запуске сессии в корне репозитория.
+Проверено: 2026-11-04. Проектные скилы лежат в `.claude/skills/`. После перезапуска сессии все 13 проектных скилов видны Claude Code (проверено по списку доступных скилов). Плагин Anthropic `example-skills` (frontend-design, webapp-testing) в списке не появился — не установлен.
 
 ## Где искали
 
@@ -18,7 +18,7 @@
 | --------------- | -------------------------- | --------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | Frontend        | React                      | Активирован (общий)               | `react-typescript`                      | `.claude/skills/react-typescript` (копия из claude-project-skills)                                                 |
 | Frontend        | TypeScript                 | Активирован (общий)               | `react-typescript`                      | то же                                                                                                              |
-| Frontend        | Дизайн UI / дизайн-системы | Ожидает установки пользователем   | `frontend-design`                       | плагин `example-skills@anthropic-agent-skills`                                                                     |
+| Frontend        | Дизайн UI / дизайн-системы | Не установлен (проверено)         | `frontend-design`                       | плагин `example-skills@anthropic-agent-skills`                                                                     |
 | Архитектура     | Монорепо, FSD              | Активирован                       | `project-architecture`                  | `.claude/skills/project-architecture` (копия)                                                                      |
 | State           | Zustand                    | Создан                            | `zustand-state`                         | `.claude/skills/zustand-state`                                                                                     |
 | Server state    | TanStack Query             | Создан, библиотека не установлена | `tanstack-query`                        | `.claude/skills/tanstack-query`                                                                                    |
@@ -27,7 +27,7 @@
 | Backend         | NestJS                     | Создан, стек бэкенда не утверждён | `nestjs-backend`                        | `.claude/skills/nestjs-backend`                                                                                    |
 | Testing         | Jest-совместимый (Vitest)  | Создан + общий                    | `testing-vitest-rtl`, `testing-quality` | `.claude/skills/…`                                                                                                 |
 | Testing         | React Testing Library      | Создан                            | `testing-vitest-rtl`                    | `.claude/skills/testing-vitest-rtl`                                                                                |
-| Testing         | E2E (Playwright)           | Ожидает установки пользователем   | `webapp-testing`                        | плагин `example-skills@anthropic-agent-skills`                                                                     |
+| Testing         | E2E (Playwright)           | Не установлен (проверено)         | `webapp-testing`                        | плагин `example-skills@anthropic-agent-skills`                                                                     |
 | Review          | Code review                | Активирован                       | `milo-code-review`                      | `.claude/skills/milo-code-review` (копия `code-review`, переименована из-за конфликта со встроенным `code-review`) |
 | Mobile          | Мобильное приложение       | Активирован (общий)               | `mobile-engineering`                    | `.claude/skills/mobile-engineering` (копия)                                                                        |
 | Version control | Git / GitHub               | Создан                            | `git-github-workflow`                   | `.claude/skills/git-github-workflow`                                                                               |
