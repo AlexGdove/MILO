@@ -15,6 +15,7 @@
     "build": "npm run build -w frontend",
     "preview": "npm run preview -w frontend",
     "typecheck": "npm run typecheck -w frontend",
+    "test": "npm run test -w frontend",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
