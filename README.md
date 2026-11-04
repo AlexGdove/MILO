@@ -34,7 +34,9 @@ npm run format     # Prettier
 
 ## Git-флоу
 
-- `main` — стабильная ветка.
-- **Каждое изменение — новая ветка** от `main`: `feat/…`, `fix/…`, `chore/…`, `refactor/…`, `docs/…`.
+- `main` — стабильная ветка, напрямую не изменяется.
+- `dev` — ветка разработки и интеграции.
+- **Каждое изменение — новая ветка** от `dev`: `feat/…`, `fix/…`, `chore/…`, `refactor/…`, `docs/…`, `test/…`, `ci/…`.
 - Коммиты — [Conventional Commits](https://www.conventionalcommits.org/ru/).
-- После проверки (`lint`, `typecheck`, `build`) ветка вливается в `main` через `--no-ff`.
+- После проверок (`lint`, `typecheck`, `test`, `build`) ветка вливается в `dev` через `--no-ff` — только с разрешения владельца.
+- В `main` изменения попадают из `dev` только после зелёных проверок и CI и явного решения владельца.
