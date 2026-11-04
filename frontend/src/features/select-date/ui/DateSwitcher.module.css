@@ -1,0 +1,39 @@
+.switcher {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+}
+
+.arrow,
+.label {
+  height: 36px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  cursor: pointer;
+}
+
+.arrow {
+  width: 36px;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.label {
+  min-width: 96px;
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.label:disabled {
+  cursor: default;
+}
+
+.arrow:hover,
+.label:not(:disabled):hover {
+  background: var(--color-surface);
+}

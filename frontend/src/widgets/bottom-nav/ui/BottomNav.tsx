@@ -5,7 +5,7 @@ import { ROUTES, type AppRoute } from '@/shared/config';
 import { cn } from '@/shared/lib';
 
 import styles from './BottomNav.module.css';
-import { HomeIcon, ProductsIcon } from './icons';
+import { DiaryIcon, HomeIcon, ProductsIcon } from './icons';
 
 interface NavItem {
   to: AppRoute;
@@ -15,6 +15,7 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { to: ROUTES.dashboard, label: 'Сегодня', icon: <HomeIcon /> },
+  { to: ROUTES.diary, label: 'Дневник', icon: <DiaryIcon /> },
   { to: ROUTES.products, label: 'Продукты', icon: <ProductsIcon /> },
 ];
 
