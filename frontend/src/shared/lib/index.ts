@@ -1,5 +1,6 @@
 export { cn } from './cn';
 export { createId } from './id';
+export { parseNumber } from './number';
 export { persistStorage, storageKey } from './storage';
 export { formatDayLabel, fromIsoDate, shiftIsoDate, todayIsoDate, toIsoDate } from './date';
 export type { IsoDate } from './date';
