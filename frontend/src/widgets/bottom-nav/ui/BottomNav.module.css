@@ -9,7 +9,7 @@
   height: calc(var(--bottom-nav-height) + var(--safe-bottom));
   margin: 0 auto;
   padding-bottom: var(--safe-bottom);
-  border-top: 1px solid var(--color-border);
+  border-top: var(--border-width) solid var(--color-border);
   background: var(--color-surface);
 }
 
@@ -19,13 +19,23 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: var(--space-0-5);
   color: var(--color-text-muted);
-  font-size: 11px;
-  font-weight: 500;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-medium);
   text-decoration: none;
 }
 
 .active {
   color: var(--color-primary);
+  font-weight: var(--weight-semibold);
+}
+
+.link svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
+
+.link:focus-visible {
+  outline-offset: calc(-1 * var(--focus-ring-width));
 }

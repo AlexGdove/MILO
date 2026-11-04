@@ -1,0 +1,38 @@
+.mark {
+  display: block;
+  flex-shrink: 0;
+}
+
+.markBg {
+  fill: var(--color-primary);
+}
+
+.markBar {
+  fill: var(--color-on-primary);
+}
+
+.markAccent {
+  fill: var(--color-accent);
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text);
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wordmark);
+  line-height: 1;
+}
+
+.sm .wordmark {
+  font-size: var(--text-md);
+}
+
+.md .wordmark {
+  font-size: var(--text-xl);
+}

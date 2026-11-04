@@ -5,14 +5,14 @@
   margin: auto auto 0;
   padding: 0;
   border: none;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   background: var(--color-surface);
   color: var(--color-text);
-  box-shadow: var(--shadow-sheet);
+  box-shadow: var(--shadow-3);
 }
 
 .dialog::backdrop {
-  background: rgb(0 0 0 / 0.4);
+  background: var(--color-overlay);
 }
 
 .header {
@@ -23,28 +23,34 @@
 }
 
 .title {
-  font-size: var(--font-size-lg);
-  font-weight: 700;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
 }
 
 .close {
-  width: 36px;
-  height: 36px;
+  width: var(--icon-button-size);
+  height: var(--icon-button-size);
   border: none;
   border-radius: var(--radius-full);
   background: var(--color-surface-muted);
-  font-size: 22px;
+  font-size: var(--text-xl);
   line-height: 1;
   cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.close:hover {
+  background: var(--color-border);
 }
 
 .body {
   padding: var(--space-2) var(--space-4) calc(var(--space-5) + var(--safe-bottom));
 }
 
+/* Брейкпоинт — литерал: CSS-переменные не работают в медиазапросах. */
 @media (min-width: 600px) {
   .dialog {
     margin: auto;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
   }
 }

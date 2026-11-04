@@ -11,10 +11,18 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  min-height: 44px;
+  min-height: var(--control-height);
 }
 
 .title {
-  font-size: var(--font-size-xl);
-  font-weight: 800;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  margin-bottom: calc(-1 * var(--space-2));
 }

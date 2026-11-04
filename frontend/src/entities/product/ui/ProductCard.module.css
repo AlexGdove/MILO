@@ -3,7 +3,7 @@
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--color-border);
+  border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
 }
@@ -15,20 +15,20 @@
 
 .name {
   overflow: hidden;
-  font-size: var(--font-size-md);
-  font-weight: 600;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .macros {
-  margin-top: 2px;
-  font-size: var(--font-size-sm);
+  margin-top: var(--space-0-5);
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
 
 .kcal {
-  font-weight: 600;
+  font-weight: var(--weight-semibold);
   color: var(--color-text);
 }
 
@@ -38,8 +38,8 @@
 
 .stock,
 .stockEmpty {
-  margin-top: 2px;
-  font-size: var(--font-size-sm);
+  margin-top: var(--space-0-5);
+  font-size: var(--text-sm);
 }
 
 .stock {
