@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkAvailability, type IngredientProduct } from '@/entities/recipe';
-
+import { checkAvailability } from './availability';
+import type { IngredientProduct } from './ingredientProduct';
 import { planCooking } from './planCooking';
 
 const products: IngredientProduct[] = [

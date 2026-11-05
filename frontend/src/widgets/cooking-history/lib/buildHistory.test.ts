@@ -64,4 +64,12 @@ describe('buildHistory', () => {
     expect(result).toHaveLength(1);
     expect(result[0]?.events.map((e) => e.kind)).toEqual(['eaten', 'cooked']);
   });
+
+  it('рецепт, записанный без готовки (источник — не блюдо), в историю не попадает', () => {
+    const fromRecipe = {
+      ...entry('e2', '2026-11-05', 12, 'recipe'),
+      source: { type: 'recipe' as const, id: 'recipe-1' },
+    };
+    expect(buildHistory([dish('d1', '2026-11-05', 9)], [fromRecipe])[0]?.events).toHaveLength(1);
+  });
 });

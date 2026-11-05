@@ -1,11 +1,9 @@
 import { useState } from 'react';
 
 import { selectProducts, useProductStore } from '@/entities/product';
-import { checkAvailability, type Recipe } from '@/entities/recipe';
+import { canAddToShopping, checkAvailability, type Recipe } from '@/entities/recipe';
 import { useShoppingStore } from '@/entities/shopping-item';
 import { Button } from '@/shared/ui';
-
-import { canAddToShopping } from '../lib/planCooking';
 
 interface AddMissingToShoppingButtonProps {
   recipe: Recipe;

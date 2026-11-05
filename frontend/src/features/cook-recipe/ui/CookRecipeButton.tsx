@@ -2,13 +2,18 @@ import { useState } from 'react';
 
 import { useCookedDishStore } from '@/entities/cooked-dish';
 import { selectProducts, useProductStore } from '@/entities/product';
-import { checkAvailability, type Recipe } from '@/entities/recipe';
+import {
+  canAddToShopping,
+  checkAvailability,
+  planCooking,
+  type Recipe,
+  type ShortageDecision,
+} from '@/entities/recipe';
 import { useShoppingStore } from '@/entities/shopping-item';
 import { cn, formatAmount } from '@/shared/lib';
 import { Button, Modal } from '@/shared/ui';
 
 import styles from './CookRecipeButton.module.css';
-import { canAddToShopping, planCooking, type ShortageDecision } from '../lib/planCooking';
 
 interface CookRecipeButtonProps {
   recipe: Recipe;

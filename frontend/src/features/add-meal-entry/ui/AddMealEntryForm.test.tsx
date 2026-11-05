@@ -25,7 +25,10 @@ const renderForm = () => {
 };
 
 const pickCheesecakes = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.type(screen.getByRole('searchbox', { name: 'Найти продукт' }), 'сыр');
+  await user.type(
+    screen.getByRole('searchbox', { name: 'Найти продукт, блюдо или рецепт' }),
+    'сыр',
+  );
   await user.click(screen.getByRole('button', { name: /Сырники/ }));
 };
 
@@ -129,13 +132,16 @@ describe('AddMealEntryForm', () => {
     expect(onDone).not.toHaveBeenCalled();
   });
 
-  it('сообщает, если продукт не найден', async () => {
+  it('сообщает, если ничего не найдено', async () => {
     const user = userEvent.setup();
     renderForm();
 
-    await user.type(screen.getByRole('searchbox', { name: 'Найти продукт' }), 'ананас');
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Найти продукт, блюдо или рецепт' }),
+      'ананас',
+    );
 
-    expect(screen.getByText(/Продукт не найден/)).toBeInTheDocument();
+    expect(screen.getByText(/Ничего не найдено/)).toBeInTheDocument();
   });
 
   it('для штучного продукта считает КБЖУ по весу штуки и списывает штуки', async () => {
@@ -150,7 +156,10 @@ describe('AddMealEntryForm', () => {
     });
     renderForm();
 
-    await user.type(screen.getByRole('searchbox', { name: 'Найти продукт' }), 'деревен');
+    await user.type(
+      screen.getByRole('searchbox', { name: 'Найти продукт, блюдо или рецепт' }),
+      'деревен',
+    );
     await user.click(screen.getByRole('button', { name: /Яйца деревенские/ }));
 
     const amount = screen.getByLabelText('Количество, шт');
