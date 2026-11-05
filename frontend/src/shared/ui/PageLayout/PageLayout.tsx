@@ -4,7 +4,7 @@ import styles from './PageLayout.module.css';
 
 interface PageLayoutProps {
   title: string;
-  /** Необязательный элемент над заголовком (например, логотип) */
+  /** Необязательный ряд над заголовком (логотип, ссылка на профиль); элементы — по краям */
   eyebrow?: ReactNode;
   actions?: ReactNode;
   children: ReactNode;
@@ -15,7 +15,7 @@ export const PageLayout = ({ title, eyebrow, actions, children }: PageLayoutProp
     {eyebrow && <div className={styles.eyebrow}>{eyebrow}</div>}
     <header className={styles.header}>
       <h1 className={styles.title}>{title}</h1>
-      {actions}
+      {actions && <div className={styles.actions}>{actions}</div>}
     </header>
     {children}
   </main>

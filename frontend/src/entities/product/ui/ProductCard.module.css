@@ -13,6 +13,37 @@
   min-width: 0;
 }
 
+/* Бейдж переносится под название, если рядом не помещается — название не обрезается из-за него */
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-0-5) var(--space-2);
+  min-width: 0;
+}
+
+.titleRow .name {
+  max-width: 100%;
+}
+
+.badge {
+  flex-shrink: 0;
+  padding: var(--space-0-5) var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-semibold);
+}
+
+.badgeOut {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.badgeLow {
+  background: var(--color-warning-soft);
+  color: var(--color-warning);
+}
+
 .name {
   overflow: hidden;
   font-size: var(--text-md);

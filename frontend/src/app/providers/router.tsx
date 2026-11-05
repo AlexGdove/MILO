@@ -4,6 +4,7 @@ import { DashboardPage } from '@/pages/dashboard';
 import { DiaryPage } from '@/pages/diary';
 import { PantryPage } from '@/pages/pantry';
 import { ProfilePage } from '@/pages/profile';
+import { ShoppingPage } from '@/pages/shopping';
 import { LEGACY_ROUTES, ROUTES } from '@/shared/config';
 
 import { RootLayout } from '../layouts/RootLayout';
@@ -16,6 +17,7 @@ const router = createBrowserRouter([
       { path: ROUTES.diary, element: <DiaryPage /> },
       { path: ROUTES.pantry, element: <PantryPage /> },
       { path: LEGACY_ROUTES.products, element: <Navigate to={ROUTES.pantry} replace /> },
+      { path: ROUTES.shopping, element: <ShoppingPage /> },
       { path: ROUTES.profile, element: <ProfilePage /> },
       { path: '*', element: <Navigate to={ROUTES.dashboard} replace /> },
     ],

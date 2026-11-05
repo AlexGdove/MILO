@@ -14,6 +14,13 @@
   min-height: var(--control-height);
 }
 
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .title {
   font-family: var(--font-display);
   font-size: var(--text-2xl);
@@ -24,5 +31,7 @@
 .eyebrow {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
   margin-bottom: calc(-1 * var(--space-2));
 }

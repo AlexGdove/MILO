@@ -2,6 +2,7 @@ export const ROUTES = {
   dashboard: '/',
   diary: '/diary',
   pantry: '/pantry',
+  shopping: '/shopping',
   profile: '/profile',
 } as const;
 
