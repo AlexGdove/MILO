@@ -8,8 +8,8 @@
 
 ## Git
 
-- Текущая ветка: `dev`. Удалённого репозитория пока нет: пользователь создаёт **публичный** репозиторий на github.com и даёт адрес (`gh` не ставим).
-- `dev` → `35054fe` (merge `feat/shopping-low-stock`); ранее `58532fc` — `feat/user-profile`, `ca3a89f` — `feat/app-header`, `bcc788c` — `feat/nav-profile-app`, `303fb00` — `feat/meal-from-recipes`, `463e661` — `feat/pantry-quick-stock`, `67648ef` — `fix/daily-summary-overflow`, `489ce85` — `feat/cook-recipe`, `48743fc` — `feat/recipes`, `58023b2` — `feat/pantry-in-stock`, `872520d` — `feat/brand-mark-m`, `57b69a5` — `feat/shopping-list`), всё с разрешения пользователя 2026-11-05. `main` → `dba56c8` (не менялся с введения правил).
+- Текущая ветка: `dev` (CI-пайплайн влит). Перед первым push — замена email автора на noreply GitHub во всей истории (разрешено пользователем, с резервной копией). Удалённого репозитория пока нет: пользователь создаёт **публичный** репозиторий на github.com и даёт адрес (`gh` не ставим; вход — Git Credential Manager через браузер).
+- `dev` → `aef0477` (merge `feat/profile-accordion`); ранее `35054fe` — `feat/shopping-low-stock`, `58532fc` — `feat/user-profile`, `ca3a89f` — `feat/app-header`, `bcc788c` — `feat/nav-profile-app`, `303fb00` — `feat/meal-from-recipes`, `463e661` — `feat/pantry-quick-stock`, `67648ef` — `fix/daily-summary-overflow`, `489ce85` — `feat/cook-recipe`, `48743fc` — `feat/recipes`, `58023b2` — `feat/pantry-in-stock`, `872520d` — `feat/brand-mark-m`, `57b69a5` — `feat/shopping-list`), всё с разрешения пользователя 2026-11-05. `main` → `dba56c8` (не менялся с введения правил).
 - Удалённого репозитория нет, push не выполнялся, CI нет.
 - Влитые рабочие ветки (не удалялись — удаление только с разрешения): `chore/monorepo-setup`, `chore/frontend-init`, `chore/eslint-setup`, `feat/pwa`, `feat/shared-ui`, `feat/products`, `feat/diary`, `feat/dashboard`, `chore/skills-setup` (в `main` до правил); `test/vitest-setup`, `docs/git-rules`, `docs/ai-delegation`, `docs/milo-foundation`, `chore/rename-milo`, `docs/session-context`, `feat/design-tokens`, `feat/brand-assets`, `feat/product-units`, `feat/shopping-list`, `feat/brand-mark-m`, `feat/pantry-in-stock`, `feat/recipes`, `feat/cook-recipe`, `fix/daily-summary-overflow` (в `dev`).
 
@@ -50,7 +50,7 @@ PWA (офлайн, установка), мобильная вёрстка. Ни�
 | Build (`npm run build`)          | успешно                                                                                                                                                                                                                                                                         |
 | Prettier                         | без замечаний                                                                                                                                                                                                                                                                   |
 | E2E-смоук (вне репозитория)      | 360×780, обе темы, 3 прогона подряд: кладовая → рецепт → «Приготовить» (нехватка → «В покупки») → «Приготовленные» → «Съесть порцию» → перезагрузка → «История» → запись на «Сегодня» → яйца в «Покупках»; обе раскладки вкладок (выбраны 3); ошибок консоли и переполнения нет |
-| CI                               | отсутствует                                                                                                                                                                                                                                                                     |
+| CI                               | `.github/workflows/ci.yml` в `dev`, на GitHub ещё не запускался — нет удалённого репозитория                                                                                                                                                                                    |
 
 ## Окружение
 

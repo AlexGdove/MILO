@@ -1,0 +1,20 @@
+# Еженедельные предложения обновлений (pull request в dev). Обновления — только через PR с зелёным CI.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # Мелкие обновления dev-зависимостей — одним PR, чтобы не засорять список
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
