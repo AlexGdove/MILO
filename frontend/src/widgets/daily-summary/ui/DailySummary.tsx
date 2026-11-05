@@ -30,12 +30,16 @@ export const DailySummary = ({ date }: DailySummaryProps) => {
           <span className={styles.sideValue}>{formatKcal(eaten.kcal)}</span>
           <span className={styles.sideLabel}>съедено</span>
         </div>
-        <ProgressRing progress={ratio(eaten.kcal, goal.kcal)}>
-          <span className={remaining < 0 ? styles.over : styles.remaining}>
-            {formatKcal(Math.abs(remaining))}
-          </span>
-          <span className={styles.sideLabel}>{remaining < 0 ? 'ккал сверх' : 'ккал осталось'}</span>
-        </ProgressRing>
+        <div className={styles.ring}>
+          <ProgressRing progress={ratio(eaten.kcal, goal.kcal)}>
+            <span className={remaining < 0 ? styles.over : styles.remaining}>
+              {formatKcal(Math.abs(remaining))}
+            </span>
+            <span className={styles.sideLabel}>
+              {remaining < 0 ? 'ккал сверх' : 'ккал осталось'}
+            </span>
+          </ProgressRing>
+        </div>
         <div className={styles.side}>
           <span className={styles.sideValue}>{formatKcal(goal.kcal)}</span>
           <span className={styles.sideLabel}>цель</span>

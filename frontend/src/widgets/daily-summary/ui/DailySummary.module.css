@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+  container: summary / inline-size;
 }
 
 .ringRow {
@@ -9,6 +10,30 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
+}
+
+.ring {
+  display: flex;
+  flex: 0 1 auto;
+  justify-content: center;
+  min-width: 0;
+}
+
+/*
+ * Узкая карточка (экран около 320 px): кольцо в ряду с двумя числами сжалось бы так,
+ * что «2000» не поместится. Кольцо — сверху в полный размер, «съедено» и «цель» — под ним.
+ */
+@container summary (width < 290px) {
+  .ringRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: var(--space-3);
+  }
+
+  .ring {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
 }
 
 .side {
