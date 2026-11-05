@@ -1,20 +1,16 @@
-import { useState, type FormEvent } from 'react';
+import { useMemo, useState } from 'react';
 
-import { MEAL_TYPES, useMealEntryStore, type MealType } from '@/entities/meal-entry';
+import { selectCookedDishes, useCookedDishStore, type CookedDish } from '@/entities/cooked-dish';
+import type { MealType } from '@/entities/meal-entry';
 import { filterProducts, selectProducts, useProductStore, type Product } from '@/entities/product';
-import {
-  formatAmount,
-  formatGrams,
-  formatKcal,
-  nutrientsForGrams,
-  parseNumber,
-  toGrams,
-  type IsoDate,
-  type Unit,
-} from '@/shared/lib';
-import { Button, Input, SegmentedControl } from '@/shared/ui';
+import { recipeNutrition, selectRecipes, useRecipeStore, type Recipe } from '@/entities/recipe';
+import { formatAmount, formatKcal, type IsoDate } from '@/shared/lib';
+import { Input } from '@/shared/ui';
 
 import styles from './AddMealEntryForm.module.css';
+import { DishEntryForm } from './DishEntryForm';
+import { ProductEntryForm } from './ProductEntryForm';
+import { RecipeEntryForm } from './RecipeEntryForm';
 
 interface AddMealEntryFormProps {
   date: IsoDate;
@@ -22,149 +18,131 @@ interface AddMealEntryFormProps {
   onDone: () => void;
 }
 
-const AMOUNT_LABEL: Record<Unit, string> = {
-  g: 'Вес, г',
-  ml: 'Объём, мл',
-  pcs: 'Количество, шт',
-};
+type Selection =
+  | { kind: 'dish'; dish: CookedDish }
+  | { kind: 'recipe'; recipe: Recipe }
+  | { kind: 'product'; product: Product };
 
-const AMOUNT_ERROR: Record<Unit, string> = {
-  g: 'Введите вес больше 0',
-  ml: 'Введите объём больше 0',
-  pcs: 'Введите количество больше 0',
-};
+const matches = (name: string, query: string) =>
+  name.toLocaleLowerCase('ru-RU').includes(query.trim().toLocaleLowerCase('ru-RU'));
 
-const DEFAULT_AMOUNT: Record<Unit, string> = { g: '100', ml: '100', pcs: '1' };
-
+/**
+ * «Добавить еду» (решение №27): приготовленные блюда, рецепты и продукты в одном поиске.
+ * После выбора — своя форма для каждого источника.
+ */
 export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntryFormProps) => {
   const products = useProductStore(selectProducts);
-  const adjustStock = useProductStore((state) => state.adjustStock);
-  const addEntry = useMealEntryStore((state) => state.addEntry);
-
+  const recipes = useRecipeStore(selectRecipes);
+  const dishes = useCookedDishStore(selectCookedDishes);
   const [query, setQuery] = useState('');
-  const [product, setProduct] = useState<Product | null>(null);
-  const [amountInput, setAmountInput] = useState('100');
-  const [mealType, setMealType] = useState<MealType>(initialMealType);
-  const [deductStock, setDeductStock] = useState(false);
+  const [selection, setSelection] = useState<Selection | null>(null);
 
-  const amount = parseNumber(amountInput);
-  const isAmountValid = amount !== null && amount > 0;
+  const available = useMemo(() => dishes.filter((dish) => dish.servingsLeft > 0), [dishes]);
 
-  const selectProduct = (selected: Product) => {
-    setProduct(selected);
-    setAmountInput(DEFAULT_AMOUNT[selected.unit]);
-    setDeductStock(selected.stock > 0);
-  };
-
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    if (!product || !isAmountValid) return;
-
-    // Списываем не больше, чем есть; количество — в единице продукта
-    const deducted = deductStock ? Math.min(amount, product.stock) : 0;
-    addEntry({
+  if (selection) {
+    const common = {
       date,
-      mealType,
-      source: { type: 'product', id: product.id },
-      productName: product.name,
-      per100g: product.per100g,
-      amount,
-      unit: product.unit,
-      grams: toGrams(amount, product.unit, product.pieceWeight),
-      stockDeducted: deducted,
-    });
-    if (deducted > 0) adjustStock(product.id, -deducted);
-    onDone();
-  };
-
-  if (!product) {
-    const found = filterProducts(products, query)
-      .slice()
-      .sort((a, b) => Number(b.stock > 0) - Number(a.stock > 0) || a.name.localeCompare(b.name));
-
-    return (
-      <div className={styles.picker}>
-        <Input
-          type="search"
-          placeholder="Найти продукт"
-          aria-label="Найти продукт"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
-        <ul className={styles.options}>
-          {found.map((item) => (
-            <li key={item.id}>
-              <button type="button" className={styles.option} onClick={() => selectProduct(item)}>
-                <span className={styles.optionName}>{item.name}</span>
-                <span className={styles.optionMeta}>
-                  {formatKcal(item.per100g.kcal)} ккал/{item.unit === 'ml' ? '100 мл' : '100 г'}
-                  {item.stock > 0 && ` · есть ${formatAmount(item.stock, item.unit)}`}
-                </span>
-              </button>
-            </li>
-          ))}
-          {found.length === 0 && (
-            <li className={styles.empty}>Продукт не найден — добавьте его на вкладке «Кладовая»</li>
-          )}
-        </ul>
-      </div>
-    );
+      initialMealType,
+      onDone,
+      onChangeSource: () => setSelection(null),
+    };
+    if (selection.kind === 'dish') return <DishEntryForm dish={selection.dish} {...common} />;
+    if (selection.kind === 'recipe') {
+      return <RecipeEntryForm recipe={selection.recipe} {...common} />;
+    }
+    return <ProductEntryForm product={selection.product} {...common} />;
   }
 
-  const grams = isAmountValid ? toGrams(amount, product.unit, product.pieceWeight) : 0;
-  const preview = nutrientsForGrams(product.per100g, grams);
+  const foundDishes = available.filter((dish) => matches(dish.name, query));
+  const foundRecipes = recipes
+    .filter((recipe) => matches(recipe.name, query))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ru-RU'));
+  const foundProducts = filterProducts(products, query)
+    .slice()
+    .sort((a, b) => Number(b.stock > 0) - Number(a.stock > 0) || a.name.localeCompare(b.name));
+  const nothing = foundDishes.length + foundRecipes.length + foundProducts.length === 0;
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit} noValidate>
-      <div className={styles.selected}>
-        <div>
-          <p className={styles.optionName}>{product.name}</p>
-          <p className={styles.optionMeta}>
-            {formatKcal(product.per100g.kcal)} ккал / {product.unit === 'ml' ? '100 мл' : '100 г'}
-            {product.unit === 'pcs' && product.pieceWeight
-              ? ` · 1 шт ≈ ${formatGrams(product.pieceWeight)} г`
-              : ''}
-          </p>
-        </div>
-        <Button variant="ghost" size="small" onClick={() => setProduct(null)}>
-          Изменить
-        </Button>
-      </div>
-
+    <div className={styles.picker}>
       <Input
-        label={AMOUNT_LABEL[product.unit]}
-        inputMode="decimal"
-        value={amountInput}
-        onChange={(event) => setAmountInput(event.target.value)}
-        error={isAmountValid ? undefined : AMOUNT_ERROR[product.unit]}
+        type="search"
+        placeholder="Продукт, блюдо или рецепт"
+        aria-label="Найти продукт, блюдо или рецепт"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
       />
-
-      <SegmentedControl
-        legend="Приём пищи"
-        options={MEAL_TYPES}
-        value={mealType}
-        onChange={setMealType}
-      />
-
-      {product.stock > 0 && (
-        <label className={styles.checkbox}>
-          <input
-            type="checkbox"
-            checked={deductStock}
-            onChange={(event) => setDeductStock(event.target.checked)}
-          />
-          Списать с остатков (есть {formatAmount(product.stock, product.unit)})
-        </label>
-      )}
-
-      <p className={styles.preview}>
-        <strong>{formatKcal(preview.kcal)} ккал</strong> · Б {formatGrams(preview.protein)} · Ж{' '}
-        {formatGrams(preview.fat)} · У {formatGrams(preview.carbs)}
-      </p>
-
-      <Button type="submit" fullWidth disabled={!isAmountValid}>
-        Добавить
-      </Button>
-    </form>
+      <div className={styles.options}>
+        {foundDishes.length > 0 && (
+          <section aria-label="Приготовленные блюда">
+            <h3 className={styles.group}>Приготовленные блюда</h3>
+            <ul className={styles.list}>
+              {foundDishes.map((dish) => (
+                <li key={dish.id}>
+                  <button
+                    type="button"
+                    className={styles.option}
+                    onClick={() => setSelection({ kind: 'dish', dish })}
+                  >
+                    <span className={styles.optionName}>{dish.name}</span>
+                    <span className={styles.optionMeta}>
+                      осталось {dish.servingsLeft} порц. ·{' '}
+                      {formatKcal((dish.per100g.kcal * dish.portionGrams) / 100)} ккал/порц.
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {foundRecipes.length > 0 && (
+          <section aria-label="Рецепты">
+            <h3 className={styles.group}>Рецепты</h3>
+            <ul className={styles.list}>
+              {foundRecipes.map((recipe) => (
+                <li key={recipe.id}>
+                  <button
+                    type="button"
+                    className={styles.option}
+                    onClick={() => setSelection({ kind: 'recipe', recipe })}
+                  >
+                    <span className={styles.optionName}>{recipe.name}</span>
+                    <span className={styles.optionMeta}>
+                      {formatKcal(recipeNutrition(recipe, products).perServing.kcal)} ккал/порц.
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {foundProducts.length > 0 && (
+          <section aria-label="Продукты">
+            <h3 className={styles.group}>Продукты</h3>
+            <ul className={styles.list}>
+              {foundProducts.map((item) => (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    className={styles.option}
+                    onClick={() => setSelection({ kind: 'product', product: item })}
+                  >
+                    <span className={styles.optionName}>{item.name}</span>
+                    <span className={styles.optionMeta}>
+                      {formatKcal(item.per100g.kcal)} ккал/{item.unit === 'ml' ? '100 мл' : '100 г'}
+                      {item.stock > 0 && ` · есть ${formatAmount(item.stock, item.unit)}`}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {nothing && (
+          <p className={styles.empty}>
+            Ничего не найдено — добавьте продукт в «Кладовой» или рецепт в «Рецептах»
+          </p>
+        )}
+      </div>
+    </div>
   );
 };

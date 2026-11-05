@@ -15,11 +15,13 @@ export interface HistoryDay {
 /**
  * Журнал готовки и съеденного по дням (новые дни сверху).
  * Готовка — из приготовленных блюд; съеденное — из записей «Сегодня» с источником-блюдом.
+ * Рецепт, записанный без готовки (источник — сам рецепт), в историю готовки не попадает.
  */
 export const buildHistory = (
   dishes: readonly CookedDish[],
   entries: readonly MealEntry[],
 ): HistoryDay[] => {
+  const dishIds = new Set(dishes.map((dish) => dish.id));
   const events: Array<HistoryEvent & { date: IsoDate }> = [
     ...dishes.map((dish) => ({
       kind: 'cooked' as const,
@@ -30,7 +32,7 @@ export const buildHistory = (
       portions: dish.servingsTotal,
     })),
     ...entries
-      .filter((entry) => entry.source.type === 'recipe')
+      .filter((entry) => entry.source.type === 'recipe' && dishIds.has(entry.source.id))
       .map((entry) => ({
         kind: 'eaten' as const,
         id: entry.id,

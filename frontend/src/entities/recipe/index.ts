@@ -8,6 +8,8 @@ export type {
   IngredientAvailability,
   RecipeAvailability,
 } from './lib/availability';
+export { canAddToShopping, planCooking } from './lib/planCooking';
+export type { CookingPlan, ShortageDecision } from './lib/planCooking';
 export { recipeNutrition } from './lib/nutrition';
 export type { RecipeNutrition } from './lib/nutrition';
 export type { IngredientProduct } from './lib/ingredientProduct';

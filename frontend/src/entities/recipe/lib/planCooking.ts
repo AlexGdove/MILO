@@ -1,5 +1,7 @@
-import type { IngredientProduct, RecipeAvailability } from '@/entities/recipe';
 import { nutrientsForGrams, sumNutrients, toGrams, type Nutrients, type Unit } from '@/shared/lib';
+
+import type { RecipeAvailability } from './availability';
+import type { IngredientProduct } from './ingredientProduct';
 
 /** Решение пользователя по ингредиенту, которого не хватает (решение №2: без автодобавления). */
 export type ShortageDecision = 'shopping' | 'skip';

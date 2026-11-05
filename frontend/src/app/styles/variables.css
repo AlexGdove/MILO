@@ -110,6 +110,7 @@
   --leading-normal: 1.4;
 
   --tracking-wordmark: 0.02em;
+  --tracking-caps: 0.04em; /* подписи групп заглавными */
 
   /* ---------- Отступы (сетка 4 px) ---------- */
   --space-0-5: 2px;

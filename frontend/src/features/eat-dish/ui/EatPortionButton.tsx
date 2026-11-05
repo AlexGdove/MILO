@@ -2,13 +2,14 @@ import { useState } from 'react';
 
 import { useCookedDishStore, type CookedDish } from '@/entities/cooked-dish';
 import {
+  buildDishEntry,
   MEAL_TYPES,
   suggestMealType,
   useMealEntryStore,
   type MealType,
 } from '@/entities/meal-entry';
 import { formatGrams, formatKcal, nutrientsForGrams, todayIsoDate } from '@/shared/lib';
-import { Button, Modal, SegmentedControl } from '@/shared/ui';
+import { Button, Modal, SegmentedControl, Stepper } from '@/shared/ui';
 
 import styles from './EatPortionButton.module.css';
 
@@ -32,50 +33,13 @@ const EatForm = ({ dish, onDone }: EatFormProps) => {
 
   const handleEat = () => {
     const eaten = eatPortions(dish.id, portions);
-    if (eaten > 0) {
-      const eatenGrams = dish.portionGrams * eaten;
-      addEntry({
-        date: todayIsoDate(),
-        mealType,
-        // Источник — приготовленное блюдо; stockDeducted для блюда — число порций (вернутся при удалении записи)
-        source: { type: 'recipe', id: dish.id },
-        productName: dish.name,
-        per100g: dish.per100g,
-        amount: Math.round(eatenGrams),
-        unit: 'g',
-        grams: eatenGrams,
-        stockDeducted: eaten,
-      });
-    }
+    if (eaten > 0) addEntry(buildDishEntry(dish, eaten, todayIsoDate(), mealType));
     onDone();
   };
 
   return (
     <div className={styles.form}>
-      <div className={styles.stepper}>
-        <span className={styles.label}>Порций</span>
-        <Button
-          variant="secondary"
-          size="small"
-          onClick={() => setPortions((n) => Math.max(1, n - 1))}
-          disabled={portions <= 1}
-          aria-label="Меньше порций"
-        >
-          −
-        </Button>
-        <output className={styles.value} aria-label="Порций к записи">
-          {portions}
-        </output>
-        <Button
-          variant="secondary"
-          size="small"
-          onClick={() => setPortions((n) => Math.min(dish.servingsLeft, n + 1))}
-          disabled={portions >= dish.servingsLeft}
-          aria-label="Больше порций"
-        >
-          +
-        </Button>
-      </div>
+      <Stepper label="Порций" value={portions} max={dish.servingsLeft} onChange={setPortions} />
       <SegmentedControl
         legend="Приём пищи"
         options={MEAL_TYPES}
