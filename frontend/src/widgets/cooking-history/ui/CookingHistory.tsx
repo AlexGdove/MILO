@@ -1,6 +1,6 @@
 import { selectCookedDishes, useCookedDishStore } from '@/entities/cooked-dish';
 import { mealTypeLabel, useMealEntryStore } from '@/entities/meal-entry';
-import { cn, formatDayLabel } from '@/shared/lib';
+import { cn, formatDayLabel, formatPortions } from '@/shared/lib';
 import { EmptyState } from '@/shared/ui';
 
 import styles from './CookingHistory.module.css';
@@ -38,8 +38,8 @@ export const CookingHistory = () => {
                 />
                 <span className={styles.text}>
                   {event.kind === 'cooked'
-                    ? `Приготовлено: ${event.name}, ${event.portions} порц.`
-                    : `Съедено: ${event.name}, ${event.portions} порц. · ${mealTypeLabel(event.mealType)}`}
+                    ? `Приготовлено: ${event.name}, ${formatPortions(event.portions)} порц.`
+                    : `Съедено: ${event.name}, ${formatPortions(event.portions)} порц. · ${mealTypeLabel(event.mealType)}`}
                 </span>
               </li>
             ))}

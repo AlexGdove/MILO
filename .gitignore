@@ -13,3 +13,6 @@ Thumbs.db
 !.vscode/extensions.json
 .idea/
 *.tsbuildinfo
+
+# Сгенерированный клиент Prisma (npm install → prisma generate)
+backend/src/generated/

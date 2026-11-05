@@ -1,16 +1,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-import { createId, persistStorage, storageKey } from '@/shared/lib';
+import { createId, persistStorage, roundPortions, storageKey } from '@/shared/lib';
 
 import { COOKED_DISHES_STORAGE_VERSION, migrateCookedDishes } from './migrations';
 import type { CookedDish, CookedDishDraft } from './types';
+
+/** Остаток меньше этого считается нулевым. */
+const MIN_PORTION_LEFT = 0.01;
 
 interface CookedDishState {
   /** Все приготовленные блюда, включая доеденные (servingsLeft 0) — они нужны для истории */
   dishes: CookedDish[];
   addDish: (draft: CookedDishDraft) => CookedDish;
-  /** Съесть порции; возвращает, сколько реально списано (не больше остатка). */
+  /**
+   * Съесть порции (можно дробно — съели в граммах); возвращает, сколько реально списано
+   * (не больше остатка, с точностью до 0.001 порции).
+   */
   eatPortions: (id: string, count: number) => number;
   /** Вернуть порции (удалена запись о съеденном); не больше, чем было приготовлено. */
   returnPortions: (id: string, count: number) => void;
@@ -43,13 +49,14 @@ export const useCookedDishStore = create<CookedDishState>()(
       eatPortions: (id, count) => {
         const dish = get().dishes.find((item) => item.id === id);
         if (!dish) return 0;
-        const eaten = Math.max(0, Math.min(Math.round(count), dish.servingsLeft));
+        const eaten = Math.max(0, Math.min(roundPortions(count), dish.servingsLeft));
         if (eaten > 0) {
           set((state) => ({
-            dishes: updateDish(state.dishes, id, (d) => ({
-              ...d,
-              servingsLeft: d.servingsLeft - eaten,
-            })),
+            dishes: updateDish(state.dishes, id, (d) => {
+              const left = roundPortions(d.servingsLeft - eaten);
+              // Крошечный остаток (меньше 0.01 порции) — это «съели всё», а не пара грамм
+              return { ...d, servingsLeft: left < MIN_PORTION_LEFT ? 0 : left };
+            }),
           }));
         }
         return eaten;
@@ -61,7 +68,7 @@ export const useCookedDishStore = create<CookedDishState>()(
             ...d,
             servingsLeft: Math.min(
               d.servingsTotal,
-              d.servingsLeft + Math.max(0, Math.round(count)),
+              roundPortions(d.servingsLeft + Math.max(0, count)),
             ),
           })),
         })),

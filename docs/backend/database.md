@@ -1,10 +1,10 @@
 # База данных backend MILO (этап 2)
 
-PostgreSQL 17, Prisma 7.10.1. Концепция — `DECISIONS.md` B-6…B-11: личных данных пользователя (профиль, кладовая, дневник, покупки, личные рецепты) в базе **нет**. Хранятся только опубликованные рецепты, жалобы, анонимные обращения в поддержку и служебные таблицы. Черновик схемы — `schema.draft.prisma`.
+PostgreSQL 17, Prisma 7.10.1 (драйвер `@prisma/adapter-pg`). Рабочая схема — `backend/prisma/schema.prisma`, миграции — `backend/prisma/migrations/` (CHECK-ограничения и `pg_trgm` — SQL в миграциях). Концепция — `DECISIONS.md` B-6…B-11: личных данных пользователя (профиль, кладовая, дневник, покупки, личные рецепты) в базе **нет**. Хранятся только опубликованные рецепты, жалобы, анонимные обращения в поддержку и служебные таблицы. Черновик схемы — `schema.draft.prisma`.
 
 ## Соглашения
 
-- Первичные ключи — `uuid` (генерирует сервер, `gen_random_uuid()`); исключения указаны.
+- Первичные ключи — `uuid` (генерирует сервер: клиент Prisma, `@default(uuid())`; при вставке в обход Prisma id задаётся явно); исключения указаны.
 - Время — `timestamptz`, UTC. Имена таблиц и колонок — `snake_case` (`@@map` / `@map` в Prisma), модели — `PascalCase`.
 - Количества и КБЖУ — `numeric` (не float): количество `numeric(10,2)`, КБЖУ на 100 г `numeric(6,2)`, вес штуки `numeric(8,2)`. Округление при показе — по правилам клиента (`roundAmount`).
 - Удаление автором — физическое (минимум данных), с каскадом на дочерние строки.
@@ -25,6 +25,8 @@ erDiagram
   support_tickets ||--|{ support_messages : "содержит"
   device_keys ||--o{ idempotency_keys : "повторы"
 ```
+
+Черновик `schema.draft.prisma` (этап 2) больше не обновляется — источник истины `backend/prisma/schema.prisma`.
 
 Служебные таблицы без связей на диаграмме: `telegram_message_links`, `telegram_updates`, `outbox_events`.
 
@@ -55,7 +57,7 @@ erDiagram
 | `published_at`                                                | timestamptz           | default now()                                                                   |
 | `updated_at`                                                  | timestamptz           | `@updatedAt`                                                                    |
 
-Индексы: `(status, published_at DESC, id)` — лента каталога; GIN `pg_trgm` по `lower(name)` — поиск по подстроке (расширение `pg_trgm` в начальной миграции); `(author_key_id)`.
+Индексы: `(status, published_at DESC, id)` — лента каталога; GIN `gin_trgm_ops` по `name` — поиск по подстроке без учёта регистра (`ILIKE`, триграммы его поддерживают; индекс описан в схеме Prisma, расширение `pg_trgm` — в начальной миграции); `(author_key_id)`.
 
 ### `public_recipe_ingredients` — снимок ингредиента (ADR-0002)
 
@@ -168,7 +170,7 @@ erDiagram
 | `attempts`     | integer           | default 0; после 10 неудач событие остаётся с `last_error` для разбора |
 | `last_error`   | varchar(500) NULL |                                                                        |
 
-Индекс: частичный по `created_at` WHERE `processed_at IS NULL`. Событие пишется в той же транзакции, что и изменение.
+Индекс: `(processed_at, created_at)` — обычный, описан в схеме Prisma (частичный индекс Prisma не описывает и считал бы расхождением). Событие пишется в той же транзакции, что и изменение.
 
 ### `idempotency_keys` — защита от повторных POST
 

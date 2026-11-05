@@ -29,6 +29,10 @@ describe('normalizeDish', () => {
     expect(normalizeDish({ ...dish, servingsLeft: -2 })?.servingsLeft).toBe(0);
   });
 
+  it('дробный остаток порций сохраняется (часть съели в граммах)', () => {
+    expect(normalizeDish({ ...dish, servingsLeft: 2.5 })?.servingsLeft).toBe(2.5);
+  });
+
   it('подставляет нули вместо некорректного КБЖУ', () => {
     expect(normalizeDish({ ...dish, per100g: { kcal: 'много' } })?.per100g).toEqual({
       kcal: 0,

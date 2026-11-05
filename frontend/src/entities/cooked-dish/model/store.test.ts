@@ -48,6 +48,28 @@ describe('useCookedDishStore', () => {
     expect(dish(id)).toMatchObject({ servingsLeft: 0, servingsTotal: 6 });
   });
 
+  it('дробные порции (съели в граммах): списываются и возвращаются точно', () => {
+    const { id } = state().addDish(draft);
+    // 150 г при порции 300 г — полпорции
+    expect(state().eatPortions(id, 0.5)).toBe(0.5);
+    expect(dish(id)?.servingsLeft).toBe(5.5);
+    state().returnPortions(id, 0.5);
+    expect(dish(id)?.servingsLeft).toBe(6);
+  });
+
+  it('дробь округляется до 0.001 порции, без накопления погрешности', () => {
+    const { id } = state().addDish(draft);
+    for (let i = 0; i < 3; i++) state().eatPortions(id, 0.1);
+    expect(dish(id)?.servingsLeft).toBe(5.7);
+    expect(state().eatPortions(id, 1 / 3)).toBe(0.333);
+  });
+
+  it('крошечный остаток (меньше 0.01 порции) считается съеденным', () => {
+    const { id } = state().addDish({ ...draft, servingsTotal: 1 });
+    state().eatPortions(id, 0.995);
+    expect(dish(id)?.servingsLeft).toBe(0);
+  });
+
   it('неизвестное блюдо: съесть 0', () => {
     expect(state().eatPortions('nope', 1)).toBe(0);
   });

@@ -1,4 +1,5 @@
 import { useCookedDishStore, type CookedDish } from '@/entities/cooked-dish';
+import { formatPortions } from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
 interface DiscardDishButtonProps {
@@ -14,7 +15,11 @@ export const DiscardDishButton = ({ dish }: DiscardDishButtonProps) => {
       variant="ghost"
       size="small"
       onClick={() => {
-        if (window.confirm(`Убрать остаток «${dish.name}» (${dish.servingsLeft} порц.)?`)) {
+        if (
+          window.confirm(
+            `Убрать остаток «${dish.name}» (${formatPortions(dish.servingsLeft)} порц.)?`,
+          )
+        ) {
           discardRest(dish.id);
         }
       }}

@@ -12,15 +12,16 @@ export interface DishLike {
 
 /**
  * Запись о съеденных порциях приготовленного блюда.
- * Источник — блюдо; `stockDeducted` = число порций, они вернутся блюду при удалении записи.
+ * Источник — блюдо; `stockDeducted` = число порций (может быть дробным, если ели в граммах),
+ * они вернутся блюду при удалении записи. `grams` — точный вес, если его ввёл пользователь.
  */
 export const buildDishEntry = (
   dish: DishLike,
   portions: number,
   date: IsoDate,
   mealType: MealType,
+  grams: number = dish.portionGrams * portions,
 ): MealEntryDraft => {
-  const grams = dish.portionGrams * portions;
   return {
     date,
     mealType,

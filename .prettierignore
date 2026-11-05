@@ -3,3 +3,4 @@ dist
 dev-dist
 package-lock.json
 .claude
+backend/src/generated
