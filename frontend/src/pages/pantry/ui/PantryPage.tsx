@@ -2,7 +2,6 @@ import { useSearchParams } from 'react-router-dom';
 
 import { AddProductButton } from '@/features/manage-product';
 import { PageLayout, Tabs } from '@/shared/ui';
-import { AppLink } from '@/widgets/app-link';
 import { ProductList } from '@/widgets/product-list';
 import { ShoppingList } from '@/widgets/shopping-list';
 
@@ -22,7 +21,6 @@ export const PantryPage = () => {
   return (
     <PageLayout
       title={tab === 'shopping' ? 'Покупки' : 'Кладовая'}
-      eyebrow={<AppLink />}
       actions={tab === 'pantry' ? <AddProductButton /> : undefined}
     >
       <Tabs

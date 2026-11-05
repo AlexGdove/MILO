@@ -28,13 +28,21 @@ import { PantryPage } from '@/pages/pantry';
 import { ProfilePage } from '@/pages/profile';
 import { LEGACY_ROUTES, ROUTES, SHOPPING_PATH } from '@/shared/config';
 
+import { RootLayout } from '../layouts/RootLayout';
+
 const renderAt = (path: string) => {
+  // Через общий макет: шапка (логотип, счётчик, кнопка «Приложение») — в RootLayout (решение №29)
   const router = createMemoryRouter(
     [
-      { path: ROUTES.pantry, element: <PantryPage /> },
-      { path: ROUTES.profile, element: <ProfilePage /> },
-      { path: ROUTES.app, element: <AppPage /> },
-      { path: LEGACY_ROUTES.shopping, element: <Navigate to={SHOPPING_PATH} replace /> },
+      {
+        element: <RootLayout />,
+        children: [
+          { path: ROUTES.pantry, element: <PantryPage /> },
+          { path: ROUTES.profile, element: <ProfilePage /> },
+          { path: ROUTES.app, element: <AppPage /> },
+          { path: LEGACY_ROUTES.shopping, element: <Navigate to={SHOPPING_PATH} replace /> },
+        ],
+      },
     ],
     { initialEntries: [path] },
   );

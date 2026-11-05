@@ -2,8 +2,6 @@
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  /* в верхнем ряду страницы всегда прижата вправо, даже если она там одна */
-  margin-inline-start: auto;
   justify-content: center;
   width: var(--icon-button-size);
   height: var(--icon-button-size);

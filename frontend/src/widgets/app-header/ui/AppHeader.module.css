@@ -1,0 +1,69 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-4) 0;
+}
+
+.logo {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.logo:focus-visible,
+.counter:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-wordmark);
+  line-height: 1;
+}
+
+.counter {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  min-height: var(--icon-button-size);
+  margin-left: auto;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  /* фон — поверхность: на ней видна дорожка кольца (она цвета surface-muted) */
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.counterText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.counterValue {
+  font-weight: var(--weight-semibold);
+  color: var(--color-text);
+}
+
+.counterOver .counterValue {
+  color: var(--color-danger);
+}
+
+/* Очень узкий экран: остаётся знак без слова, чтобы счётчик поместился */
+@media (max-width: 359px) {
+  .wordmark {
+    display: none;
+  }
+}
