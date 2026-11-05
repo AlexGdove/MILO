@@ -12,19 +12,22 @@ Meal Intelligence & Lifestyle Organizer — питание, кладовая, р
 | Папка       | Назначение                                     |
 | ----------- | ---------------------------------------------- |
 | `frontend/` | React + Vite + TypeScript PWA, архитектура FSD |
-| `backend/`  | Заготовка API                                  |
+| `backend/`  | API на NestJS (см. `backend/README.md`)        |
 | `mobile/`   | Заготовка мобильного приложения                |
 
 ## Запуск
 
 ```bash
 npm install
-npm run dev        # дев-сервер фронтенда
-npm run build      # продакшн-сборка (с service worker)
-npm run preview    # просмотр сборки
-npm run lint       # ESLint (включая проверку слоёв FSD)
-npm run typecheck  # TypeScript
-npm run format     # Prettier
+npm run dev           # фронтенд и бэкенд вместе: [web] http://localhost:5173, [api] http://localhost:3000
+npm run dev:frontend  # только фронтенд (Vite)
+npm run dev:backend   # только бэкенд (Nest, перезапуск при изменениях)
+npm run build         # продакшн-сборка фронтенда и бэкенда
+npm run preview       # просмотр сборки фронтенда
+npm test              # тесты: Vitest (frontend) и Jest (backend)
+npm run lint          # ESLint (включая проверку слоёв FSD)
+npm run typecheck     # TypeScript
+npm run format        # Prettier
 ```
 
 ## Архитектура фронтенда (Feature-Sliced Design)
