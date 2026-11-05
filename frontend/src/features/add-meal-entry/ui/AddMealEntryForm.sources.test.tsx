@@ -108,6 +108,77 @@ describe('AddMealEntryForm: блюда и рецепты', () => {
     expect(onDone).toHaveBeenCalled();
   });
 
+  describe('приготовленное блюдо в граммах', () => {
+    const addSoup = (servingsTotal = 4) =>
+      useCookedDishStore.getState().addDish({
+        recipeId: 'r',
+        name: 'Суп',
+        servingsTotal,
+        portionGrams: 300,
+        per100g: { kcal: 40, protein: 2, fat: 1, carbs: 5 },
+      });
+
+    const chooseGrams = async (user: ReturnType<typeof userEvent.setup>) => {
+      await user.click(screen.getByRole('button', { name: /Суп/ }));
+      await user.click(screen.getByRole('radio', { name: 'Граммы' }));
+    };
+
+    it('150 г при порции 300 г — списывается полпорции, в записи ровно 150 г', async () => {
+      const dish = addSoup();
+      const { user } = renderForm();
+      await chooseGrams(user);
+      const weight = screen.getByRole('textbox', { name: 'Вес, г' });
+      await user.clear(weight);
+      await user.type(weight, '150');
+      expect(screen.getByText('60 ккал')).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Добавить' }));
+
+      expect(dishes()[0]?.servingsLeft).toBe(3.5);
+      expect(entries()[0]).toMatchObject({
+        source: { type: 'recipe', id: dish.id },
+        grams: 150,
+        amount: 150,
+        stockDeducted: 0.5,
+      });
+    });
+
+    it('больше остатка ввести нельзя', async () => {
+      addSoup(1);
+      const { user } = renderForm();
+      await chooseGrams(user);
+      const weight = screen.getByRole('textbox', { name: 'Вес, г' });
+      await user.clear(weight);
+      await user.type(weight, '301');
+
+      expect(screen.getByText('Осталось 300 г')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Добавить' })).toBeDisabled();
+      expect(entries()).toEqual([]);
+    });
+
+    it('весь остаток в граммах — блюдо доедено полностью', async () => {
+      addSoup(1);
+      const { user } = renderForm();
+      await chooseGrams(user);
+      const weight = screen.getByRole('textbox', { name: 'Вес, г' });
+      await user.clear(weight);
+      await user.type(weight, '300');
+      await user.click(screen.getByRole('button', { name: 'Добавить' }));
+
+      expect(dishes()[0]?.servingsLeft).toBe(0);
+      expect(entries()[0]).toMatchObject({ grams: 300, stockDeducted: 1 });
+    });
+
+    it('если целой порции не осталось — сразу граммы, без выбора порций', async () => {
+      const dish = addSoup(1);
+      useCookedDishStore.getState().eatPortions(dish.id, 0.5);
+      const { user } = renderForm();
+      await user.click(screen.getByRole('button', { name: /Суп/ }));
+
+      expect(screen.queryByRole('radio', { name: 'Порции' })).not.toBeInTheDocument();
+      expect(screen.getByRole('textbox', { name: 'Вес, г' })).toHaveValue('150');
+    });
+  });
+
   it('рецепт со списанием: продукты на порцию уходят из кладовой, блюдо — в историю', async () => {
     const { eggs, milk, recipe } = setupOmelet();
     const { user } = renderForm();

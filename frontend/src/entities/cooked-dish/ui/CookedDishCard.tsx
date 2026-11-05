@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { formatGrams, formatKcal, nutrientsForGrams } from '@/shared/lib';
+import { formatGrams, formatKcal, formatPortions, nutrientsForGrams } from '@/shared/lib';
 
 import styles from './CookedDishCard.module.css';
 import type { CookedDish } from '../model/types';
@@ -20,7 +20,7 @@ export const CookedDishCard = ({ dish, actions }: CookedDishCardProps) => {
       <div className={styles.head}>
         <h3 className={styles.name}>{dish.name}</h3>
         <span className={styles.portions}>
-          {dish.servingsLeft} из {dish.servingsTotal} порц.
+          {formatPortions(dish.servingsLeft)} из {dish.servingsTotal} порц.
         </span>
       </div>
       <p className={styles.meta}>

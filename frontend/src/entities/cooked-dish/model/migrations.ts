@@ -1,3 +1,5 @@
+import { roundPortions } from '@/shared/lib';
+
 import type { CookedDish } from './types';
 
 /** Текущая версия сохранённого состояния приготовленных блюд. */
@@ -23,7 +25,8 @@ export const normalizeDish = (raw: unknown): CookedDish | null => {
     recipeId: typeof raw.recipeId === 'string' ? raw.recipeId : '',
     name: raw.name,
     servingsTotal,
-    servingsLeft: Math.min(servingsTotal, Math.max(0, Math.round(toNumber(raw.servingsLeft)))),
+    // Дробный остаток допустим: часть блюда могли съесть в граммах
+    servingsLeft: Math.min(servingsTotal, Math.max(0, roundPortions(toNumber(raw.servingsLeft)))),
     portionGrams: Math.max(0, toNumber(raw.portionGrams)),
     per100g: {
       kcal: toNumber(per100g.kcal),
