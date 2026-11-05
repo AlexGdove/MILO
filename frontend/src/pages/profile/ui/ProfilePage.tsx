@@ -1,10 +1,11 @@
 import { useState } from 'react';
 
 import { useDailyGoal, useGoalMode } from '@/entities/user-goal';
+import { describeProfile, selectProfile, useUserProfileStore } from '@/entities/user-profile';
 import { ProfileForm, useApplyProfileNorm } from '@/features/edit-profile';
 import { DailyGoalForm } from '@/features/set-daily-goal';
 import { formatKcal } from '@/shared/lib';
-import { Button, Card, PageLayout } from '@/shared/ui';
+import { Button, Card, Collapsible, PageLayout } from '@/shared/ui';
 
 import styles from './ProfilePage.module.css';
 
@@ -57,13 +58,23 @@ const NormSection = () => {
   );
 };
 
-/** Профиль — вкладка нижней навигации (решение №28); данные и норма — решение №30. */
-export const ProfilePage = () => (
-  <PageLayout title="Профиль">
-    <Card className={styles.section}>
-      <h2 className={styles.title}>Мои данные</h2>
-      <ProfileForm />
-    </Card>
-    <NormSection />
-  </PageLayout>
-);
+/**
+ * Профиль — вкладка нижней навигации (решение №28); данные и норма — решение №30.
+ * «Мои данные» — аккордеон (решение №33): заполненный профиль свёрнут до краткой сводки.
+ */
+export const ProfilePage = () => {
+  const profile = useUserProfileStore(selectProfile);
+
+  return (
+    <PageLayout title="Профиль">
+      <Collapsible
+        title="Мои данные"
+        summary={profile ? describeProfile(profile) : 'Не заполнено'}
+        defaultOpen={!profile}
+      >
+        <ProfileForm />
+      </Collapsible>
+      <NormSection />
+    </PageLayout>
+  );
+};

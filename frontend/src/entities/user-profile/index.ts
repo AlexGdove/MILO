@@ -9,3 +9,4 @@ export {
   totalDailyExpenditure,
   WEIGHT_GOALS,
 } from './lib/dailyNorm';
+export { describeProfile } from './lib/describeProfile';
