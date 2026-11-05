@@ -14,7 +14,7 @@ const FSD_LAYERS = ['app', 'pages', 'widgets', 'features', 'entities', 'shared']
 const SLICED_LAYERS = ['pages', 'widgets', 'features', 'entities'];
 
 export default tseslint.config(
-  { ignores: ['**/node_modules', '**/dist', '**/dev-dist', 'mobile'] },
+  { ignores: ['**/node_modules', '**/dist', '**/dev-dist', 'mobile', 'backend/src/generated'] },
 
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -27,6 +27,7 @@ export default tseslint.config(
       'frontend/*.{js,ts}',
       'frontend/scripts/**/*.{js,mjs}',
       'backend/*.js',
+      'backend/test/**/*.js',
     ],
     languageOptions: { globals: globals.node },
   },

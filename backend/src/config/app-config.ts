@@ -12,7 +12,7 @@ export interface AppConfig {
 }
 
 /** Итоговые настройки с вычисленными значениями по умолчанию. */
-export function toAppConfig(env: EnvironmentVariables): AppConfig {
+export function toAppConfig(env: Omit<EnvironmentVariables, 'DATABASE_URL'>): AppConfig {
   return {
     nodeEnv: env.NODE_ENV,
     port: env.PORT,

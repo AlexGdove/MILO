@@ -19,6 +19,7 @@ Meal Intelligence & Lifestyle Organizer — питание, кладовая, р
 
 ```bash
 npm install
+npm run db:up         # PostgreSQL в Docker (нужен для бэкенда и его тестов)
 npm run dev           # фронтенд и бэкенд вместе: [web] http://localhost:5173, [api] http://localhost:3000
 npm run dev:frontend  # только фронтенд (Vite)
 npm run dev:backend   # только бэкенд (Nest, перезапуск при изменениях)

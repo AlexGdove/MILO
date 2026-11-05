@@ -9,6 +9,7 @@ import { createValidationPipe } from './common/validation/validation.pipe.js';
 import { getAppConfig } from './config/app-config.js';
 import { validateEnv } from './config/env.validation.js';
 import { HealthModule } from './health/health.module.js';
+import { PrismaModule } from './prisma/prisma.module.js';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { HealthModule } from './health/health.module.js';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => buildLoggerOptions(getAppConfig(config)),
     }),
+    PrismaModule,
     HealthModule,
   ],
   providers: [
