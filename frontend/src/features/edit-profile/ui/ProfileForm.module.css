@@ -1,0 +1,169 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sex {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.error {
+  font-size: var(--text-sm);
+  color: var(--color-danger);
+}
+
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.legend {
+  margin-bottom: var(--space-1);
+  padding: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.choice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.choice:has(input:focus-visible) {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.choiceActive {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.choiceLabel {
+  font-weight: var(--weight-semibold);
+}
+
+.choiceActive .choiceLabel {
+  color: var(--color-primary);
+}
+
+.choiceText {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-soft);
+  text-align: center;
+}
+
+.previewKcal {
+  color: var(--color-text-muted);
+}
+
+.previewValue {
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.previewMacros {
+  font-weight: var(--weight-medium);
+}
+
+.previewNote,
+.previewEmpty {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.previewEmpty {
+  text-align: center;
+}
+
+.wizard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.stepCounter {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.stepTitle {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+}
+
+.wizardActions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.wizardActions > * {
+  flex: 1;
+}
+
+.reminder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.reminderTitle {
+  font-weight: var(--weight-semibold);
+}
+
+.reminderText {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.reminderLink {
+  align-self: flex-start;
+  margin-top: var(--space-1);
+  color: var(--color-primary);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+}
+
+.reminderLink:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}

@@ -98,9 +98,11 @@ describe('страница «Приложение»', () => {
     expect(screen.getByText('Google Play · скоро')).toBeInTheDocument();
   });
 
-  it('в профиле больше нет карточки установки — только дневная цель', () => {
+  // Требование изменилось (решение №30): в профиле — данные и норма вместо формы «Дневная цель»
+  it('в профиле больше нет карточки установки — данные и норма', () => {
     renderAt('/profile');
-    expect(screen.getByRole('heading', { name: 'Дневная цель' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Мои данные' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Дневная норма' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Установить MILO' })).toBeNull();
   });
 });
