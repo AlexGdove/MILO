@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { selectProducts, useProductStore } from '@/entities/product';
 import {
@@ -8,6 +9,8 @@ import {
   type IngredientAvailability,
   type Recipe,
 } from '@/entities/recipe';
+import { AddMissingToShoppingButton, CookRecipeButton } from '@/features/cook-recipe';
+import { ROUTES } from '@/shared/config';
 import { cn, formatAmount, formatGrams, formatKcal } from '@/shared/lib';
 import { Button, Card } from '@/shared/ui';
 
@@ -34,6 +37,7 @@ interface RecipeDetailsProps {
 /** Рецепт: выбор порций, наличие каждого ингредиента в кладовой и КБЖУ. */
 export const RecipeDetails = ({ recipe }: RecipeDetailsProps) => {
   const products = useProductStore(selectProducts);
+  const navigate = useNavigate();
   const [servings, setServings] = useState(recipe.servings);
 
   const availability = checkAvailability(recipe, products, servings);
@@ -95,6 +99,16 @@ export const RecipeDetails = ({ recipe }: RecipeDetailsProps) => {
           ))}
         </ul>
       </section>
+
+      <div className={styles.actions}>
+        <CookRecipeButton
+          recipe={recipe}
+          servings={servings}
+          onCooked={() => navigate(`${ROUTES.recipes}?tab=cooked`)}
+        />
+        {/* key: после смены порций кнопка снова предлагает добавить недостающее */}
+        <AddMissingToShoppingButton key={servings} recipe={recipe} servings={servings} />
+      </div>
 
       <Card className={styles.nutrition}>
         <h2 className={styles.heading}>На порцию</h2>
