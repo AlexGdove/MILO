@@ -8,6 +8,8 @@ import styles from './ProductForm.module.css';
 
 interface ProductFormProps {
   initial?: ProductDraft;
+  /** Название для нового продукта (например, из строки поиска) */
+  defaultName?: string;
   submitLabel: string;
   onSubmit: (draft: ProductDraft) => void;
   onDelete?: () => void;
@@ -52,8 +54,17 @@ const validate = (values: FormValues, unit: Unit) => {
   return errors;
 };
 
-export const ProductForm = ({ initial, submitLabel, onSubmit, onDelete }: ProductFormProps) => {
-  const [values, setValues] = useState<FormValues>(() => toValues(initial));
+export const ProductForm = ({
+  initial,
+  defaultName,
+  submitLabel,
+  onSubmit,
+  onDelete,
+}: ProductFormProps) => {
+  const [values, setValues] = useState<FormValues>(() => {
+    const base = toValues(initial);
+    return !initial && defaultName ? { ...base, name: defaultName } : base;
+  });
   const [unit, setUnit] = useState<Unit>(initial?.unit ?? 'g');
   const [submitted, setSubmitted] = useState(false);
   const errors = submitted ? validate(values, unit) : {};

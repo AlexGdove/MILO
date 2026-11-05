@@ -1,9 +1,9 @@
-import { useState, type FormEvent } from 'react';
+import { useState } from 'react';
 
 import { suggestPurchaseAmount, type Product } from '@/entities/product';
 import { selectShoppingItemByProductId, useShoppingStore } from '@/entities/shopping-item';
-import { formatAmount, parseNumber, roundAmount, unitLabel } from '@/shared/lib';
-import { Button, Input, Modal } from '@/shared/ui';
+import { formatAmount } from '@/shared/lib';
+import { AmountForm, Button, Modal } from '@/shared/ui';
 
 import styles from './AddToShoppingButton.module.css';
 
@@ -12,53 +12,6 @@ interface AddToShoppingButtonProps {
   /** Компактная иконка (в карточке кладовой) или кнопка с подписью (в подсказках) */
   compact?: boolean;
 }
-
-interface AmountFormProps {
-  product: Product;
-  inListAmount?: number;
-  onSubmit: (amount: number) => void;
-}
-
-const AmountForm = ({ product, inListAmount, onSubmit }: AmountFormProps) => {
-  const [value, setValue] = useState(() =>
-    String(suggestPurchaseAmount(product)).replace('.', ','),
-  );
-  const [error, setError] = useState<string>();
-
-  const handleSubmit = (event: FormEvent) => {
-    event.preventDefault();
-    const amount = parseNumber(value);
-    if (amount === null || roundAmount(amount, product.unit) <= 0) {
-      setError('Укажите количество больше нуля');
-      return;
-    }
-    onSubmit(amount);
-  };
-
-  return (
-    <form className={styles.form} onSubmit={handleSubmit} noValidate>
-      <p className={styles.hint}>
-        В кладовой: {formatAmount(product.stock, product.unit)}
-        {product.minStock > 0 && ` · минимум ${formatAmount(product.minStock, product.unit)}`}
-      </p>
-      {inListAmount !== undefined && (
-        <p className={styles.hint}>
-          Уже в списке: {formatAmount(inListAmount, product.unit)} — количество добавится
-        </p>
-      )}
-      <Input
-        label={`Сколько купить, ${unitLabel(product.unit)}`}
-        inputMode="decimal"
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        error={error}
-      />
-      <Button type="submit" fullWidth>
-        В список покупок
-      </Button>
-    </form>
-  );
-};
 
 export const AddToShoppingButton = ({ product, compact = false }: AddToShoppingButtonProps) => {
   const [open, setOpen] = useState(false);
@@ -101,8 +54,24 @@ export const AddToShoppingButton = ({ product, compact = false }: AddToShoppingB
       )}
       <Modal open={open} title={product.name} onClose={() => setOpen(false)}>
         <AmountForm
-          product={product}
-          inListAmount={inListAmount}
+          label="Сколько купить"
+          unit={product.unit}
+          initialAmount={suggestPurchaseAmount(product)}
+          submitLabel="В список покупок"
+          hints={
+            <>
+              <p>
+                В кладовой: {formatAmount(product.stock, product.unit)}
+                {product.minStock > 0 &&
+                  ` · минимум ${formatAmount(product.minStock, product.unit)}`}
+              </p>
+              {inListAmount !== undefined && (
+                <p>
+                  Уже в списке: {formatAmount(inListAmount, product.unit)} — количество добавится
+                </p>
+              )}
+            </>
+          }
           onSubmit={(amount) => {
             addItem({ productId: product.id, name: product.name, amount, unit: product.unit });
             setOpen(false);

@@ -5,18 +5,25 @@ import { Button, Modal } from '@/shared/ui';
 
 import { ProductForm } from './ProductForm';
 
-export const AddProductButton = () => {
+interface AddProductButtonProps {
+  /** Название, подставляемое в форму (например, из строки поиска) */
+  initialName?: string;
+  label?: string;
+}
+
+export const AddProductButton = ({ initialName, label = '+ Продукт' }: AddProductButtonProps) => {
   const [open, setOpen] = useState(false);
   const addProduct = useProductStore((state) => state.addProduct);
 
   return (
     <>
       <Button size="small" onClick={() => setOpen(true)}>
-        + Продукт
+        {label}
       </Button>
       <Modal open={open} title="Новый продукт" onClose={() => setOpen(false)}>
         <ProductForm
           submitLabel="Добавить"
+          defaultName={initialName?.trim()}
           onSubmit={(draft) => {
             addProduct(draft);
             setOpen(false);

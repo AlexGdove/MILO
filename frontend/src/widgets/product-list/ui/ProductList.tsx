@@ -1,52 +1,61 @@
 import { useState } from 'react';
 
-import { filterProducts, ProductCard, selectProducts, useProductStore } from '@/entities/product';
+import {
+  filterProducts,
+  ProductCard,
+  selectProducts,
+  useProductStore,
+  type Product,
+} from '@/entities/product';
 import { AddToShoppingButton } from '@/features/add-to-shopping-list';
-import { EditProductButton } from '@/features/manage-product';
+import { AddProductButton, EditProductButton } from '@/features/manage-product';
 import { ProductSearch } from '@/features/search-products';
-import { cn } from '@/shared/lib';
+import { AddToPantryButton } from '@/features/stock-product';
 import { EmptyState } from '@/shared/ui';
 
 import styles from './ProductList.module.css';
 
-type StockFilter = 'all' | 'inStock';
+const byName = (a: Product, b: Product) => a.name.localeCompare(b.name, 'ru-RU');
 
+/** В результатах поиска сначала то, что есть дома, затем остальное — по алфавиту. */
+const byStockThenName = (a: Product, b: Product) =>
+  Number(b.stock > 0) - Number(a.stock > 0) || byName(a, b);
+
+/**
+ * Кладовая: без запроса — только продукты в наличии.
+ * Поиск идёт по всем известным продуктам: найденное можно положить в кладовую или в покупки.
+ */
 export const ProductList = () => {
   const products = useProductStore(selectProducts);
   const [query, setQuery] = useState('');
-  const [stockFilter, setStockFilter] = useState<StockFilter>('all');
+  const searching = query.trim() !== '';
 
-  const visible = filterProducts(products, query)
-    .filter((product) => stockFilter === 'all' || product.stock > 0)
-    .sort((a, b) => a.name.localeCompare(b.name, 'ru-RU'));
+  const visible = searching
+    ? [...filterProducts(products, query)].sort(byStockThenName)
+    : products.filter((product) => product.stock > 0).sort(byName);
+
+  const renderEmpty = () =>
+    searching ? (
+      <EmptyState
+        title="Ничего не найдено"
+        description={`Продукта «${query.trim()}» ещё нет — создайте его`}
+        action={<AddProductButton initialName={query} label="Создать продукт" />}
+      />
+    ) : (
+      <EmptyState
+        title="Кладовая пуста"
+        description="Найдите продукт через поиск и добавьте в кладовую или в покупки"
+      />
+    );
 
   return (
     <section className={styles.section}>
       <ProductSearch value={query} onChange={setQuery} />
-      <div className={styles.tabs} role="tablist" aria-label="Фильтр продуктов">
-        {(
-          [
-            ['all', `Все (${products.length})`],
-            ['inStock', `В наличии (${products.filter((p) => p.stock > 0).length})`],
-          ] as const
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            role="tab"
-            aria-selected={stockFilter === value}
-            className={cn(styles.tab, stockFilter === value && styles.tabActive)}
-            onClick={() => setStockFilter(value)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <p className={styles.caption} aria-live="polite">
+        {searching ? `Найдено: ${visible.length}` : `В наличии: ${visible.length}`}
+      </p>
       {visible.length === 0 ? (
-        <EmptyState
-          title="Ничего не найдено"
-          description={query ? 'Попробуйте изменить запрос' : 'Добавьте первый продукт'}
-        />
+        renderEmpty()
       ) : (
         <ul className={styles.list}>
           {visible.map((product) => (
@@ -55,6 +64,7 @@ export const ProductList = () => {
                 product={product}
                 actions={
                   <>
+                    <AddToPantryButton product={product} />
                     <AddToShoppingButton product={product} compact />
                     <EditProductButton product={product} />
                   </>
