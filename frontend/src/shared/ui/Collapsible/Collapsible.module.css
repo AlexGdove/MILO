@@ -53,11 +53,11 @@
   transition: transform var(--duration-fast) var(--ease-standard);
 }
 
-.details[open] .chevron {
+.expanded .chevron {
   transform: rotate(180deg);
 }
 
-.body {
+.bodyInner {
   padding: 0 var(--space-4) var(--space-4);
 }
 
