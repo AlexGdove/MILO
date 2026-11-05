@@ -10,7 +10,7 @@ import {
 import { AddToShoppingButton } from '@/features/add-to-shopping-list';
 import { AddProductButton, EditProductButton } from '@/features/manage-product';
 import { ProductSearch } from '@/features/search-products';
-import { AddToPantryButton } from '@/features/stock-product';
+import { AddToPantryButton, SetStockButton } from '@/features/stock-product';
 import { EmptyState } from '@/shared/ui';
 
 import styles from './ProductList.module.css';
@@ -62,6 +62,7 @@ export const ProductList = () => {
             <li key={product.id}>
               <ProductCard
                 product={product}
+                stock={<SetStockButton product={product} />}
                 actions={
                   <>
                     <AddToPantryButton product={product} />
