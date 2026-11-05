@@ -15,7 +15,7 @@
 - Данные пока хранятся локально (zustand persist) — доступ к хранилищу только через `shared/lib/storage`.
 - UI-тексты на русском.
 - AI-скилы проекта — в `.claude/skills/` (инвентаризация: `docs/skills-inventory.md`). Перед задачей выбирать релевантные (React/TS, Zustand, тесты, git, CI); скилы не разрешают менять стек или ставить зависимости без одобрения.
-- Тесты: Vitest + React Testing Library (не Jest).
+- Тесты: frontend — Vitest + React Testing Library (не Jest); backend — Jest + supertest (решение B-3, `docs/backend/DECISIONS.md`).
 
 ## Git (строгие правила, раздел 11 требований пользователя)
 
