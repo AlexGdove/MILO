@@ -21,7 +21,13 @@ export default tseslint.config(
 
   // Конфиги node-окружения (vite.config.ts, eslint.config.js)
   {
-    files: ['*.{js,ts}', 'frontend/*.{js,ts}', 'frontend/scripts/**/*.{js,mjs}', 'backend/*.js'],
+    files: [
+      '*.{js,ts}',
+      'scripts/**/*.{js,mjs}',
+      'frontend/*.{js,ts}',
+      'frontend/scripts/**/*.{js,mjs}',
+      'backend/*.js',
+    ],
     languageOptions: { globals: globals.node },
   },
 
