@@ -4,7 +4,7 @@ import { selectCookedDishes, useCookedDishStore, type CookedDish } from '@/entit
 import type { MealType } from '@/entities/meal-entry';
 import { filterProducts, selectProducts, useProductStore, type Product } from '@/entities/product';
 import { recipeNutrition, selectRecipes, useRecipeStore, type Recipe } from '@/entities/recipe';
-import { formatAmount, formatKcal, type IsoDate } from '@/shared/lib';
+import { formatAmount, formatKcal, formatPortions, type IsoDate } from '@/shared/lib';
 import { Input } from '@/shared/ui';
 
 import styles from './AddMealEntryForm.module.css';
@@ -85,7 +85,7 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
                   >
                     <span className={styles.optionName}>{dish.name}</span>
                     <span className={styles.optionMeta}>
-                      осталось {dish.servingsLeft} порц. ·{' '}
+                      осталось {formatPortions(dish.servingsLeft)} порц. ·{' '}
                       {formatKcal((dish.per100g.kcal * dish.portionGrams) / 100)} ккал/порц.
                     </span>
                   </button>

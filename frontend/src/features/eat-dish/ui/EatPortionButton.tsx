@@ -28,7 +28,8 @@ const EatForm = ({ dish, onDone }: EatFormProps) => {
   const [portions, setPortions] = useState(1);
   const [mealType, setMealType] = useState<MealType>(() => suggestMealType());
 
-  const grams = dish.portionGrams * portions;
+  // Если осталось меньше порции (часть съели в граммах) — доедается остаток
+  const grams = dish.portionGrams * Math.min(portions, dish.servingsLeft);
   const kcal = nutrientsForGrams(dish.per100g, grams).kcal;
 
   const handleEat = () => {
@@ -39,7 +40,12 @@ const EatForm = ({ dish, onDone }: EatFormProps) => {
 
   return (
     <div className={styles.form}>
-      <Stepper label="Порций" value={portions} max={dish.servingsLeft} onChange={setPortions} />
+      <Stepper
+        label="Порций"
+        value={portions}
+        max={Math.max(1, Math.floor(dish.servingsLeft))}
+        onChange={setPortions}
+      />
       <SegmentedControl
         legend="Приём пищи"
         options={MEAL_TYPES}
