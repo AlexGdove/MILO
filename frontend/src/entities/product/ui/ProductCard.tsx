@@ -10,9 +10,11 @@ interface ProductCardProps {
   product: Product;
   /** Слот для действий (кнопки фич) */
   actions?: ReactNode;
+  /** Замена строки остатка (например, кнопка быстрой правки количества) */
+  stock?: ReactNode;
 }
 
-export const ProductCard = ({ product, actions }: ProductCardProps) => {
+export const ProductCard = ({ product, actions, stock }: ProductCardProps) => {
   const { kcal, protein, fat, carbs } = product.per100g;
   const status = getStockStatus(product);
 
@@ -34,11 +36,13 @@ export const ProductCard = ({ product, actions }: ProductCardProps) => {
           Ж {formatGrams(fat)} · У {formatGrams(carbs)}{' '}
           <span className={styles.per}>/ {product.unit === 'ml' ? '100 мл' : '100 г'}</span>
         </p>
-        <p className={cn(styles.stock, status === 'out' && styles.stockEmpty)}>
-          {status === 'out'
-            ? 'Нет в наличии'
-            : `В наличии: ${formatAmount(product.stock, product.unit)}`}
-        </p>
+        {stock ?? (
+          <p className={cn(styles.stock, status === 'out' && styles.stockEmpty)}>
+            {status === 'out'
+              ? 'Нет в наличии'
+              : `В наличии: ${formatAmount(product.stock, product.unit)}`}
+          </p>
+        )}
       </div>
       {actions && <div className={styles.actions}>{actions}</div>}
     </article>
