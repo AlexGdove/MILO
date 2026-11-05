@@ -4,6 +4,7 @@ import { useDailyGoal, useGoalMode } from '@/entities/user-goal';
 import { describeProfile, selectProfile, useUserProfileStore } from '@/entities/user-profile';
 import { ProfileForm, useApplyProfileNorm } from '@/features/edit-profile';
 import { DailyGoalForm } from '@/features/set-daily-goal';
+import { ThemeSwitcher } from '@/features/switch-theme';
 import { formatKcal } from '@/shared/lib';
 import { Button, Card, Collapsible, PageLayout } from '@/shared/ui';
 
@@ -75,6 +76,10 @@ export const ProfilePage = () => {
         <ProfileForm />
       </Collapsible>
       <NormSection />
+      <Card className={styles.section}>
+        <h2 className={styles.title}>Оформление</h2>
+        <ThemeSwitcher />
+      </Card>
     </PageLayout>
   );
 };
