@@ -12,7 +12,8 @@ interface SegmentedOption<T extends string> {
 interface SegmentedControlProps<T extends string> {
   legend: string;
   options: ReadonlyArray<SegmentedOption<T>>;
-  value: T;
+  /** null — ничего не выбрано (например, пол в анкете) */
+  value: T | null;
   onChange: (value: T) => void;
 }
 

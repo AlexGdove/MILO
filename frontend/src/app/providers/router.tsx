@@ -6,13 +6,21 @@ import { PantryPage } from '@/pages/pantry';
 import { ProfilePage } from '@/pages/profile';
 import { RecipePage } from '@/pages/recipe';
 import { RecipesPage } from '@/pages/recipes';
+import { WelcomePage } from '@/pages/welcome';
 import { LEGACY_ROUTES, ROUTES, SHOPPING_PATH } from '@/shared/config';
 
+import { OnboardingGate } from './OnboardingGate';
 import { RootLayout } from '../layouts/RootLayout';
 
 const routes = [
+  // Анкета первого запуска — без шапки и нижней навигации
+  { path: ROUTES.welcome, element: <WelcomePage /> },
   {
-    element: <RootLayout />,
+    element: (
+      <OnboardingGate>
+        <RootLayout />
+      </OnboardingGate>
+    ),
     children: [
       { path: ROUTES.dashboard, element: <DashboardPage /> },
       { path: ROUTES.recipes, element: <RecipesPage /> },

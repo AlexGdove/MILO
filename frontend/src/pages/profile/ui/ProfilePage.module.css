@@ -8,3 +8,19 @@
   font-size: var(--text-lg);
   font-weight: var(--weight-semibold);
 }
+
+.norm {
+  color: var(--color-text-muted);
+}
+
+.normValue {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
