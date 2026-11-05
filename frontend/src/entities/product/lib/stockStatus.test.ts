@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { getStockStatus, isLowStock, needsRestock, suggestPurchaseAmount } from './stockStatus';
+import {
+  becameLow,
+  getStockStatus,
+  isLowStock,
+  needsRestock,
+  suggestPurchaseAmount,
+} from './stockStatus';
 
 describe('getStockStatus', () => {
   it.each([
@@ -47,5 +53,26 @@ describe('suggestPurchaseAmount', () => {
     expect(suggestPurchaseAmount({ stock: 0, minStock: 0, unit: 'g' })).toBe(500);
     expect(suggestPurchaseAmount({ stock: 0, minStock: 0, unit: 'ml' })).toBe(1000);
     expect(suggestPurchaseAmount({ stock: 3, minStock: 0, unit: 'pcs' })).toBe(1);
+  });
+});
+
+describe('becameLow', () => {
+  it('срабатывает, когда остаток опустился ниже минимума', () => {
+    expect(becameLow({ stock: 6, minStock: 5 }, { stock: 4, minStock: 5 })).toBe(true);
+    expect(becameLow({ stock: 5, minStock: 5 }, { stock: 0, minStock: 5 })).toBe(true);
+  });
+
+  it('без минимума — когда продукт закончился', () => {
+    expect(becameLow({ stock: 200, minStock: 0 }, { stock: 0, minStock: 0 })).toBe(true);
+    expect(becameLow({ stock: 200, minStock: 0 }, { stock: 50, minStock: 0 })).toBe(false);
+  });
+
+  it('не срабатывает повторно, если уже было мало', () => {
+    expect(becameLow({ stock: 4, minStock: 5 }, { stock: 2, minStock: 5 })).toBe(false);
+    expect(becameLow({ stock: 0, minStock: 0 }, { stock: 0, minStock: 0 })).toBe(false);
+  });
+
+  it('не срабатывает при пополнении', () => {
+    expect(becameLow({ stock: 2, minStock: 5 }, { stock: 8, minStock: 5 })).toBe(false);
   });
 });

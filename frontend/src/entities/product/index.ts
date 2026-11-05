@@ -1,6 +1,12 @@
 export type { Product, ProductDraft } from './model/types';
 export { selectProductById, selectProducts, useProductStore } from './model/store';
 export { filterProducts } from './lib/filterProducts';
-export { getStockStatus, isLowStock, needsRestock, suggestPurchaseAmount } from './lib/stockStatus';
+export {
+  becameLow,
+  getStockStatus,
+  isLowStock,
+  needsRestock,
+  suggestPurchaseAmount,
+} from './lib/stockStatus';
 export type { StockStatus } from './lib/stockStatus';
 export { ProductCard } from './ui/ProductCard';

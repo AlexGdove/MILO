@@ -10,4 +10,5 @@ export { ProgressRing } from './ProgressRing/ProgressRing';
 export { SegmentedControl } from './SegmentedControl/SegmentedControl';
 export { Skeleton } from './Skeleton/Skeleton';
 export { Tabs } from './Tabs/Tabs';
+export { Toast } from './Toast/Toast';
 export { Stepper } from './Stepper/Stepper';

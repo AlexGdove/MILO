@@ -21,6 +21,19 @@ export const isLowStock = (product: Pick<Product, 'stock' | 'minStock'>): boolea
 export const needsRestock = (product: Pick<Product, 'stock' | 'minStock'>): boolean =>
   product.minStock > 0 && product.stock < product.minStock;
 
+/** «Мало»: ниже минимального остатка, а если минимум не задан — закончился. */
+const isRunningOut = (product: Pick<Product, 'stock' | 'minStock'>): boolean =>
+  product.minStock > 0 ? product.stock < product.minStock : product.stock <= 0;
+
+/**
+ * Продукта стало мало именно сейчас (решение №31): до изменения было достаточно,
+ * после — ниже минимума или закончился. Повторно при дальнейшем уменьшении не срабатывает.
+ */
+export const becameLow = (
+  prev: Pick<Product, 'stock' | 'minStock'>,
+  next: Pick<Product, 'stock' | 'minStock'>,
+): boolean => !isRunningOut(prev) && isRunningOut(next);
+
 /** Количество «на одну покупку» для продуктов без минимального остатка. */
 const DEFAULT_PURCHASE: Record<Unit, number> = { g: 500, ml: 1000, pcs: 1 };
 
