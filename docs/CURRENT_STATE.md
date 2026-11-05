@@ -4,14 +4,15 @@
 
 ## С чего начать следующую сессию
 
-Доработки №26–32 влиты в `dev`. Скан штрихкодов отложен (№34). Дальше (№35): аккордеон «Мои данные» (в `dev`) → **проект на GitHub** (удалённого репозитория нет, `gh` не установлен — нужны данные пользователя) → **CI** → **merge всего в `main`** → бэкенд. Решение о коммите — вариантами, отчёты — таблицами.
+Проект на GitHub: **https://github.com/AlexGdove/MILO** (публичный), `main` и `dev` отправлены 2026-11-05, CI (GitHub Actions) запускается на push в `main`/`dev` и на PR. CI зелёный на `dev` и `main`; **пользователь сам влил `dev` в `main`** (2026-11-05, `main` = `dev`). Дальше: плавность аккордеона → **бэкенд** (стек не выбран — начать со сравнения вариантов на выбор). Скан штрихкодов отложен (№34). Решение о коммите — вариантами, отчёты — таблицами.
 
 ## Git
 
-- Текущая ветка: `dev` (CI-пайплайн влит). Перед первым push — замена email автора на noreply GitHub во всей истории (разрешено пользователем, с резервной копией). Удалённого репозитория пока нет: пользователь создаёт **публичный** репозиторий на github.com и даёт адрес (`gh` не ставим; вход — Git Credential Manager через браузер).
-- `dev` → `aef0477` (merge `feat/profile-accordion`); ранее `35054fe` — `feat/shopping-low-stock`, `58532fc` — `feat/user-profile`, `ca3a89f` — `feat/app-header`, `bcc788c` — `feat/nav-profile-app`, `303fb00` — `feat/meal-from-recipes`, `463e661` — `feat/pantry-quick-stock`, `67648ef` — `fix/daily-summary-overflow`, `489ce85` — `feat/cook-recipe`, `48743fc` — `feat/recipes`, `58023b2` — `feat/pantry-in-stock`, `872520d` — `feat/brand-mark-m`, `57b69a5` — `feat/shopping-list`), всё с разрешения пользователя 2026-11-05. `main` → `dba56c8` (не менялся с введения правил).
-- Удалённого репозитория нет, push не выполнялся, CI нет.
-- Влитые рабочие ветки (не удалялись — удаление только с разрешения): `chore/monorepo-setup`, `chore/frontend-init`, `chore/eslint-setup`, `feat/pwa`, `feat/shared-ui`, `feat/products`, `feat/diary`, `feat/dashboard`, `chore/skills-setup` (в `main` до правил); `test/vitest-setup`, `docs/git-rules`, `docs/ai-delegation`, `docs/milo-foundation`, `chore/rename-milo`, `docs/session-context`, `feat/design-tokens`, `feat/brand-assets`, `feat/product-units`, `feat/shopping-list`, `feat/brand-mark-m`, `feat/pantry-in-stock`, `feat/recipes`, `feat/cook-recipe`, `fix/daily-summary-overflow` (в `dev`).
+- Удалённый репозиторий: `origin` = https://github.com/AlexGdove/MILO.git (публичный, ветка по умолчанию на GitHub — `main`). На GitHub только `main` и `dev`; рабочие ветки — локально.
+- **Автор коммитов** — `AlexGdove <238381513+AlexGdove@users.noreply.github.com>` (локальная настройка репозитория). 2026-11-05 с разрешения пользователя история переписана до первого push: личный адрес заменён на noreply во всех 65 коммитах всех 34 веток; деревья файлов не изменились; резервная копия (bundle) — во временной папке той сессии. **Хэши коммитов до этой даты в документах не совпадают с текущими** — актуальные: `git log`.
+- `main` = `dev` (пользователь влил `dev` в `main` и отправил на GitHub 2026-11-05). Дальнейшие изменения в `main` — только по разрешению пользователя.
+- Влитые рабочие ветки не удалялись (удаление — только с разрешения).
+- push в `dev` — только с разрешения пользователя; `git push --force` запрещён.
 
 ## Что работает в приложении
 
@@ -50,7 +51,7 @@ PWA (офлайн, установка), мобильная вёрстка. Ни�
 | Build (`npm run build`)          | успешно                                                                                                                                                                                                                                                                         |
 | Prettier                         | без замечаний                                                                                                                                                                                                                                                                   |
 | E2E-смоук (вне репозитория)      | 360×780, обе темы, 3 прогона подряд: кладовая → рецепт → «Приготовить» (нехватка → «В покупки») → «Приготовленные» → «Съесть порцию» → перезагрузка → «История» → запись на «Сегодня» → яйца в «Покупках»; обе раскладки вкладок (выбраны 3); ошибок консоли и переполнения нет |
-| CI                               | `.github/workflows/ci.yml` в `dev`, на GitHub ещё не запускался — нет удалённого репозитория                                                                                                                                                                                    |
+| CI                               | GitHub Actions: первые запуски на `dev` и `main` — **успешно**. PR Dependabot с мажорными версиями (TypeScript 7, React 19, ESLint 10) CI правильно не пропускает; мажорные обновления в Dependabot отключены (ветка `ci/dependabot-no-majors`)                                 |
 
 ## Окружение
 
