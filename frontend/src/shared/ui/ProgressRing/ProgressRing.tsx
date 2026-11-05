@@ -24,8 +24,9 @@ export const ProgressRing = ({
   const clamped = Math.min(Math.max(progress, 0), 1);
 
   return (
-    <div className={styles.wrapper} style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+    // size — наибольший размер: в узком контейнере кольцо сжимается (SVG масштабируется по viewBox)
+    <div className={styles.wrapper} style={{ width: size }}>
+      <svg className={styles.svg} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
         <circle
           className={styles.track}
           cx={center}

@@ -4,21 +4,16 @@
 
 ## С чего начать следующую сессию
 
-Идёт **частичная переделка** по утверждённому плану (решения №22–25 в `DECISIONS.md`), четыре этапа, каждый в своей ветке от `dev`:
+Частичная переделка (решения №22–25) **завершена и влита в `dev`**: знак «м», кладовая «в наличии», раздел «Рецепты» вместо «Дневника» (3 вкладки), готовка с порциями и историей; исправлена вёрстка сводки дня на 320–360 px.
 
-1. `feat/brand-mark-m` — знак «м» (этап 1) — влит в `dev`.
-2. `feat/pantry-in-stock` — кладовая только «в наличии», поиск → «в кладовую»/«в покупки» (этап 2) — влит в `dev`.
-3. `feat/recipes` — раздел «Рецепты» вместо «Дневника», навигация Сегодня · Рецепты · Кладовая · Покупки (этап 3) — влит в `dev`.
-4. `feat/cook-recipe` — готовка со списанием, «Приготовленные» (порции), «История»; скриншоты вариантов 2 и 3 вкладок на выбор пользователю (этап 4) — влит в `dev`; выбрана раскладка из 3 вкладок.
-
-Подробности этапов — `docs/ROADMAP.md`. Отчёты пользователь просит в виде таблиц.
+Следующее — **по решению пользователя** (в плане остался только этап C, каждый пункт требует отдельного решения): внешний каталог продуктов и штрихкоды, внешний API рецептов, бэкенд, мобильное приложение, CI/удалённый репозиторий. Мелкие задачи — в `docs/TASKS.md`. Решение о коммите/merge спрашивать вариантами, отчёты — таблицами.
 
 ## Git
 
-- Текущая ветка: `feat/cook-recipe` (от `dev` @ `48743fc`), изменения не закоммичены.
-- `dev` → `48743fc` (merge `feat/recipes`; ранее `58023b2` — `feat/pantry-in-stock`, `872520d` — `feat/brand-mark-m`, `57b69a5` — `feat/shopping-list`), всё с разрешения пользователя 2026-11-05. `main` → `dba56c8` (не менялся с введения правил).
+- Текущая ветка: `dev` (рабочие ветки этой сессии влиты).
+- `dev` → merge `fix/daily-summary-overflow` (актуальный хэш — `git log -1 --oneline dev`); ранее `489ce85` — `feat/cook-recipe`, `48743fc` — `feat/recipes`, `58023b2` — `feat/pantry-in-stock`, `872520d` — `feat/brand-mark-m`, `57b69a5` — `feat/shopping-list`), всё с разрешения пользователя 2026-11-05. `main` → `dba56c8` (не менялся с введения правил).
 - Удалённого репозитория нет, push не выполнялся, CI нет.
-- Влитые рабочие ветки (не удалялись — удаление только с разрешения): `chore/monorepo-setup`, `chore/frontend-init`, `chore/eslint-setup`, `feat/pwa`, `feat/shared-ui`, `feat/products`, `feat/diary`, `feat/dashboard`, `chore/skills-setup` (в `main` до правил); `test/vitest-setup`, `docs/git-rules`, `docs/ai-delegation`, `docs/milo-foundation`, `chore/rename-milo`, `docs/session-context`, `feat/design-tokens`, `feat/brand-assets`, `feat/product-units`, `feat/shopping-list`, `feat/brand-mark-m`, `feat/pantry-in-stock`, `feat/recipes` (в `dev`).
+- Влитые рабочие ветки (не удалялись — удаление только с разрешения): `chore/monorepo-setup`, `chore/frontend-init`, `chore/eslint-setup`, `feat/pwa`, `feat/shared-ui`, `feat/products`, `feat/diary`, `feat/dashboard`, `chore/skills-setup` (в `main` до правил); `test/vitest-setup`, `docs/git-rules`, `docs/ai-delegation`, `docs/milo-foundation`, `chore/rename-milo`, `docs/session-context`, `feat/design-tokens`, `feat/brand-assets`, `feat/product-units`, `feat/shopping-list`, `feat/brand-mark-m`, `feat/pantry-in-stock`, `feat/recipes`, `feat/cook-recipe`, `fix/daily-summary-overflow` (в `dev`).
 
 ## Что работает в приложении
 
@@ -33,7 +28,7 @@ PWA (офлайн, установка), мобильная вёрстка. Ни�
 
 ## Чего ещё нет (по плану)
 
-После этапа 4 переделка завершена; дальше — исправление `daily-summary` при 360 px и этап C (по решениям пользователя). Выбор блюда из «Приготовленных» прямо в форме «Добавить еду» на «Сегодня» — не делался (точка входа — «Съесть порцию»). Этап C — по отдельным решениям пользователя.
+После этапа 4 переделка завершена; вёрстка сводки исправлена; дальше — этап C (по решениям пользователя). Выбор блюда из «Приготовленных» прямо в форме «Добавить еду» на «Сегодня» — не делался (точка входа — «Съесть порцию»). Этап C — по отдельным решениям пользователя.
 
 ## Структура фронтенда (FSD)
 
@@ -44,11 +39,11 @@ PWA (офлайн, установка), мобильная вёрстка. Ни�
 - `entities`: cooked-dish (persist v1, `milo:cooked-dishes`; снимок КБЖУ порции, остаток порций; доеденные остаются для истории), meal-entry (persist v2; источник `recipe` = id блюда, `stockDeducted` = порции), product (persist v2), recipe (persist v1, `milo:recipes`; `checkAvailability`, `recipeNutrition`, `RecipeSource` + `localRecipeSource`; продукт описан структурным типом `IngredientProduct` — FSD запрещает импорт между сущностями), shopping-item (persist v1), user-goal (persist v1); миграции — `model/migrations.ts`
 - `shared`: api (заготовка), config (routes, `recipePath`), lib (cn, id, number, storage, date, nutrition, units), ui (AmountForm, Button, Card, EmptyState, Input, Logo, Modal, PageLayout, ProgressRing, SegmentedControl, Skeleton)
 
-## Качество (последний прогон на `feat/cook-recipe`, 2026-11-05)
+## Качество (последний прогон на `fix/daily-summary-overflow`, 2026-11-05)
 
 | Проверка                         | Результат                                                                                                                                                                                                                                                                       |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Тесты (`npm test`, Vitest)       | 37 файлов, 246 тестов, все прошли, 0 пропущено (на `dev` после этапа 3: 224)                                                                                                                                                                                                    |
+| Тесты (`npm test`, Vitest)       | 38 файлов, 248 тестов, все прошли, 0 пропущено (на `dev` после этапа 4: 246)                                                                                                                                                                                                    |
 | TypeScript (`npm run typecheck`) | без ошибок                                                                                                                                                                                                                                                                      |
 | ESLint (`npm run lint`)          | без ошибок                                                                                                                                                                                                                                                                      |
 | Build (`npm run build`)          | успешно                                                                                                                                                                                                                                                                         |

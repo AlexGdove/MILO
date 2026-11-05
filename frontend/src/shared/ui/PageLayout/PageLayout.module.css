@@ -6,8 +6,10 @@
   padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + var(--space-5));
 }
 
+/* На узких экранах (около 320 px) действия переносятся под заголовок, а не вылезают за край */
 .header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
