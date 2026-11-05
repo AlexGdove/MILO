@@ -99,7 +99,8 @@ describe('раздел «Рецепты»', () => {
 });
 
 describe('нижняя навигация', () => {
-  it('четыре вкладки без «Дневника»; «Рецепты» активна и на странице рецепта', () => {
+  // Требование изменилось (решение №28): «Покупки» стали вкладкой кладовой, в навигации — «Профиль»
+  it('четыре вкладки: Сегодня, Рецепты, Кладовая, Профиль; «Рецепты» активна и на странице рецепта', () => {
     const router = createMemoryRouter([{ path: '*', element: <BottomNav /> }], {
       initialEntries: ['/recipes/abc'],
     });
@@ -110,7 +111,7 @@ describe('нижняя навигация', () => {
       'Сегодня',
       'Рецепты',
       'Кладовая',
-      'Покупки',
+      'Профиль',
     ]);
     expect(screen.getByRole('link', { name: 'Рецепты' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Сегодня' })).not.toHaveAttribute('aria-current');

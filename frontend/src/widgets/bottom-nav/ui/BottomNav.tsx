@@ -5,7 +5,7 @@ import { ROUTES } from '@/shared/config';
 import { cn } from '@/shared/lib';
 
 import styles from './BottomNav.module.css';
-import { PantryIcon, RecipesIcon, ShoppingIcon, TodayIcon } from './icons';
+import { PantryIcon, ProfileIcon, RecipesIcon, TodayIcon } from './icons';
 
 interface NavItem {
   to: string;
@@ -15,12 +15,12 @@ interface NavItem {
   end?: boolean;
 }
 
-/** Навигация по решению №24; профиль — из шапки страниц (ProfileLink). */
+/** Навигация по решению №28: «Покупки» — вкладка кладовой, в шапке страниц — переход к приложению. */
 const NAV_ITEMS: NavItem[] = [
   { to: ROUTES.dashboard, label: 'Сегодня', icon: <TodayIcon />, end: true },
   { to: ROUTES.recipes, label: 'Рецепты', icon: <RecipesIcon /> },
   { to: ROUTES.pantry, label: 'Кладовая', icon: <PantryIcon /> },
-  { to: ROUTES.shopping, label: 'Покупки', icon: <ShoppingIcon /> },
+  { to: ROUTES.profile, label: 'Профиль', icon: <ProfileIcon /> },
 ];
 
 export const BottomNav = () => (

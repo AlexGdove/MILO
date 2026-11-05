@@ -2,9 +2,9 @@ import { suggestMealType } from '@/entities/meal-entry';
 import { AddMealEntryButton } from '@/features/add-meal-entry';
 import { DateSwitcher, useSelectedDate } from '@/features/select-date';
 import { MiloLogo, PageLayout } from '@/shared/ui';
+import { AppLink } from '@/widgets/app-link';
 import { DailySummary } from '@/widgets/daily-summary';
 import { MealList } from '@/widgets/meal-list';
-import { ProfileLink } from '@/widgets/profile-link';
 
 export const DashboardPage = () => {
   const date = useSelectedDate();
@@ -15,7 +15,7 @@ export const DashboardPage = () => {
       eyebrow={
         <>
           <MiloLogo size="sm" />
-          <ProfileLink />
+          <AppLink />
         </>
       }
       actions={<DateSwitcher />}
