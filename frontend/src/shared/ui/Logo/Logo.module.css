@@ -7,8 +7,13 @@
   fill: var(--color-primary);
 }
 
-.markBar {
-  fill: var(--color-on-primary);
+/* Толщина обводки — часть геометрии знака в сетке 48 (docs/brand.md), а не размер интерфейса */
+.markLetter {
+  fill: none;
+  stroke: var(--color-on-primary);
+  stroke-width: var(--mark-stroke-width);
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .markAccent {

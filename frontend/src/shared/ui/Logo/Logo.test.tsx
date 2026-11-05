@@ -16,14 +16,17 @@ describe('MiloMark', () => {
     expect(screen.getByRole('img', { name: 'MILO' })).toBeInTheDocument();
   });
 
-  it('рисует фон и три столбика: крайние одной высоты, средний ниже', () => {
+  // Требование изменилось 2026-11-05 (решение №22): знак — «м» из двух арок и точка вместо трёх столбиков
+  it('рисует скруглённый фон, «м» из двух арок и точку', () => {
     const { container } = render(<MiloMark size={48} />);
-    const [bg, left, middle, right] = Array.from(container.querySelectorAll('rect'));
-    expect(bg).toHaveAttribute('rx', '12');
-    expect(left?.getAttribute('height')).toBe(right?.getAttribute('height'));
-    expect(Number(middle?.getAttribute('height'))).toBeLessThan(
-      Number(left?.getAttribute('height')),
-    );
+    const rects = container.querySelectorAll('rect');
+    expect(rects).toHaveLength(1);
+    expect(rects[0]).toHaveAttribute('rx', '12');
+
+    const letter = container.querySelector('path');
+    // две арки: две дуги одинакового радиуса, стоящие рядом
+    expect(letter?.getAttribute('d')?.match(/a5\.5 5\.5/g)).toHaveLength(2);
+    expect(container.querySelectorAll('circle')).toHaveLength(1);
     expect(container.querySelector('svg')).toHaveAttribute('width', '48');
   });
 });

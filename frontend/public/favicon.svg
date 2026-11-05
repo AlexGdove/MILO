@@ -1,10 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
 <style>
-.bg{fill:#2F3BD9}.bar{fill:#FFFFFF}.accent{fill:#3CCB9A}
-@media (prefers-color-scheme: dark){.bg{fill:#6F7BFF}.bar{fill:#0B0C14}}
+.bg{fill:#2F3BD9}
+.m{fill:none;stroke:#FFFFFF;stroke-width:4.6;stroke-linecap:round;stroke-linejoin:round}
+.dot{fill:#3CCB9A}
+@media (prefers-color-scheme: dark){.bg{fill:#6F7BFF}.m{stroke:#0B0C14}}
 </style>
 <rect class="bg" width="48" height="48" rx="12"/>
-<rect class="bar" x="9" y="12" width="8" height="24" rx="4"/>
-<rect class="accent" x="20" y="21" width="8" height="15" rx="4"/>
-<rect class="bar" x="31" y="12" width="8" height="24" rx="4"/>
+<path class="m" d="M13 34V24.5a5.5 5.5 0 0 1 11 0V34M24 24.5a5.5 5.5 0 0 1 11 0V34"/>
+<circle class="dot" cx="36.5" cy="13.5" r="3.3"/>
 </svg>
