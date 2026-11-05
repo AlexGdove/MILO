@@ -2,7 +2,6 @@ import { useSearchParams } from 'react-router-dom';
 
 import { AddRecipeButton } from '@/features/manage-recipe';
 import { PageLayout, Tabs } from '@/shared/ui';
-import { AppLink } from '@/widgets/app-link';
 import { CookedDishes } from '@/widgets/cooked-dishes';
 import { CookingHistory } from '@/widgets/cooking-history';
 import { RecipeList } from '@/widgets/recipe-list';
@@ -26,7 +25,7 @@ export const RecipesPage = () => {
   const tab: RecipesTab = isTab(rawTab) ? rawTab : 'all';
 
   return (
-    <PageLayout title="Рецепты" eyebrow={<AppLink />} actions={<AddRecipeButton />}>
+    <PageLayout title="Рецепты" actions={<AddRecipeButton />}>
       <Tabs
         label="Раздел рецептов"
         items={TABS}
