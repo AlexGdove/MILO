@@ -14,14 +14,14 @@ const FSD_LAYERS = ['app', 'pages', 'widgets', 'features', 'entities', 'shared']
 const SLICED_LAYERS = ['pages', 'widgets', 'features', 'entities'];
 
 export default tseslint.config(
-  { ignores: ['**/node_modules', '**/dist', '**/dev-dist', 'backend', 'mobile'] },
+  { ignores: ['**/node_modules', '**/dist', '**/dev-dist', 'mobile'] },
 
   js.configs.recommended,
   ...tseslint.configs.recommended,
 
   // Конфиги node-окружения (vite.config.ts, eslint.config.js)
   {
-    files: ['*.{js,ts}', 'frontend/*.{js,ts}', 'frontend/scripts/**/*.{js,mjs}'],
+    files: ['*.{js,ts}', 'frontend/*.{js,ts}', 'frontend/scripts/**/*.{js,mjs}', 'backend/*.js'],
     languageOptions: { globals: globals.node },
   },
 
@@ -120,6 +120,28 @@ export default tseslint.config(
               message: 'FSD: для импорта из другого слоя используйте алиас @/.',
             },
           ],
+        },
+      ],
+    },
+  },
+
+  // Backend (NestJS, Node.js, тесты — Jest)
+  {
+    files: ['backend/**/*.ts'],
+    languageOptions: { globals: { ...globals.node, ...globals.jest } },
+    plugins: { 'import-x': importX },
+    rules: {
+      // Nest внедряет зависимости по метаданным типов: импорт класса для конструктора
+      // должен остаться значением, поэтому type-импорты здесь не навязываются
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-floating-promises': 'off',
+      'import-x/no-duplicates': 'error',
+      'import-x/order': [
+        'error',
+        {
+          groups: ['builtin', 'external', 'internal', ['parent', 'sibling', 'index']],
+          'newlines-between': 'always',
+          alphabetize: { order: 'asc', caseInsensitive: true },
         },
       ],
     },

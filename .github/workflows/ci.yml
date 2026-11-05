@@ -43,7 +43,7 @@ jobs:
       - name: Typecheck (TypeScript)
         run: npm run typecheck
 
-      - name: Test (Vitest)
+      - name: Test (Vitest + Jest)
         run: npm test
 
       - name: Build
