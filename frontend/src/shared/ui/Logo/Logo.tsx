@@ -10,8 +10,11 @@ interface MiloMarkProps {
   className?: string;
 }
 
+/** Строчная «м» из двух арок (обводка 4.6, скруглённые концы) в сетке 48×48. */
+const MARK_LETTER_PATH = 'M13 34V24.5a5.5 5.5 0 0 1 11 0V34M24 24.5a5.5 5.5 0 0 1 11 0V34';
+
 /**
- * Знак MILO: скруглённый квадрат (rx 25%) и три столбика БЖУ — крайние равные, средний ниже.
+ * Знак MILO: скруглённый квадрат (rx 25%), строчная «м» из двух арок и мятная точка — «искра».
  * Цвета берутся из токенов, поэтому знак сам переключается между светлой и тёмной версией.
  */
 export const MiloMark = ({ size = 32, title, className }: MiloMarkProps) => (
@@ -25,9 +28,8 @@ export const MiloMark = ({ size = 32, title, className }: MiloMarkProps) => (
     aria-label={title}
   >
     <rect className={styles.markBg} width="48" height="48" rx="12" />
-    <rect className={styles.markBar} x="9" y="12" width="8" height="24" rx="4" />
-    <rect className={styles.markAccent} x="20" y="21" width="8" height="15" rx="4" />
-    <rect className={styles.markBar} x="31" y="12" width="8" height="24" rx="4" />
+    <path className={styles.markLetter} d={MARK_LETTER_PATH} />
+    <circle className={styles.markAccent} cx="36.5" cy="13.5" r="3.3" />
   </svg>
 );
 

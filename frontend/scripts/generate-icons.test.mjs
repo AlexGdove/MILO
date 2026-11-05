@@ -19,17 +19,25 @@ describe('generate-icons', () => {
     expect(pixel(rgba, 48, 24, 6)).toEqual([47, 59, 217, 255]);
   });
 
-  it('крайние столбики белые, средний мятный', () => {
+  // Требование изменилось 2026-11-05 (решение №22): вместо трёх столбиков — «м» из двух арок и точка
+  it('три ножки «м» белые', () => {
     const rgba = renderMark(48);
-    expect(pixel(rgba, 48, 12, 24)).toEqual([255, 255, 255, 255]);
-    expect(pixel(rgba, 48, 35, 24)).toEqual([255, 255, 255, 255]);
-    expect(pixel(rgba, 48, 23, 30)).toEqual([60, 203, 154, 255]);
+    for (const x of [12, 23, 34]) {
+      expect(pixel(rgba, 48, x, 30)).toEqual([255, 255, 255, 255]);
+    }
   });
 
-  it('средний столбик ниже крайних', () => {
+  it('арки «м» белые сверху, под аркой — фон', () => {
     const rgba = renderMark(48);
-    expect(pixel(rgba, 48, 23, 15)).toEqual([47, 59, 217, 255]);
-    expect(pixel(rgba, 48, 12, 15)).toEqual([255, 255, 255, 255]);
+    expect(pixel(rgba, 48, 18, 18)).toEqual([255, 255, 255, 255]); // вершина левой арки
+    expect(pixel(rgba, 48, 29, 18)).toEqual([255, 255, 255, 255]); // вершина правой арки
+    expect(pixel(rgba, 48, 18, 28)).toEqual([47, 59, 217, 255]); // просвет под левой аркой
+    expect(pixel(rgba, 48, 12, 12)).toEqual([47, 59, 217, 255]); // над «м» — фон
+  });
+
+  it('точка справа сверху — мятная', () => {
+    const rgba = renderMark(48);
+    expect(pixel(rgba, 48, 36, 13)).toEqual([60, 203, 154, 255]);
   });
 
   it('fullBleed закрашивает углы', () => {
