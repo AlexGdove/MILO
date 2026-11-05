@@ -8,7 +8,7 @@ export const InstallAppCard = () => {
 
   return (
     <Card className={styles.card}>
-      <h2 className={styles.title}>Приложение</h2>
+      <h2 className={styles.title}>Установить MILO</h2>
       {installed ? (
         <p className={styles.text}>Приложение установлено на устройство ✓</p>
       ) : canInstall ? (

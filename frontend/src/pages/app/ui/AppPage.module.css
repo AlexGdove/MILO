@@ -1,0 +1,58 @@
+.hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.lead {
+  color: var(--color-text-muted);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.platform {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.platformName {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--color-text-muted);
+}
+
+.text {
+  color: var(--color-text-muted);
+}
+
+.stores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.store {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) dashed var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}

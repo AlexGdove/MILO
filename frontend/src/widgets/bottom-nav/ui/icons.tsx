@@ -38,11 +38,10 @@ export const PantryIcon = () => (
   </svg>
 );
 
-/** «Покупки» — корзина */
-export const ShoppingIcon = () => (
+/** «Профиль» */
+export const ProfileIcon = () => (
   <svg {...base}>
-    <path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.5L20.5 8H6.2" />
-    <circle cx="10" cy="20" r="1.25" />
-    <circle cx="17" cy="20" r="1.25" />
+    <circle cx="12" cy="8" r="4" />
+    <path d="M5 20a7 7 0 0 1 14 0" />
   </svg>
 );

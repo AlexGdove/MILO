@@ -1,14 +1,11 @@
 import { useSearchParams } from 'react-router-dom';
 
 import { AddRecipeButton } from '@/features/manage-recipe';
-import { cn } from '@/shared/lib';
-import { PageLayout } from '@/shared/ui';
+import { PageLayout, Tabs } from '@/shared/ui';
+import { AppLink } from '@/widgets/app-link';
 import { CookedDishes } from '@/widgets/cooked-dishes';
 import { CookingHistory } from '@/widgets/cooking-history';
-import { ProfileLink } from '@/widgets/profile-link';
 import { RecipeList } from '@/widgets/recipe-list';
-
-import styles from './RecipesPage.module.css';
 
 type RecipesTab = 'all' | 'cooked' | 'history';
 
@@ -29,23 +26,13 @@ export const RecipesPage = () => {
   const tab: RecipesTab = isTab(rawTab) ? rawTab : 'all';
 
   return (
-    <PageLayout title="Рецепты" eyebrow={<ProfileLink />} actions={<AddRecipeButton />}>
-      <div className={styles.tabs} role="tablist" aria-label="Раздел рецептов">
-        {TABS.map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            role="tab"
-            aria-selected={tab === item.value}
-            className={cn(styles.tab, tab === item.value && styles.tabActive)}
-            onClick={() =>
-              setParams(item.value === 'all' ? {} : { tab: item.value }, { replace: true })
-            }
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+    <PageLayout title="Рецепты" eyebrow={<AppLink />} actions={<AddRecipeButton />}>
+      <Tabs
+        label="Раздел рецептов"
+        items={TABS}
+        value={tab}
+        onChange={(next) => setParams(next === 'all' ? {} : { tab: next }, { replace: true })}
+      />
       {tab === 'all' && <RecipeList />}
       {tab === 'cooked' && <CookedDishes />}
       {tab === 'history' && <CookingHistory />}

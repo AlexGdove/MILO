@@ -3,9 +3,13 @@ export const ROUTES = {
   recipes: '/recipes',
   recipe: '/recipes/:id',
   pantry: '/pantry',
-  shopping: '/shopping',
   profile: '/profile',
+  /** Установка и скачивание приложения (решение №28) */
+  app: '/app',
 } as const;
+
+/** «Покупки» — вкладка кладовой (решение №28). */
+export const SHOPPING_PATH = `/pantry?tab=shopping`;
 
 /** Адрес страницы конкретного рецепта. */
 export const recipePath = (id: string) => `/recipes/${encodeURIComponent(id)}`;
@@ -15,6 +19,8 @@ export const LEGACY_ROUTES = {
   products: '/products',
   /** Раздел «Дневник» убран (решение №24): записи о съеденном — на «Сегодня» */
   diary: '/diary',
+  /** Отдельная страница покупок стала вкладкой кладовой (решение №28) */
+  shopping: '/shopping',
 } as const;
 
 export type AppRoute = (typeof ROUTES)[keyof typeof ROUTES];
