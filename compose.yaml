@@ -1,0 +1,28 @@
+# Инфраструктура MILO для локальной разработки и тестов (не для production).
+# Запуск: `npm run db:up` (или `docker compose up -d`). Данные — в томе milo-postgres.
+# Production-конфигурация — этап 11 (docs/backend/IMPLEMENTATION_PLAN.md).
+name: milo
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: milo
+      # Только для локальной разработки; в production пароль задаётся секретом
+      POSTGRES_PASSWORD: milo
+      POSTGRES_DB: milo
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - milo-postgres:/var/lib/postgresql/data
+      # Создаёт вторую базу milo_test для автотестов (только при первом запуске тома)
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U milo -d milo']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  milo-postgres:

@@ -1,0 +1,23 @@
+import type { PrismaService } from '../../src/prisma/prisma.service.js';
+
+const TABLES = [
+  'device_keys',
+  'public_recipes',
+  'public_recipe_ingredients',
+  'recipe_reports',
+  'operators',
+  'moderation_actions',
+  'support_tickets',
+  'support_messages',
+  'telegram_message_links',
+  'telegram_updates',
+  'outbox_events',
+  'idempotency_keys',
+];
+
+/** Пустые таблицы и счётчики с 1 — каждый тест независим от предыдущих. */
+export async function resetData(prisma: PrismaService): Promise<void> {
+  await prisma.$executeRawUnsafe(
+    `TRUNCATE ${TABLES.map((table) => `"${table}"`).join(', ')} RESTART IDENTITY CASCADE`,
+  );
+}

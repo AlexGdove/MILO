@@ -23,6 +23,23 @@ jobs:
     name: lint · typecheck · test · build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # PostgreSQL для интеграционных тестов backend (Jest e2e); база milo_test — как в compose.yaml
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: milo
+          POSTGRES_PASSWORD: milo
+          POSTGRES_DB: milo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U milo -d milo_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://milo:milo@localhost:5432/milo_test
     steps:
       - uses: actions/checkout@v7
 
