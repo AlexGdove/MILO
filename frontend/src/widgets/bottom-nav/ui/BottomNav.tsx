@@ -1,25 +1,27 @@
 import type { ReactNode } from 'react';
 import { NavLink } from 'react-router-dom';
 
-import { ROUTES, type AppRoute } from '@/shared/config';
+import { ROUTES } from '@/shared/config';
 import { cn } from '@/shared/lib';
 
 import styles from './BottomNav.module.css';
-import { DiaryIcon, HomeIcon, ProductsIcon, ShoppingIcon } from './icons';
+import { PantryIcon, RecipesIcon, ShoppingIcon, TodayIcon } from './icons';
 
 interface NavItem {
-  to: AppRoute;
+  to: string;
   label: string;
   icon: ReactNode;
+  /** Только точное совпадение адреса (для «/»); иначе вкладка активна и на вложенных страницах */
+  end?: boolean;
 }
 
+/** Навигация по решению №24; профиль — из шапки страниц (ProfileLink). */
 const NAV_ITEMS: NavItem[] = [
-  { to: ROUTES.dashboard, label: 'Сегодня', icon: <HomeIcon /> },
-  { to: ROUTES.diary, label: 'Дневник', icon: <DiaryIcon /> },
-  { to: ROUTES.pantry, label: 'Кладовая', icon: <ProductsIcon /> },
+  { to: ROUTES.dashboard, label: 'Сегодня', icon: <TodayIcon />, end: true },
+  { to: ROUTES.recipes, label: 'Рецепты', icon: <RecipesIcon /> },
+  { to: ROUTES.pantry, label: 'Кладовая', icon: <PantryIcon /> },
   { to: ROUTES.shopping, label: 'Покупки', icon: <ShoppingIcon /> },
 ];
-// Профиль — из шапки страниц (ProfileLink); «Рецепты» добавятся с шагом 8
 
 export const BottomNav = () => (
   <nav className={styles.nav} aria-label="Основная навигация">
@@ -27,7 +29,7 @@ export const BottomNav = () => (
       <NavLink
         key={item.to}
         to={item.to}
-        end
+        end={item.end}
         className={({ isActive }) => cn(styles.link, isActive && styles.active)}
       >
         {item.icon}

@@ -11,24 +11,26 @@ const base: SVGProps<SVGSVGElement> = {
   'aria-hidden': true,
 };
 
-/** «Сегодня» — три столбика, мотив знака MILO */
-export const HomeIcon = () => (
+/** «Сегодня» — тарелка: съеденное за день */
+export const TodayIcon = () => (
   <svg {...base}>
-    <rect x="4" y="5" width="4" height="14" rx="2" />
-    <rect x="10" y="10" width="4" height="9" rx="2" />
-    <rect x="16" y="5" width="4" height="14" rx="2" />
+    <circle cx="12" cy="12" r="8.5" />
+    <circle cx="12" cy="12" r="4.5" />
   </svg>
 );
 
-export const DiaryIcon = () => (
+/** «Рецепты» — кастрюля с крышкой */
+export const RecipesIcon = () => (
   <svg {...base}>
-    <rect x="5" y="3" width="14" height="18" rx="3" />
-    <path d="M9 8h6M9 12h6M9 16h3" />
+    <path d="M5 11h14v6a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z" />
+    <path d="M3 11h2M19 11h2" />
+    <path d="M6 8.5h12" />
+    <path d="M12 6v2.5" />
   </svg>
 );
 
-/** Кладовая/продукты — банка */
-export const ProductsIcon = () => (
+/** «Кладовая» — банка */
+export const PantryIcon = () => (
   <svg {...base}>
     <rect x="6" y="3" width="12" height="4" rx="1.5" />
     <path d="M7 7h10v11a3 3 0 0 1-3 3h-4a3 3 0 0 1-3-3z" />
@@ -36,7 +38,7 @@ export const ProductsIcon = () => (
   </svg>
 );
 
-/** Покупки — корзина */
+/** «Покупки» — корзина */
 export const ShoppingIcon = () => (
   <svg {...base}>
     <path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.5L20.5 8H6.2" />

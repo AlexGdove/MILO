@@ -6,59 +6,60 @@
 
 Идёт **частичная переделка** по утверждённому плану (решения №22–25 в `DECISIONS.md`), четыре этапа, каждый в своей ветке от `dev`:
 
-1. `feat/brand-mark-m` — знак «м» (этап 1) — влит в `dev` (2026-11-05).
-2. `feat/pantry-in-stock` — кладовая только «в наличии», поиск → «в кладовую»/«в покупки» (этап 2) — **реализован, не закоммичен**, ждёт разрешения на коммит и merge.
-3. `feat/recipes` — раздел «Рецепты» вместо «Дневника», навигация Сегодня · Рецепты · Кладовая · Покупки (этап 3).
-4. `feat/cook-recipe` — готовка, «Приготовленные» (порции), «История»; скриншоты вариантов 2 и 3 вкладок на выбор пользователю (этап 4).
+1. `feat/brand-mark-m` — знак «м» (этап 1) — влит в `dev`.
+2. `feat/pantry-in-stock` — кладовая только «в наличии», поиск → «в кладовую»/«в покупки» (этап 2) — влит в `dev`.
+3. `feat/recipes` — раздел «Рецепты» вместо «Дневника», навигация Сегодня · Рецепты · Кладовая · Покупки (этап 3) — **реализован, не закоммичен**, ждёт решения пользователя (коммит/merge/пауза — спрашивать вариантами, см. память).
+4. `feat/cook-recipe` — готовка со списанием, «Приготовленные» (порции), «История»; скриншоты вариантов 2 и 3 вкладок на выбор пользователю (этап 4) — следующий.
 
-Подробности этапов — `docs/ROADMAP.md`.
+Подробности этапов — `docs/ROADMAP.md`. Отчёты пользователь просит в виде таблиц.
 
 ## Git
 
-- Текущая ветка: `feat/pantry-in-stock` (от `dev` @ `872520d`), изменения не закоммичены.
-- `dev` → `872520d` (merge `feat/brand-mark-m`; до него `57b69a5` — merge `feat/shopping-list`), с разрешения пользователя 2026-11-05. `main` → `dba56c8` (не менялся с введения правил).
+- Текущая ветка: `feat/recipes` (от `dev` @ `58023b2`), изменения не закоммичены.
+- `dev` → `58023b2` (merge `feat/pantry-in-stock`; ранее `872520d` — `feat/brand-mark-m`, `57b69a5` — `feat/shopping-list`), всё с разрешения пользователя 2026-11-05. `main` → `dba56c8` (не менялся с введения правил).
 - Удалённого репозитория нет, push не выполнялся, CI нет.
-- Влитые рабочие ветки (не удалялись — удаление только с разрешения): `chore/monorepo-setup`, `chore/frontend-init`, `chore/eslint-setup`, `feat/pwa`, `feat/shared-ui`, `feat/products`, `feat/diary`, `feat/dashboard`, `chore/skills-setup` (в `main` до правил); `test/vitest-setup`, `docs/git-rules`, `docs/ai-delegation`, `docs/milo-foundation`, `chore/rename-milo`, `docs/session-context`, `feat/design-tokens`, `feat/brand-assets`, `feat/product-units`, `feat/shopping-list`, `feat/brand-mark-m` (в `dev`).
+- Влитые рабочие ветки (не удалялись — удаление только с разрешения): `chore/monorepo-setup`, `chore/frontend-init`, `chore/eslint-setup`, `feat/pwa`, `feat/shared-ui`, `feat/products`, `feat/diary`, `feat/dashboard`, `chore/skills-setup` (в `main` до правил); `test/vitest-setup`, `docs/git-rules`, `docs/ai-delegation`, `docs/milo-foundation`, `chore/rename-milo`, `docs/session-context`, `feat/design-tokens`, `feat/brand-assets`, `feat/product-units`, `feat/shopping-list`, `feat/brand-mark-m`, `feat/pantry-in-stock` (в `dev`).
 
 ## Что работает в приложении
 
-PWA (офлайн, установка), мобильная вёрстка. Нижняя навигация: **Сегодня · Дневник · Кладовая · Покупки** (вкладка «Рецепты» добавится в шаге 8). Профиль — кнопка в верхнем ряду каждой страницы (справа).
+PWA (офлайн, установка), мобильная вёрстка. Нижняя навигация: **Сегодня · Рецепты · Кладовая · Покупки** (иконки: тарелка, кастрюля, банка, корзина). Профиль — кнопка в верхнем ряду страниц. `/diary` → `/`, `/products` → `/pantry`.
 
-- Кладовая (`/pantry`, `/products` → редирект; ветка `feat/pantry-in-stock`): показывает только продукты в наличии («В наличии: N»), вкладок нет. Поиск — по всем продуктам, сначала то, что есть дома; на каждой карточке «+» (в кладовую, диалог количества), корзина (в покупки, ✓ — уже в списке), ✎ (изменить). Ничего не найдено → «Создать продукт» с названием из поиска. Продукты: КБЖУ на 100 г/мл, единицы г/мл/шт, остаток, минимальный остаток; бейджи «Закончился»/«Заканчивается» у отслеживаемых (`minStock > 0`).
-- **Покупки** (`/shopping`, шаг 7, в `dev`): позиции «Купить» / «Куплено» с чекбоксами, удаление позиции; «Перенести купленное в кладовую (N)» — прибавляет к остаткам и убирает перенесённое; блок «Заканчиваются в кладовой» — подсказки для отслеживаемых продуктов ниже минимума, которых нет в списке (добавляются только нажатием, без автодобавления). Количество по умолчанию — недостающее до минимума. Повторное добавление продукта суммирует количество. Позиции удалённых продуктов и со сменившейся единицей не переносятся и помечаются.
-- Дневник: приёмы пищи по дням, КБЖУ, списание с остатка и возврат при удалении записи.
-- Сводка дня (кольцо калорий, БЖУ), переключение дней, дневная цель, карточка установки.
-- Айдентика MILO: знак «м» с мятной точкой (с 2026-11-05; до этого — три столбика), логотип, палитра «Орбита», Onest/Unbounded, светлая и тёмная тема, иконки PWA; данные в `localStorage` под `milo:*` (миграция со старых ключей).
+- **Сегодня** (`/`): сводка дня (кольцо калорий, БЖУ), переключение дней, приёмы пищи (бывший «Дневник»): записи по дням, списание с остатка и возврат при удалении.
+- **Рецепты** (`/recipes`, ветка `feat/recipes`): вкладки «Рецепты» / «Приготовленные» / «История» (вкладка в адресе `?tab=`; две последние пока — пустые состояния до этапа 4). Список с поиском; карточка — порции, число ингредиентов, ккал на порцию, бейдж наличия («Всё есть» / «Не всего хватает» / «Нет продуктов»). Создание и правка рецепта: название, порции, ингредиенты — только продукты кладовой (выпадающий список), количество в единице продукта, без дублей.
+- **Рецепт** (`/recipes/:id`): выбор порций (− / +, пересчёт количеств), по каждому ингредиенту — нужно / есть / не хватает и статус (Хватает / Частично / Нет), КБЖУ на порцию и всего; «Изменить» (с удалением).
+- **Кладовая** (`/pantry`): только продукты в наличии («В наличии: N»). Поиск — по всем продуктам, сначала то, что есть дома; на карточке «+» (в кладовую), корзина (в покупки), ✎. Ничего не найдено → «Создать продукт» с названием из поиска. Единицы г/мл/шт, минимальный остаток, бейджи «Закончился»/«Заканчивается».
+- **Покупки** (`/shopping`): «Купить» / «Куплено», перенос купленного в кладовую, подсказки «Заканчиваются в кладовой» (без автодобавления).
+- Айдентика: знак «м» с мятной точкой, палитра «Орбита», Onest/Unbounded, светлая и тёмная тема; данные в `localStorage` под `milo:*`.
 
 ## Чего ещё нет (по плану)
 
-Рецепты (шаг 8), готовка со списанием (шаг 9), e2e-смоук этапа B целиком. Этап C — по отдельным решениям пользователя.
+Готовка со списанием, «Приготовленные» и «История» (этап 4), e2e-смоук этапа B целиком. Этап C — по отдельным решениям пользователя.
 
 ## Структура фронтенда (FSD)
 
-- `app`: layouts, providers (router, ErrorBoundary), styles
-- `pages`: dashboard, diary, pantry, profile, shopping
-- `widgets`: bottom-nav, daily-summary, meal-list, product-list, profile-link, shopping-list
-- `features`: add-meal-entry, add-to-shopping-list, install-app, manage-product, remove-meal-entry, restock-from-shopping (`planRestock` — чистая функция), search-products, select-date, set-daily-goal
-- `entities`: meal-entry (persist v2), product (persist v2; `getStockStatus`, `needsRestock`, `suggestPurchaseAmount`), shopping-item (persist v1, ключ `milo:shopping`, слияние по `productId`), user-goal (persist v1); миграции — `model/migrations.ts`
-- `shared`: api (заготовка), config (routes), lib (cn, id, number, storage, date, nutrition, units), ui (Button, Card, EmptyState, Input, Logo, Modal, PageLayout, ProgressRing, SegmentedControl, Skeleton)
+- `app`: layouts, providers (router, ErrorBoundary; интеграционный тест раздела рецептов и навигации — `recipesFlow.test.tsx`), styles
+- `pages`: dashboard, pantry, profile, recipe, recipes, shopping (`diary` удалена)
+- `widgets`: bottom-nav, daily-summary, meal-list, product-list, profile-link, recipe-details, recipe-list, shopping-list
+- `features`: add-meal-entry, add-to-shopping-list, install-app, manage-product, manage-recipe, remove-meal-entry, restock-from-shopping, search-products, select-date, set-daily-goal, stock-product
+- `entities`: meal-entry (persist v2), product (persist v2), recipe (persist v1, `milo:recipes`; `checkAvailability`, `recipeNutrition`, `RecipeSource` + `localRecipeSource`; продукт описан структурным типом `IngredientProduct` — FSD запрещает импорт между сущностями), shopping-item (persist v1), user-goal (persist v1); миграции — `model/migrations.ts`
+- `shared`: api (заготовка), config (routes, `recipePath`), lib (cn, id, number, storage, date, nutrition, units), ui (AmountForm, Button, Card, EmptyState, Input, Logo, Modal, PageLayout, ProgressRing, SegmentedControl, Skeleton)
 
-## Качество (последний прогон на `feat/pantry-in-stock`, 2026-11-05)
+## Качество (последний прогон на `feat/recipes`, 2026-11-05)
 
-| Проверка                         | Результат                                                                                                      |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Тесты (`npm test`, Vitest)       | 27 файлов, 199 тестов, все прошли, 0 пропущено (на `dev` после этапа 1: 190)                                   |
-| TypeScript (`npm run typecheck`) | без ошибок                                                                                                     |
-| ESLint (`npm run lint`)          | без ошибок                                                                                                     |
-| Build (`npm run build`)          | успешно                                                                                                        |
-| Prettier                         | без замечаний                                                                                                  |
-| E2E-смоук (вне репозитория)      | 360×780, светлая и тёмная тема: кладовая → покупки → перенос → перезагрузка; ошибок консоли и переполнения нет |
-| CI                               | отсутствует                                                                                                    |
+| Проверка                         | Результат                                                                                                                                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Тесты (`npm test`, Vitest)       | 32 файла, 224 теста, все прошли, 0 пропущено (на `dev` после этапа 2: 199)                                                                                                                 |
+| TypeScript (`npm run typecheck`) | без ошибок                                                                                                                                                                                 |
+| ESLint (`npm run lint`)          | без ошибок                                                                                                                                                                                 |
+| Build (`npm run build`)          | успешно                                                                                                                                                                                    |
+| Prettier                         | без замечаний                                                                                                                                                                              |
+| E2E-смоук (вне репозитория)      | 360×780, светлая и тёмная тема: кладовая → создать рецепт (3 ингредиента) → список → страница рецепта → порции → перезагрузка → вкладки; `/diary` → `/`; ошибок консоли и переполнения нет |
+| CI                               | отсутствует                                                                                                                                                                                |
 
 ## Окружение
 
 - Windows 10, Node 22.23, npm 10.9, Git 2.51; путь проекта `F:\Desktop\MILO`. Python в системе нет.
-- Ollama (`qwen2.5-coder:7b`, MCP-сервер `ollama`): работает (0.40.14); 2026-11-05 утром была недоступна — шаг 7 сделан Claude Code целиком. В этапе 1 модель написала `favicon.svg` (с первой попытки, убрана только markdown-обёртка). Headless Edge не снимает скриншоты SVG-документов — проверять SVG через компонент в приложении.
+- Ollama (`qwen2.5-coder:7b`, MCP-сервер `ollama`): работает (0.40.14). Делала: `favicon.svg`; тесты `AddToPantryButton`; `RecipeCard`; тесты `checkAvailability` и миграций рецептов. Типичные огрехи: теряет пункты ТЗ (пропустила интерфейс пропсов), добавляет лишние проверки с неверными числами, забывает `?.` при `noUncheckedIndexedAccess` — всё проверять и прогонять. Headless Edge не снимает скриншоты SVG-документов.
 - E2E: `playwright-core@1.48.2` + системный Edge (`C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe`) из временной папки сессии; сервер — `npx vite preview --port N` из `frontend/` (аргументы через `npm run preview` не прокидываются).
 - В Bash-инструменте heredoc с кириллицей в длинных командах может не разобраться — файлы создавать инструментом Write.
 
