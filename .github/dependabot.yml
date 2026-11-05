@@ -1,4 +1,6 @@
 # Еженедельные предложения обновлений (pull request в dev). Обновления — только через PR с зелёным CI.
+# Мажорные версии не предлагаются: это смена стека (TypeScript закреплён на ~5.9, React 18, ESLint 9 —
+# решения №10 и №16), она делается отдельной задачей с одобрения пользователя.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -6,6 +8,9 @@ updates:
     target-branch: dev
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: npm
     directory: /
@@ -13,8 +18,14 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
     groups:
-      # Мелкие обновления dev-зависимостей — одним PR, чтобы не засорять список
+      # Мелкие обновления — одним PR на группу, чтобы не засорять список
       dev-dependencies:
         dependency-type: development
+        update-types: [minor, patch]
+      production-dependencies:
+        dependency-type: production
         update-types: [minor, patch]
