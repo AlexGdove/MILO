@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { cn, formatAmount, formatGrams, formatKcal } from '@/shared/lib';
 
 import styles from './ProductCard.module.css';
-import { getStockStatus } from '../lib/stockStatus';
+import { getStockStatus, needsRestock } from '../lib/stockStatus';
 import type { Product } from '../model/types';
 
 interface ProductCardProps {
@@ -19,7 +19,16 @@ export const ProductCard = ({ product, actions }: ProductCardProps) => {
   return (
     <article className={styles.card}>
       <div className={styles.info}>
-        <h3 className={styles.name}>{product.name}</h3>
+        <div className={styles.titleRow}>
+          <h3 className={styles.name}>{product.name}</h3>
+          {needsRestock(product) && (
+            <span
+              className={cn(styles.badge, status === 'out' ? styles.badgeOut : styles.badgeLow)}
+            >
+              {status === 'out' ? 'Закончился' : 'Заканчивается'}
+            </span>
+          )}
+        </div>
         <p className={styles.macros}>
           <span className={styles.kcal}>{formatKcal(kcal)} ккал</span> · Б {formatGrams(protein)} ·
           Ж {formatGrams(fat)} · У {formatGrams(carbs)}{' '}

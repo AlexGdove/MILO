@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { filterProducts, ProductCard, selectProducts, useProductStore } from '@/entities/product';
+import { AddToShoppingButton } from '@/features/add-to-shopping-list';
 import { EditProductButton } from '@/features/manage-product';
 import { ProductSearch } from '@/features/search-products';
 import { cn } from '@/shared/lib';
@@ -50,7 +51,15 @@ export const ProductList = () => {
         <ul className={styles.list}>
           {visible.map((product) => (
             <li key={product.id}>
-              <ProductCard product={product} actions={<EditProductButton product={product} />} />
+              <ProductCard
+                product={product}
+                actions={
+                  <>
+                    <AddToShoppingButton product={product} compact />
+                    <EditProductButton product={product} />
+                  </>
+                }
+              />
             </li>
           ))}
         </ul>

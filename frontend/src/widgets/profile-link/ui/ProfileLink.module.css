@@ -1,0 +1,27 @@
+.link {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  /* в верхнем ряду страницы всегда прижата вправо, даже если она там одна */
+  margin-inline-start: auto;
+  justify-content: center;
+  width: var(--icon-button-size);
+  height: var(--icon-button-size);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+}
+
+.link:hover {
+  color: var(--color-primary);
+}
+
+.link:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.link svg {
+  width: var(--icon-size-sm);
+  height: var(--icon-size-sm);
+}

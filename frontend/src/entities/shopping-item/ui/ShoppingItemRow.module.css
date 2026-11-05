@@ -1,0 +1,55 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.checkbox {
+  flex-shrink: 0;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+  cursor: pointer;
+}
+
+.name {
+  overflow: hidden;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.amount {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.note {
+  font-size: var(--text-sm);
+  color: var(--color-warning);
+}
+
+.checked .name {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-1);
+}
