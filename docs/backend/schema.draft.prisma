@@ -1,0 +1,264 @@
+// Черновик схемы backend MILO (этап 2). Спецификация — docs/backend/database.md.
+// На этапе 4 переносится в backend/prisma/schema.prisma; URL базы — в prisma.config.ts (Prisma 7).
+// Вне схемы, в начальной миграции (SQL): расширение pg_trgm и GIN-индекс по lower(name)
+// в public_recipes; CHECK «ровно одно из ticket_id / report_id» в telegram_message_links;
+// CHECK диапазонов КБЖУ и количеств; частичный индекс outbox_events WHERE processed_at IS NULL.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Unit {
+  g
+  ml
+  pcs
+
+  @@map("unit")
+}
+
+enum RecipeStatus {
+  published
+  hidden
+
+  @@map("recipe_status")
+}
+
+enum ReportReason {
+  spam
+  offensive
+  not_food
+  other
+
+  @@map("report_reason")
+}
+
+enum ReportStatus {
+  open
+  accepted
+  dismissed
+
+  @@map("report_status")
+}
+
+enum ModerationActionType {
+  hide_recipe
+  restore_recipe
+  dismiss_reports
+  block_key
+  unblock_key
+
+  @@map("moderation_action")
+}
+
+enum TicketStatus {
+  open
+  answered
+  closed
+
+  @@map("ticket_status")
+}
+
+enum MessageAuthor {
+  user
+  operator
+
+  @@map("message_author")
+}
+
+/// Анонимный ключ устройства (B-8). Сам ключ не хранится — только SHA-256.
+model DeviceKey {
+  id         String    @id @default(uuid()) @db.Uuid
+  keyHash    String    @unique @map("key_hash") @db.Char(64)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastSeenAt DateTime? @map("last_seen_at") @db.Timestamptz(6)
+  blockedAt  DateTime? @map("blocked_at") @db.Timestamptz(6)
+
+  recipes         PublicRecipe[]
+  reports         RecipeReport[]
+  tickets         SupportTicket[]
+  idempotencyKeys IdempotencyKey[]
+
+  @@map("device_keys")
+}
+
+/// Опубликованный рецепт (B-7). КБЖУ на порцию вычисляет сервер из снимка ингредиентов.
+model PublicRecipe {
+  id                String       @id @default(uuid()) @db.Uuid
+  authorKeyId       String       @map("author_key_id") @db.Uuid
+  name              String       @db.VarChar(120)
+  servings          Int          @db.SmallInt
+  kcalPerServing    Decimal      @map("kcal_per_serving") @db.Decimal(8, 2)
+  proteinPerServing Decimal      @map("protein_per_serving") @db.Decimal(8, 2)
+  fatPerServing     Decimal      @map("fat_per_serving") @db.Decimal(8, 2)
+  carbsPerServing   Decimal      @map("carbs_per_serving") @db.Decimal(8, 2)
+  status            RecipeStatus @default(published)
+  version           Int          @default(1)
+  publishedAt       DateTime     @default(now()) @map("published_at") @db.Timestamptz(6)
+  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  author            DeviceKey                @relation(fields: [authorKeyId], references: [id], onDelete: Cascade)
+  ingredients       PublicRecipeIngredient[]
+  reports           RecipeReport[]
+  moderationActions ModerationAction[]
+
+  @@index([status, publishedAt(sort: Desc), id])
+  @@index([authorKeyId])
+  @@map("public_recipes")
+}
+
+/// Снимок ингредиента на момент публикации (ADR-0002). КБЖУ — на 100 г.
+model PublicRecipeIngredient {
+  id          String   @id @default(uuid()) @db.Uuid
+  recipeId    String   @map("recipe_id") @db.Uuid
+  position    Int      @db.SmallInt
+  name        String   @db.VarChar(80)
+  amount      Decimal  @db.Decimal(10, 2)
+  unit        Unit
+  pieceWeight Decimal? @map("piece_weight") @db.Decimal(8, 2)
+  kcal        Decimal  @db.Decimal(6, 2)
+  protein     Decimal  @db.Decimal(6, 2)
+  fat         Decimal  @db.Decimal(6, 2)
+  carbs       Decimal  @db.Decimal(6, 2)
+
+  recipe PublicRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([recipeId, position])
+  @@map("public_recipe_ingredients")
+}
+
+/// Жалоба на рецепт (B-9): одна от устройства на рецепт.
+model RecipeReport {
+  id            String       @id @default(uuid()) @db.Uuid
+  recipeId      String       @map("recipe_id") @db.Uuid
+  reporterKeyId String       @map("reporter_key_id") @db.Uuid
+  reason        ReportReason
+  comment       String?      @db.VarChar(500)
+  status        ReportStatus @default(open)
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  resolvedAt    DateTime?    @map("resolved_at") @db.Timestamptz(6)
+
+  recipe        PublicRecipe          @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  reporter      DeviceKey             @relation(fields: [reporterKeyId], references: [id], onDelete: Cascade)
+  telegramLinks TelegramMessageLink[]
+
+  @@unique([recipeId, reporterKeyId])
+  @@index([status, createdAt])
+  @@map("recipe_reports")
+}
+
+/// Оператор поддержки и модерации в Telegram (B-10). Добавляется командой сервера, не через API.
+model Operator {
+  id             String   @id @default(uuid()) @db.Uuid
+  telegramUserId BigInt   @unique @map("telegram_user_id")
+  displayName    String   @map("display_name") @db.VarChar(64)
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actions  ModerationAction[]
+  messages SupportMessage[]
+
+  @@map("operators")
+}
+
+/// Журнал модерации; переживает удаление рецепта и ключа.
+model ModerationAction {
+  id          String               @id @default(uuid()) @db.Uuid
+  operatorId  String               @map("operator_id") @db.Uuid
+  recipeId    String?              @map("recipe_id") @db.Uuid
+  deviceKeyId String?              @map("device_key_id") @db.Uuid
+  action      ModerationActionType
+  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  operator Operator      @relation(fields: [operatorId], references: [id], onDelete: Restrict)
+  recipe   PublicRecipe? @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+
+  @@map("moderation_actions")
+}
+
+/// Анонимное обращение в поддержку (B-10).
+model SupportTicket {
+  id          String       @id @default(uuid()) @db.Uuid
+  number      Int          @unique @default(autoincrement())
+  deviceKeyId String       @map("device_key_id") @db.Uuid
+  status      TicketStatus @default(open)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  deviceKey     DeviceKey             @relation(fields: [deviceKeyId], references: [id], onDelete: Cascade)
+  messages      SupportMessage[]
+  telegramLinks TelegramMessageLink[]
+
+  @@index([deviceKeyId, updatedAt(sort: Desc)])
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id         String        @id @default(uuid()) @db.Uuid
+  ticketId   String        @map("ticket_id") @db.Uuid
+  author     MessageAuthor
+  operatorId String?       @map("operator_id") @db.Uuid
+  text       String        @db.VarChar(4000)
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  ticket   SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  operator Operator?     @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+
+  @@index([ticketId, createdAt, id])
+  @@map("support_messages")
+}
+
+/// Сообщение бота в чате операторов → обращение или жалоба (ответ оператора reply-сообщением).
+model TelegramMessageLink {
+  chatId    BigInt   @map("chat_id")
+  messageId Int      @map("message_id")
+  ticketId  String?  @map("ticket_id") @db.Uuid
+  reportId  String?  @map("report_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  ticket SupportTicket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  report RecipeReport?  @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@id([chatId, messageId])
+  @@map("telegram_message_links")
+}
+
+/// Дедупликация обновлений Telegram; строки старше 7 дней удаляются.
+model TelegramUpdate {
+  updateId   BigInt   @id @map("update_id")
+  receivedAt DateTime @default(now()) @map("received_at") @db.Timestamptz(6)
+
+  @@map("telegram_updates")
+}
+
+/// Исходящие события (ADR-0003), пишутся в одной транзакции с изменением.
+model OutboxEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  type        String    @db.VarChar(64)
+  payload     Json      @db.JsonB
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  processedAt DateTime? @map("processed_at") @db.Timestamptz(6)
+  attempts    Int       @default(0)
+  lastError   String?   @map("last_error") @db.VarChar(500)
+
+  @@map("outbox_events")
+}
+
+/// Сохранённые ответы на POST с заголовком Idempotency-Key; строки старше 24 ч удаляются.
+model IdempotencyKey {
+  deviceKeyId String   @map("device_key_id") @db.Uuid
+  key         String   @db.VarChar(64)
+  requestHash String   @map("request_hash") @db.Char(64)
+  statusCode  Int      @map("status_code") @db.SmallInt
+  response    Json     @db.JsonB
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  deviceKey DeviceKey @relation(fields: [deviceKeyId], references: [id], onDelete: Cascade)
+
+  @@id([deviceKeyId, key])
+  @@map("idempotency_keys")
+}
