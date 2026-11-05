@@ -2,7 +2,7 @@ import type { IsoDate, Nutrients, Unit } from '@/shared/lib';
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-/** Откуда запись: продукт из кладовой или приготовленное блюдо (рецепт). */
+/** Откуда запись: продукт из кладовой или приготовленное блюдо (id — у `entities/cooked-dish`). */
 export interface MealEntrySource {
   type: 'product' | 'recipe';
   id: string;
@@ -21,7 +21,10 @@ export interface MealEntry {
   unit: Unit;
   /** Вес в граммах — для расчёта КБЖУ */
   grams: number;
-  /** Сколько списано с остатка, в единице продукта (вернётся при удалении записи) */
+  /**
+   * Сколько списано (вернётся при удалении записи): для продукта — с остатка, в единице продукта;
+   * для приготовленного блюда — число порций.
+   */
   stockDeducted: number;
   createdAt: number;
 }

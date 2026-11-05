@@ -2,7 +2,9 @@ import { useSearchParams } from 'react-router-dom';
 
 import { AddRecipeButton } from '@/features/manage-recipe';
 import { cn } from '@/shared/lib';
-import { EmptyState, PageLayout } from '@/shared/ui';
+import { PageLayout } from '@/shared/ui';
+import { CookedDishes } from '@/widgets/cooked-dishes';
+import { CookingHistory } from '@/widgets/cooking-history';
 import { ProfileLink } from '@/widgets/profile-link';
 import { RecipeList } from '@/widgets/recipe-list';
 
@@ -10,6 +12,7 @@ import styles from './RecipesPage.module.css';
 
 type RecipesTab = 'all' | 'cooked' | 'history';
 
+/** Три вкладки — выбор пользователя по скриншотам (решение №25). */
 const TABS: ReadonlyArray<{ value: RecipesTab; label: string }> = [
   { value: 'all', label: 'Рецепты' },
   { value: 'cooked', label: 'Приготовленные' },
@@ -19,7 +22,7 @@ const TABS: ReadonlyArray<{ value: RecipesTab; label: string }> = [
 const isTab = (value: string | null): value is RecipesTab =>
   TABS.some((tab) => tab.value === value);
 
-/** Раздел «Рецепты» (решение №25). Вкладка хранится в адресе (?tab=), чтобы «назад» возвращал на неё. */
+/** Раздел «Рецепты». Вкладка хранится в адресе (?tab=), чтобы «назад» возвращал на неё. */
 export const RecipesPage = () => {
   const [params, setParams] = useSearchParams();
   const rawTab = params.get('tab');
@@ -44,18 +47,8 @@ export const RecipesPage = () => {
         ))}
       </div>
       {tab === 'all' && <RecipeList />}
-      {tab === 'cooked' && (
-        <EmptyState
-          title="Пока ничего не приготовлено"
-          description="Здесь появятся готовые блюда с оставшимися порциями"
-        />
-      )}
-      {tab === 'history' && (
-        <EmptyState
-          title="История пуста"
-          description="Здесь будет журнал готовки и съеденного по дням"
-        />
-      )}
+      {tab === 'cooked' && <CookedDishes />}
+      {tab === 'history' && <CookingHistory />}
     </PageLayout>
   );
 };

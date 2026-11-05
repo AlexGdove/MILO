@@ -7,8 +7,9 @@
 }
 
 .tab {
-  flex: 1;
-  min-width: 0;
+  /* ширина по подписи: при 360 px «Приготовленные» не обрезается */
+  flex: 1 1 auto;
+  white-space: nowrap;
   min-height: var(--control-height-sm);
   padding: 0 var(--space-2);
   border: none;
