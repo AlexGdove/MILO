@@ -3,14 +3,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { selectCookedDishes, useCookedDishStore, type CookedDish } from '@/entities/cooked-dish';
 import type { MealType } from '@/entities/meal-entry';
 import { filterProducts, selectProducts, useProductStore, type Product } from '@/entities/product';
-import { recipeNutrition, selectRecipes, useRecipeStore, type Recipe } from '@/entities/recipe';
 import { formatAmount, formatKcal, formatPortions, type IsoDate } from '@/shared/lib';
 import { Input } from '@/shared/ui';
 
 import styles from './AddMealEntryForm.module.css';
 import { DishEntryForm } from './DishEntryForm';
 import { ProductEntryForm } from './ProductEntryForm';
-import { RecipeEntryForm } from './RecipeEntryForm';
 
 interface AddMealEntryFormProps {
   date: IsoDate;
@@ -18,30 +16,23 @@ interface AddMealEntryFormProps {
   onDone: () => void;
 }
 
-type Selection =
-  | { kind: 'dish'; dish: CookedDish }
-  | { kind: 'recipe'; recipe: Recipe }
-  | { kind: 'product'; product: Product };
+type Selection = { kind: 'dish'; dish: CookedDish } | { kind: 'product'; product: Product };
 
 /** Ключ варианта в списке — чтобы после «← Другой …» вернуться к нему. */
 const optionKey = (selection: Selection) =>
-  selection.kind === 'dish'
-    ? `dish:${selection.dish.id}`
-    : selection.kind === 'recipe'
-      ? `recipe:${selection.recipe.id}`
-      : `product:${selection.product.id}`;
+  selection.kind === 'dish' ? `dish:${selection.dish.id}` : `product:${selection.product.id}`;
 
 const matches = (name: string, query: string) =>
   name.toLocaleLowerCase('ru-RU').includes(query.trim().toLocaleLowerCase('ru-RU'));
 
 /**
- * «Добавить еду» (решение №27): приготовленные блюда, рецепты и продукты в одном поиске.
+ * «Добавить еду» (решения №27, №45): приготовленные блюда и продукты в одном поиске.
+ * Рецепты сюда не попадают: неприготовленное не съесть — сначала «Приготовить» в «Рецептах».
  * После выбора — своя форма для каждого источника. «← Другой …» возвращает к тому же поиску:
  * запрос сохраняется, список прокручен к выбранному варианту, фокус — на нём.
  */
 export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntryFormProps) => {
   const products = useProductStore(selectProducts);
-  const recipes = useRecipeStore(selectRecipes);
   const dishes = useCookedDishStore(selectCookedDishes);
   const [query, setQuery] = useState('');
   const [selection, setSelection] = useState<Selection | null>(null);
@@ -73,27 +64,21 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
       onChangeSource: () => setSelection(null),
     };
     if (selection.kind === 'dish') return <DishEntryForm dish={selection.dish} {...common} />;
-    if (selection.kind === 'recipe') {
-      return <RecipeEntryForm recipe={selection.recipe} {...common} />;
-    }
     return <ProductEntryForm product={selection.product} {...common} />;
   }
 
   const foundDishes = available.filter((dish) => matches(dish.name, query));
-  const foundRecipes = recipes
-    .filter((recipe) => matches(recipe.name, query))
-    .sort((a, b) => a.name.localeCompare(b.name, 'ru-RU'));
   const foundProducts = filterProducts(products, query)
     .slice()
     .sort((a, b) => Number(b.stock > 0) - Number(a.stock > 0) || a.name.localeCompare(b.name));
-  const nothing = foundDishes.length + foundRecipes.length + foundProducts.length === 0;
+  const nothing = foundDishes.length + foundProducts.length === 0;
 
   return (
     <div className={styles.picker} ref={pickerRef}>
       <Input
         type="search"
-        placeholder="Продукт, блюдо или рецепт"
-        aria-label="Найти продукт, блюдо или рецепт"
+        placeholder="Продукт или приготовленное блюдо"
+        aria-label="Найти продукт или блюдо"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
       />
@@ -114,28 +99,6 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
                     <span className={styles.optionMeta}>
                       осталось {formatPortions(dish.servingsLeft)} порц. ·{' '}
                       {formatKcal((dish.per100g.kcal * dish.portionGrams) / 100)} ккал/порц.
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-        {foundRecipes.length > 0 && (
-          <section aria-label="Рецепты">
-            <h3 className={styles.group}>Рецепты</h3>
-            <ul className={styles.list}>
-              {foundRecipes.map((recipe) => (
-                <li key={recipe.id}>
-                  <button
-                    type="button"
-                    className={styles.option}
-                    data-option={`recipe:${recipe.id}`}
-                    onClick={() => choose({ kind: 'recipe', recipe })}
-                  >
-                    <span className={styles.optionName}>{recipe.name}</span>
-                    <span className={styles.optionMeta}>
-                      {formatKcal(recipeNutrition(recipe, products).perServing.kcal)} ккал/порц.
                     </span>
                   </button>
                 </li>
@@ -168,7 +131,7 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
         )}
         {nothing && (
           <p className={styles.empty}>
-            Ничего не найдено — добавьте продукт в «Кладовой» или рецепт в «Рецептах»
+            Ничего не найдено — добавьте продукт в «Кладовой» или приготовьте блюдо в «Рецептах»
           </p>
         )}
       </div>
