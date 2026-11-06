@@ -42,10 +42,10 @@ export class DeviceKeysController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(DeviceKeyGuard)
   @AllowBlockedDeviceKey()
-  @RateLimit('recipeWrite')
+  @RateLimit('deviceDataDelete')
   @ApiSecurity('device-key')
   @ApiOperation({
-    summary: 'Удалить ключ и всё, что связано с устройством (рецепты, жалобы)',
+    summary: 'Удалить ключ и всё, что связано с устройством (предложения, обращения)',
     description: 'Разрешено и заблокированному ключу: право стереть свои данные не отнимается',
   })
   @ApiNoContentResponse()

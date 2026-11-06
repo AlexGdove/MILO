@@ -2,9 +2,8 @@ import type { PrismaService } from '../../src/prisma/prisma.service.js';
 
 const TABLES = [
   'device_keys',
-  'public_recipes',
-  'public_recipe_ingredients',
-  'recipe_reports',
+  'products',
+  'product_submissions',
   'operators',
   'moderation_actions',
   'support_tickets',

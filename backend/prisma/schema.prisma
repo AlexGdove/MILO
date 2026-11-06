@@ -21,34 +21,26 @@ enum Unit {
   @@map("unit")
 }
 
-enum RecipeStatus {
-  published
-  hidden
+/// Предложение продукта: на проверке у человека / принято в общую базу / отклонено (B-18).
+enum SubmissionStatus {
+  pending
+  approved
+  rejected
 
-  @@map("recipe_status")
+  @@map("submission_status")
 }
 
-enum ReportReason {
-  spam
-  offensive
-  not_food
-  other
+/// Кто решил: автомодерация или оператор.
+enum ReviewedBy {
+  auto
+  operator
 
-  @@map("report_reason")
-}
-
-enum ReportStatus {
-  open
-  accepted
-  dismissed
-
-  @@map("report_status")
+  @@map("reviewed_by")
 }
 
 enum ModerationActionType {
-  hide_recipe
-  restore_recipe
-  dismiss_reports
+  approve_submission
+  reject_submission
   block_key
   unblock_key
 
@@ -70,7 +62,7 @@ enum MessageAuthor {
   @@map("message_author")
 }
 
-/// Анонимный ключ устройства (B-8). Сам ключ не хранится — только SHA-256.
+/// Анонимный ключ устройства (B-8): один на продукты и поддержку. Сам ключ не хранится — только SHA-256.
 model DeviceKey {
   id         String    @id @default(uuid()) @db.Uuid
   keyHash    String    @unique @map("key_hash") @db.Char(64)
@@ -78,82 +70,71 @@ model DeviceKey {
   lastSeenAt DateTime? @map("last_seen_at") @db.Timestamptz(6)
   blockedAt  DateTime? @map("blocked_at") @db.Timestamptz(6)
 
-  recipes         PublicRecipe[]
-  reports         RecipeReport[]
+  submissions     ProductSubmission[]
   tickets         SupportTicket[]
   idempotencyKeys IdempotencyKey[]
 
   @@map("device_keys")
 }
 
-/// Опубликованный рецепт (B-7). КБЖУ на порцию вычисляет сервер из снимка ингредиентов.
-model PublicRecipe {
-  id                String       @id @default(uuid()) @db.Uuid
-  authorKeyId       String       @map("author_key_id") @db.Uuid
-  name              String       @db.VarChar(120)
-  servings          Int          @db.SmallInt
-  kcalPerServing    Decimal      @map("kcal_per_serving") @db.Decimal(8, 2)
-  proteinPerServing Decimal      @map("protein_per_serving") @db.Decimal(8, 2)
-  fatPerServing     Decimal      @map("fat_per_serving") @db.Decimal(8, 2)
-  carbsPerServing   Decimal      @map("carbs_per_serving") @db.Decimal(8, 2)
-  status            RecipeStatus @default(published)
-  version           Int          @default(1)
-  publishedAt       DateTime     @default(now()) @map("published_at") @db.Timestamptz(6)
-  updatedAt         DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  author            DeviceKey                @relation(fields: [authorKeyId], references: [id], onDelete: Cascade)
-  ingredients       PublicRecipeIngredient[]
-  reports           RecipeReport[]
-  moderationActions ModerationAction[]
-
-  @@index([status, publishedAt(sort: Desc), id])
-  @@index([authorKeyId])
-  /// Поиск по подстроке названия (ILIKE) — триграммы, расширение pg_trgm
-  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "public_recipes_name_trgm_idx")
-  @@map("public_recipes")
-}
-
-/// Снимок ингредиента на момент публикации (ADR-0002). КБЖУ — на 100 г.
-model PublicRecipeIngredient {
+/// Общая база продуктов (B-18): только принятые предложения. КБЖУ — на 100 г.
+model Product {
   id          String   @id @default(uuid()) @db.Uuid
-  recipeId    String   @map("recipe_id") @db.Uuid
-  position    Int      @db.SmallInt
-  name        String   @db.VarChar(80)
-  amount      Decimal  @db.Decimal(10, 2)
+  name        String   @db.VarChar(120)
+  brand       String?  @db.VarChar(80)
+  /// EAN-8 / UPC-A / EAN-13 / GTIN-14 — только цифры, контрольная цифра проверяется API
+  barcode     String?  @unique @db.VarChar(14)
   unit        Unit
   pieceWeight Decimal? @map("piece_weight") @db.Decimal(8, 2)
   kcal        Decimal  @db.Decimal(6, 2)
   protein     Decimal  @db.Decimal(6, 2)
   fat         Decimal  @db.Decimal(6, 2)
   carbs       Decimal  @db.Decimal(6, 2)
+  createdAt   DateTime @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  recipe PublicRecipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  submissions ProductSubmission[]
 
-  @@unique([recipeId, position])
-  @@map("public_recipe_ingredients")
+  @@index([createdAt(sort: Desc), id])
+  /// Поиск по подстроке названия (ILIKE) — триграммы, расширение pg_trgm
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "products_name_trgm_idx")
+  @@map("products")
 }
 
-/// Жалоба на рецепт (B-9): одна от устройства на рецепт.
-model RecipeReport {
-  id            String       @id @default(uuid()) @db.Uuid
-  recipeId      String       @map("recipe_id") @db.Uuid
-  reporterKeyId String       @map("reporter_key_id") @db.Uuid
-  reason        ReportReason
-  comment       String?      @db.VarChar(500)
-  status        ReportStatus @default(open)
-  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  resolvedAt    DateTime?    @map("resolved_at") @db.Timestamptz(6)
+/// Предложение продукта от устройства (B-18). Автомодерация решает сразу; сомнительное — оператору.
+model ProductSubmission {
+  id          String           @id @default(uuid()) @db.Uuid
+  deviceKeyId String           @map("device_key_id") @db.Uuid
+  name        String           @db.VarChar(120)
+  brand       String?          @db.VarChar(80)
+  barcode     String?          @db.VarChar(14)
+  unit        Unit
+  pieceWeight Decimal?         @map("piece_weight") @db.Decimal(8, 2)
+  kcal        Decimal          @db.Decimal(6, 2)
+  protein     Decimal          @db.Decimal(6, 2)
+  fat         Decimal          @db.Decimal(6, 2)
+  carbs       Decimal          @db.Decimal(6, 2)
+  status      SubmissionStatus @default(pending)
+  /// Коды замечаний автомодерации (`automod.ts`), например `energy_mismatch`
+  flags       String[]         @default([])
+  reviewedBy  ReviewedBy?      @map("reviewed_by")
+  reviewedAt  DateTime?        @map("reviewed_at") @db.Timestamptz(6)
+  /// Принятое предложение → продукт общей базы (новый или уже существующий)
+  productId   String?          @map("product_id") @db.Uuid
+  createdAt   DateTime         @map("created_at") @db.Timestamptz(6)
 
-  recipe        PublicRecipe          @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  reporter      DeviceKey             @relation(fields: [reporterKeyId], references: [id], onDelete: Cascade)
-  telegramLinks TelegramMessageLink[]
+  deviceKey         DeviceKey             @relation(fields: [deviceKeyId], references: [id], onDelete: Cascade)
+  product           Product?              @relation(fields: [productId], references: [id], onDelete: SetNull)
+  moderationActions ModerationAction[]
+  telegramLinks     TelegramMessageLink[]
 
-  @@unique([recipeId, reporterKeyId])
+  @@index([deviceKeyId, createdAt(sort: Desc), id])
   @@index([status, createdAt])
-  @@map("recipe_reports")
+  @@index([barcode])
+  @@map("product_submissions")
 }
 
-/// Оператор поддержки и модерации в Telegram (B-10). Добавляется командой сервера, не через API.
+/// Оператор в Telegram (B-10): поддержка и модерация. Добавляется командой сервера, не через API.
 model Operator {
   id             String   @id @default(uuid()) @db.Uuid
   telegramUserId BigInt   @unique @map("telegram_user_id")
@@ -167,17 +148,17 @@ model Operator {
   @@map("operators")
 }
 
-/// Журнал модерации; переживает удаление рецепта и ключа.
+/// Журнал действий операторов; переживает удаление предложения и ключа.
 model ModerationAction {
-  id          String               @id @default(uuid()) @db.Uuid
-  operatorId  String               @map("operator_id") @db.Uuid
-  recipeId    String?              @map("recipe_id") @db.Uuid
-  deviceKeyId String?              @map("device_key_id") @db.Uuid
-  action      ModerationActionType
-  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  id           String               @id @default(uuid()) @db.Uuid
+  operatorId   String               @map("operator_id") @db.Uuid
+  submissionId String?              @map("submission_id") @db.Uuid
+  deviceKeyId  String?              @map("device_key_id") @db.Uuid
+  action       ModerationActionType
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  operator Operator      @relation(fields: [operatorId], references: [id], onDelete: Restrict)
-  recipe   PublicRecipe? @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+  operator   Operator           @relation(fields: [operatorId], references: [id], onDelete: Restrict)
+  submission ProductSubmission? @relation(fields: [submissionId], references: [id], onDelete: SetNull)
 
   @@map("moderation_actions")
 }
@@ -214,16 +195,16 @@ model SupportMessage {
   @@map("support_messages")
 }
 
-/// Сообщение бота в чате операторов → обращение или жалоба (ответ оператора reply-сообщением).
+/// Сообщение бота в чате операторов → обращение (бот поддержки) или предложение (бот модерации).
 model TelegramMessageLink {
-  chatId    BigInt   @map("chat_id")
-  messageId Int      @map("message_id")
-  ticketId  String?  @map("ticket_id") @db.Uuid
-  reportId  String?  @map("report_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  chatId       BigInt   @map("chat_id")
+  messageId    Int      @map("message_id")
+  ticketId     String?  @map("ticket_id") @db.Uuid
+  submissionId String?  @map("submission_id") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  ticket SupportTicket? @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  report RecipeReport?  @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  ticket     SupportTicket?     @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  submission ProductSubmission? @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   @@id([chatId, messageId])
   @@map("telegram_message_links")
