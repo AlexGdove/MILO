@@ -25,10 +25,7 @@ const renderForm = () => {
 };
 
 const pickCheesecakes = async (user: ReturnType<typeof userEvent.setup>) => {
-  await user.type(
-    screen.getByRole('searchbox', { name: 'Найти продукт, блюдо или рецепт' }),
-    'сыр',
-  );
+  await user.type(screen.getByRole('searchbox', { name: 'Найти продукт или блюдо' }), 'сыр');
   await user.click(screen.getByRole('button', { name: /Сырники/ }));
 };
 
@@ -56,9 +53,7 @@ describe('AddMealEntryForm', () => {
     expect(screen.queryByRole('button', { name: 'Изменить' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '← Другой продукт' }));
 
-    expect(screen.getByRole('searchbox', { name: 'Найти продукт, блюдо или рецепт' })).toHaveValue(
-      'сыр',
-    );
+    expect(screen.getByRole('searchbox', { name: 'Найти продукт или блюдо' })).toHaveValue('сыр');
     expect(screen.getByRole('button', { name: /Сырники/ })).toHaveFocus();
     expect(screen.getByRole('button', { name: /Сыр плавленый/ })).toBeInTheDocument();
     expect(useMealEntryStore.getState().entries).toHaveLength(0);
@@ -163,10 +158,7 @@ describe('AddMealEntryForm', () => {
     const user = userEvent.setup();
     renderForm();
 
-    await user.type(
-      screen.getByRole('searchbox', { name: 'Найти продукт, блюдо или рецепт' }),
-      'ананас',
-    );
+    await user.type(screen.getByRole('searchbox', { name: 'Найти продукт или блюдо' }), 'ананас');
 
     expect(screen.getByText(/Ничего не найдено/)).toBeInTheDocument();
   });
@@ -183,10 +175,7 @@ describe('AddMealEntryForm', () => {
     });
     renderForm();
 
-    await user.type(
-      screen.getByRole('searchbox', { name: 'Найти продукт, блюдо или рецепт' }),
-      'деревен',
-    );
+    await user.type(screen.getByRole('searchbox', { name: 'Найти продукт или блюдо' }), 'деревен');
     await user.click(screen.getByRole('button', { name: /Яйца деревенские/ }));
 
     const amount = screen.getByLabelText('Количество, шт');
