@@ -27,6 +27,13 @@ export const MAIN_SECTIONS = [
   ROUTES.profile,
 ] as const;
 
+/**
+ * Свежая сборка Android-приложения (решение №46): workflow «Android APK» после каждой сборки
+ * заменяет файл в релизе GitHub `android-latest` — ссылка постоянная, скачивается без входа.
+ */
+export const ANDROID_APK_URL =
+  'https://github.com/AlexGdove/MILO/releases/download/android-latest/milo.apk';
+
 /** «Покупки» — вкладка кладовой (решение №28). */
 export const SHOPPING_PATH = `/pantry?tab=shopping`;
 

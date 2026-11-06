@@ -56,3 +56,20 @@
   font-size: var(--text-sm);
   color: var(--color-text-muted);
 }
+
+.download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-height);
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+}
+
+.download:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}

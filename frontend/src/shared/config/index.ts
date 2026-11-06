@@ -1,4 +1,5 @@
 export {
+  ANDROID_APK_URL,
   LEGACY_ROUTES,
   MAIN_SECTIONS,
   recipePath,

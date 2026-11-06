@@ -1,11 +1,13 @@
 import { InstallAppCard } from '@/features/install-app';
+import { ANDROID_APK_URL } from '@/shared/config';
+import { isNativeApp } from '@/shared/lib';
 import { Card, MiloMark, PageLayout } from '@/shared/ui';
 
 import styles from './AppPage.module.css';
 
 /**
- * «Приложение» (решение №28): установка PWA сейчас; ссылки на App Store и Google Play —
- * когда появится мобильное приложение (стек не выбран, см. TASKS «Открытые вопросы»).
+ * «Приложение» (решение №28): установка PWA; Android-приложение — файл APK последней сборки
+ * (решение №46); App Store и Google Play — позже. В самом Android-приложении кнопки APK нет.
  */
 export const AppPage = () => (
   <PageLayout title="Приложение">
@@ -40,11 +42,18 @@ export const AppPage = () => (
     </Card>
 
     <Card className={styles.section}>
-      <h2 className={styles.title}>App Store и Google Play</h2>
-      <p className={styles.text}>
-        Мобильное приложение MILO для магазинов — в разработке. Когда оно выйдет, ссылки на
-        скачивание появятся здесь.
-      </p>
+      <h2 className={styles.title}>Приложение для телефона</h2>
+      {!isNativeApp() && (
+        <>
+          <a className={styles.download} href={ANDROID_APK_URL} download="milo.apk">
+            Скачать для Android (APK)
+          </a>
+          <p className={styles.text}>
+            Откройте скачанный файл и разрешите установку из этого источника — Android спросит один
+            раз. Это последняя сборка; в магазинах приложение появится позже.
+          </p>
+        </>
+      )}
       <div className={styles.stores} aria-label="Магазины приложений">
         <span className={styles.store}>App Store · скоро</span>
         <span className={styles.store}>Google Play · скоро</span>
