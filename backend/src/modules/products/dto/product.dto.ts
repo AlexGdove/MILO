@@ -2,7 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsIn,
-  IsInt,
   IsNumber,
   IsOptional,
   IsPositive,
@@ -20,6 +19,7 @@ import {
   type ValidatorConstraintInterface,
 } from 'class-validator';
 
+import { PageQueryDto } from '../../../common/pagination/page.js';
 import type { AutomodFlag } from '../automod.js';
 import { isValidBarcode } from '../barcode.js';
 
@@ -153,21 +153,7 @@ export class SubmitProductDto {
   per100g!: NutrientsDto;
 }
 
-export class PageQueryDto {
-  @ApiPropertyOptional({ minimum: 1, maximum: 50, default: 20 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(50)
-  limit: number = 20;
-
-  @ApiPropertyOptional({ description: 'nextCursor из предыдущей страницы' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(200)
-  cursor?: string;
-}
+export { PageQueryDto };
 
 export class ProductQueryDto extends PageQueryDto {
   @ApiPropertyOptional({ minLength: 2, maxLength: 60, description: 'Поиск по названию и бренду' })

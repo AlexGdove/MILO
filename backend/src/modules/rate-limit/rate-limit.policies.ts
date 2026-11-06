@@ -19,7 +19,7 @@ export const GLOBAL_RATE_LIMIT = 'all';
 /**
  * Лимиты из `docs/backend/architecture.md` §5. Действие подключается к маршруту декоратором
  * `@RateLimit(name)`; один счётчик на действие, общий для всех его маршрутов.
- * Поддержка — на этом же сервере (B-18); её лимиты подключаются на этапе 8.
+ * Поддержка — на этом же сервере (B-18).
  */
 export const RATE_LIMIT_POLICIES = {
   [GLOBAL_RATE_LIMIT]: { limit: 600, ttl: MINUTE, tracker: 'ip' },
@@ -29,6 +29,9 @@ export const RATE_LIMIT_POLICIES = {
   productSubmit: { limit: 20, ttl: DAY, tracker: 'device' },
   ticketCreate: { limit: 5, ttl: DAY, tracker: 'device' },
   ticketMessage: { limit: 30, ttl: 10 * MINUTE, tracker: 'device' },
+  supportRead: { limit: 120, ttl: MINUTE, tracker: 'device' },
+  /** Подключения к WebSocket `/support` — считает `SupportGateway`, не HTTP-guard */
+  supportConnect: { limit: 30, ttl: MINUTE, tracker: 'ip' },
 } as const satisfies Record<string, RateLimitPolicy>;
 
 export type RateLimitPolicyName = Exclude<
