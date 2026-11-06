@@ -4,7 +4,9 @@
 
 ## Как получить APK
 
-**Без установки чего-либо** — в GitHub Actions: Actions → «Android APK» → последний запуск (или «Run workflow») → Artifacts → `milo-debug-apk`. Это отладочная сборка: на телефоне нужно разрешить установку из этого источника.
+**Прямая ссылка** (всегда последняя сборка, качается сразу): https://github.com/AlexGdove/MILO/releases/download/android-latest/milo.apk — она же на странице «Приложение».
+
+**Файл запуска** — в GitHub Actions: Actions → «Android APK» → последний запуск (или «Run workflow») → Artifacts → `milo-debug-apk`. Это отладочная сборка: на телефоне нужно разрешить установку из этого источника.
 
 Workflow `.github/workflows/android.yml` запускается при push в `dev` / `main` с изменениями во `frontend/` или `mobile/`.
 
