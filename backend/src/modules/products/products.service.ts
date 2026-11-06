@@ -1,10 +1,10 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 
 import { moderateSubmission } from './automod.js';
-import type { PageQueryDto, ProductQueryDto, SubmitProductDto } from './dto/product.dto.js';
+import type { ProductQueryDto, SubmitProductDto } from './dto/product.dto.js';
 import { toKnown, toProduct, toSubmission } from './products.mapper.js';
 import { AppException } from '../../common/errors/app.exception.js';
-import { decodeCursor, encodeCursor } from '../../common/pagination/cursor.js';
+import { cursorPage, type PageQueryDto } from '../../common/pagination/page.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 
@@ -166,7 +166,7 @@ export class ProductsService {
           }
         : {}),
     };
-    const page = await this.page(query, (after, take) =>
+    const page = await cursorPage(query, 'createdAt', (after, take) =>
       this.prisma.product.findMany({
         where: { AND: [where, after] },
         orderBy: [...NEWEST_FIRST],
@@ -184,7 +184,7 @@ export class ProductsService {
 
   /** Свои предложения со статусами, новые сверху. */
   async mine(deviceKeyId: string, query: PageQueryDto) {
-    const page = await this.page(query, (after, take) =>
+    const page = await cursorPage(query, 'createdAt', (after, take) =>
       this.prisma.productSubmission.findMany({
         where: { AND: [{ deviceKeyId }, after] },
         orderBy: [...NEWEST_FIRST],
@@ -192,35 +192,5 @@ export class ProductsService {
       }),
     );
     return { items: page.rows.map(toSubmission), nextCursor: page.nextCursor };
-  }
-
-  /** Курсорная страница по (createdAt, id) убыванию: limit + 1 строка — есть ли дальше. */
-  private async page<T extends { createdAt: Date; id: string }>(
-    query: PageQueryDto,
-    load: (after: { OR?: object[] }, take: number) => Promise<T[]>,
-  ) {
-    let after: { OR?: object[] } = {};
-    if (query.cursor !== undefined) {
-      const cursor = decodeCursor(query.cursor);
-      if (!cursor) {
-        throw new AppException(HttpStatus.BAD_REQUEST, 'validation_failed', 'Invalid cursor', [
-          { field: 'cursor', message: 'cursor is invalid' },
-        ]);
-      }
-      after = {
-        OR: [
-          { createdAt: { lt: cursor.createdAt } },
-          { createdAt: cursor.createdAt, id: { lt: cursor.id } },
-        ],
-      };
-    }
-    const rows = await load(after, query.limit + 1);
-    const hasMore = rows.length > query.limit;
-    const pageRows = hasMore ? rows.slice(0, query.limit) : rows;
-    const last = pageRows.at(-1);
-    return {
-      rows: pageRows,
-      nextCursor: hasMore && last ? encodeCursor({ createdAt: last.createdAt, id: last.id }) : null,
-    };
   }
 }

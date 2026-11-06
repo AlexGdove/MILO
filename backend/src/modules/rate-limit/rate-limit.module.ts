@@ -7,5 +7,6 @@ import { RedisRateLimitStorage } from './rate-limit.storage.js';
 /** Лимиты запросов (`architecture.md` §5): глобальный guard и счётчики в Redis. */
 @Module({
   providers: [RedisRateLimitStorage, { provide: APP_GUARD, useClass: RateLimitGuard }],
+  exports: [RedisRateLimitStorage],
 })
 export class RateLimitModule {}

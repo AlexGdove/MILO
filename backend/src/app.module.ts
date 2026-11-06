@@ -13,6 +13,7 @@ import { DeviceKeysModule } from './modules/device-keys/device-keys.module.js';
 import { ModerationModule } from './modules/moderation/moderation.module.js';
 import { ProductsModule } from './modules/products/products.module.js';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module.js';
+import { SupportModule } from './modules/support/support.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { RedisModule } from './redis/redis.module.js';
 
@@ -36,6 +37,7 @@ import { RedisModule } from './redis/redis.module.js';
     DeviceKeysModule,
     ProductsModule,
     ModerationModule,
+    SupportModule,
   ],
   providers: [
     { provide: APP_PIPE, useFactory: createValidationPipe },
