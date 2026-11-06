@@ -8,10 +8,12 @@ import styles from './AddToPantryButton.module.css';
 
 interface AddToPantryButtonProps {
   product: Product;
+  /** Количество добавлено (например, чтобы сбросить поиск и показать кладовую) */
+  onAdded?: () => void;
 }
 
 /** «В кладовую»: прибавить купленное или найденное дома количество к остатку продукта. */
-export const AddToPantryButton = ({ product }: AddToPantryButtonProps) => {
+export const AddToPantryButton = ({ product, onAdded }: AddToPantryButtonProps) => {
   const [open, setOpen] = useState(false);
   const adjustStock = useProductStore((state) => state.adjustStock);
 
@@ -45,6 +47,7 @@ export const AddToPantryButton = ({ product }: AddToPantryButtonProps) => {
           onSubmit={(amount) => {
             adjustStock(product.id, amount);
             setOpen(false);
+            onAdded?.();
           }}
         />
       </Modal>
