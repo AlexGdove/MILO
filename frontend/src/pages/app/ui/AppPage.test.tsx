@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -56,5 +57,39 @@ describe('Страница «Приложение»: APK для Android (реш�
   it('перед скачиванием — предупреждение: данные из браузера не переносятся', () => {
     renderPage();
     expect(screen.getByText(/данные из браузера в него не переносятся/)).toBeInTheDocument();
+  });
+
+  it('«Установить на iPhone» ведёт к инструкции для Safari и подсвечивает её (решение №51)', async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const link = screen.getByRole('link', { name: 'Установить на iPhone' });
+    expect(link).toHaveAttribute('href', '#iphone');
+    await user.click(link);
+    const steps = document.getElementById('iphone');
+    expect(steps).toHaveFocus();
+    expect(steps).toHaveTextContent('Откройте MILO в Safari');
+  });
+
+  it('на iPhone первым идёт установка через Safari, на других — APK', () => {
+    const order = () =>
+      screen
+        .getAllByRole('link', { name: /Скачать для Android|Установить на iPhone/ })
+        .map((link) => link.textContent);
+
+    const { unmount } = renderPage();
+    expect(order()).toEqual(['Скачать для Android (APK)', 'Установить на iPhone']);
+    unmount();
+
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15',
+    );
+    renderPage();
+    expect(order()).toEqual(['Установить на iPhone', 'Скачать для Android (APK)']);
+  });
+
+  it('в мобильном приложении нет ни APK, ни установки на iPhone', () => {
+    platform.native = true;
+    renderPage();
+    expect(screen.queryByRole('link', { name: 'Установить на iPhone' })).not.toBeInTheDocument();
   });
 });
