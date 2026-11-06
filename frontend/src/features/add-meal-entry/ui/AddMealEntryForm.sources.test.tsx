@@ -60,6 +60,27 @@ beforeEach(() => {
 });
 
 describe('AddMealEntryForm: блюда и рецепты', () => {
+  it('у блюда и рецепта своя подпись возврата; возврат — к тому же варианту', async () => {
+    setupOmelet();
+    useCookedDishStore.getState().addDish({
+      recipeId: 'r',
+      name: 'Суп',
+      servingsTotal: 4,
+      portionGrams: 300,
+      per100g: { kcal: 40, protein: 2, fat: 1, carbs: 5 },
+    });
+    const { user } = renderForm();
+
+    await user.click(screen.getByRole('button', { name: /Суп/ }));
+    await user.click(screen.getByRole('button', { name: '← Другое блюдо' }));
+    expect(screen.getByRole('button', { name: /Суп/ })).toHaveFocus();
+
+    await user.click(screen.getByRole('button', { name: /Омлет/ }));
+    await user.click(screen.getByRole('button', { name: '← Другой рецепт' }));
+    expect(screen.getByRole('button', { name: /Омлет/ })).toHaveFocus();
+    expect(entries()).toHaveLength(0);
+  });
+
   it('показывает группы: приготовленные блюда, рецепты, продукты', () => {
     setupOmelet();
     useCookedDishStore.getState().addDish({
