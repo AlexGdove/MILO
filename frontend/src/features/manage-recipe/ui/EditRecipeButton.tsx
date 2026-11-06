@@ -8,23 +8,13 @@ import { RecipeForm } from './RecipeForm';
 
 interface EditRecipeButtonProps {
   recipe: Recipe;
-  /** Вызывается после удаления (например, чтобы уйти со страницы рецепта) */
-  onDeleted?: () => void;
 }
 
-export const EditRecipeButton = ({ recipe, onDeleted }: EditRecipeButtonProps) => {
+/** Правка рецепта; удаление — отдельной кнопкой `DeleteRecipeButton` (решение №54). */
+export const EditRecipeButton = ({ recipe }: EditRecipeButtonProps) => {
   const [open, setOpen] = useState(false);
   const products = useProductStore(selectProducts);
   const updateRecipe = useRecipeStore((state) => state.updateRecipe);
-  const removeRecipe = useRecipeStore((state) => state.removeRecipe);
-
-  const handleDelete = () => {
-    if (window.confirm(`Удалить рецепт «${recipe.name}»?`)) {
-      removeRecipe(recipe.id);
-      setOpen(false);
-      onDeleted?.();
-    }
-  };
 
   return (
     <>
@@ -40,7 +30,6 @@ export const EditRecipeButton = ({ recipe, onDeleted }: EditRecipeButtonProps) =
             updateRecipe(recipe.id, draft);
             setOpen(false);
           }}
-          onDelete={handleDelete}
         />
       </Modal>
     </>

@@ -87,6 +87,32 @@ describe('раздел «Рецепты»', () => {
     expect(within(list).getByText('есть 300 г, не хватает 100 г')).toBeInTheDocument();
   });
 
+  it('удаление со страницы рецепта: корзина рядом с «Изменить» → подтверждение → список рецептов', async () => {
+    const recipe = useRecipeStore
+      .getState()
+      .addRecipe({ name: 'Омлет', servings: 1, ingredients: [] });
+    const { user, router } = renderAt(`/recipes/${recipe.id}`);
+
+    expect(screen.getByRole('button', { name: 'Изменить' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Удалить рецепт' }));
+    const dialog = screen.getByRole('dialog', { name: 'Удалить рецепт?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Удалить' }));
+
+    expect(useRecipeStore.getState().recipes).toEqual([]);
+    expect(router.state.location.pathname).toBe(ROUTES.recipes);
+    expect(screen.getByText('Рецептов пока нет')).toBeInTheDocument();
+  });
+
+  it('в форме изменения рецепта кнопки удаления больше нет', async () => {
+    const recipe = useRecipeStore
+      .getState()
+      .addRecipe({ name: 'Омлет', servings: 1, ingredients: [] });
+    const { user } = renderAt(`/recipes/${recipe.id}`);
+    await user.click(screen.getByRole('button', { name: 'Изменить' }));
+    const dialog = screen.getByRole('dialog', { name: 'Изменить рецепт' });
+    expect(within(dialog).queryByRole('button', { name: /Удалить/ })).not.toBeInTheDocument();
+  });
+
   it('несуществующий рецепт — понятное сообщение', () => {
     renderAt('/recipes/unknown');
     expect(screen.getByText('Рецепт не найден')).toBeInTheDocument();
