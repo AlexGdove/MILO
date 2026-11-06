@@ -38,6 +38,33 @@ beforeEach(() => {
 });
 
 describe('AddMealEntryForm', () => {
+  // Регрессия (2026-11-06): «Изменить» выбрасывало в общий список, и было непонятно,
+  // куда делся выбор. Теперь «← Другой продукт» возвращает к тому же поиску и варианту.
+  it('«← Другой продукт» возвращает к тому же поиску: запрос сохранён, фокус на выбранном', async () => {
+    const user = userEvent.setup();
+    addCheesecakes(0);
+    useProductStore.getState().addProduct({
+      name: 'Сыр плавленый',
+      per100g: { kcal: 300, protein: 10, fat: 25, carbs: 5 },
+      unit: 'g',
+      stock: 0,
+      minStock: 0,
+    });
+    const { onDone } = renderForm();
+
+    await pickCheesecakes(user);
+    expect(screen.queryByRole('button', { name: 'Изменить' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: '← Другой продукт' }));
+
+    expect(screen.getByRole('searchbox', { name: 'Найти продукт, блюдо или рецепт' })).toHaveValue(
+      'сыр',
+    );
+    expect(screen.getByRole('button', { name: /Сырники/ })).toHaveFocus();
+    expect(screen.getByRole('button', { name: /Сыр плавленый/ })).toBeInTheDocument();
+    expect(useMealEntryStore.getState().entries).toHaveLength(0);
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
   it('ищет продукт и показывает расчёт КБЖУ для введённого веса', async () => {
     const user = userEvent.setup();
     addCheesecakes(0);

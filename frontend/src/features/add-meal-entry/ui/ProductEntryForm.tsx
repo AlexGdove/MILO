@@ -89,6 +89,7 @@ export const ProductEntryForm = ({
             ? ` · 1 шт ≈ ${formatGrams(product.pieceWeight)} г`
             : ''
         }`}
+        changeLabel="← Другой продукт"
         onChange={onChangeSource}
       />
 
