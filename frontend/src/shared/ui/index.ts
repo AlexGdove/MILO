@@ -10,6 +10,7 @@ export { PageLayout } from './PageLayout/PageLayout';
 export { ProgressRing } from './ProgressRing/ProgressRing';
 export { SegmentedControl } from './SegmentedControl/SegmentedControl';
 export { Skeleton } from './Skeleton/Skeleton';
+export { Select } from './Select/Select';
 export { Tabs } from './Tabs/Tabs';
 export { Toast } from './Toast/Toast';
 export { Stepper } from './Stepper/Stepper';
