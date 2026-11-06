@@ -5,6 +5,15 @@ export {
   isBarcode,
   searchCatalog,
 } from './api/foodCatalogApi';
+export {
+  searchSharedProducts,
+  sharedProductKeys,
+  sharedSearchAvailable,
+} from './api/sharedProductsApi';
 export { parseOffProduct } from './lib/parseOffProduct';
-export { CATALOG_DEBOUNCE_MS, useCatalogSearch } from './model/useCatalogSearch';
-export type { CatalogFood } from './model/types';
+export {
+  CATALOG_DEBOUNCE_MS,
+  useCatalogSearch,
+  useSharedProductSearch,
+} from './model/useCatalogSearch';
+export type { CatalogFood, SharedProduct } from './model/types';
