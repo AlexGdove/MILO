@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { LanguageSwitcher } from '@/features/switch-language';
 import { ThemeSwitcher } from '@/features/switch-theme';
-import { ROUTES } from '@/shared/config';
+import { APP_VERSION, ROUTES } from '@/shared/config';
 import { BackLink, Card, PageLayout } from '@/shared/ui';
 
 import styles from './SettingsPage.module.css';
@@ -27,5 +27,6 @@ export const SettingsPage = () => (
         Написать в поддержку
       </Link>
     </Card>
+    <p className={styles.version}>MILO {APP_VERSION}</p>
   </PageLayout>
 );

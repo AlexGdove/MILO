@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 
 import react from '@vitejs/plugin-react';
@@ -7,7 +8,15 @@ import { VitePWA } from 'vite-plugin-pwa';
 /** Куда прокси разработки отправляет API (другой порт backend — MILO_API_PROXY). */
 const API_PROXY = process.env.MILO_API_PROXY ?? 'http://localhost:3000';
 
+/** Версия приложения (решение №48) — из package.json, разносит `npm run version:sync`. */
+const APP_VERSION = (
+  JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as {
+    version: string;
+  }
+).version;
+
 export default defineConfig(({ mode }) => ({
+  define: { 'import.meta.env.VITE_APP_VERSION': JSON.stringify(APP_VERSION) },
   plugins: [
     react(),
     // В мобильном приложении (Capacitor, режим `mobile`) файлы и так лежат внутри APK —

@@ -1,6 +1,7 @@
-// Иконки и экраны запуска Android из знака MILO (тот же рисовальщик, что для PWA:
+// Иконки и экраны запуска Android и iOS из знака MILO (тот же рисовальщик, что для PWA:
 // frontend/scripts/generate-icons.mjs). Без зависимостей. Заменяет стандартный логотип
-// Capacitor в mobile/android/app/src/main/res; размеры файлов берутся из шаблона.
+// Capacitor в mobile/android/.../res и mobile/ios/App/App/Assets.xcassets; размеры файлов
+// берутся из шаблона.
 // Запуск: npm run icons -w mobile
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -9,15 +10,9 @@ import { deflateSync } from 'node:zlib';
 
 import { renderMark } from '../../frontend/scripts/generate-icons.mjs';
 
-const RES = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..',
-  'android',
-  'app',
-  'src',
-  'main',
-  'res',
-);
+const MOBILE = join(dirname(fileURLToPath(import.meta.url)), '..');
+const RES = join(MOBILE, 'android', 'app', 'src', 'main', 'res');
+const IOS_ASSETS = join(MOBILE, 'ios', 'App', 'App', 'Assets.xcassets');
 
 /** Фон экрана запуска — светлый фон приложения (--color-bg, docs/brand.md). */
 export const SPLASH_BG = [0xf4, 0xf5, 0xfa];
@@ -91,18 +86,31 @@ const chunk = (type, data) => {
   crc.writeUInt32BE(crc32(body));
   return Buffer.concat([length, body, crc]);
 };
-/** PNG RGBA произвольного размера (в generate-icons.mjs — только квадрат). */
-export const encodePngRect = (rgba, width, height) => {
-  const raw = Buffer.alloc((width * 4 + 1) * height);
+/**
+ * PNG произвольного размера (в generate-icons.mjs — только квадрат). `alpha: false` — RGB без
+ * прозрачности: так требует App Store для иконки (прозрачность отбрасывается, картинка должна
+ * быть непрозрачной).
+ */
+export const encodePngRect = (rgba, width, height, { alpha = true } = {}) => {
+  const channels = alpha ? 4 : 3;
+  const raw = Buffer.alloc((width * channels + 1) * height);
   for (let y = 0; y < height; y++) {
-    raw[y * (width * 4 + 1)] = 0;
-    rgba.copy(raw, y * (width * 4 + 1) + 1, y * width * 4, (y + 1) * width * 4);
+    const row = y * (width * channels + 1);
+    raw[row] = 0; // фильтр None
+    for (let x = 0; x < width; x++) {
+      const from = (y * width + x) * 4;
+      const to = row + 1 + x * channels;
+      raw[to] = rgba[from];
+      raw[to + 1] = rgba[from + 1];
+      raw[to + 2] = rgba[from + 2];
+      if (alpha) raw[to + 3] = rgba[from + 3];
+    }
   }
   const header = Buffer.alloc(13);
   header.writeUInt32BE(width, 0);
   header.writeUInt32BE(height, 4);
   header[8] = 8; // глубина цвета
-  header[9] = 6; // RGBA
+  header[9] = alpha ? 6 : 2; // RGBA / RGB
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk('IHDR', header),
@@ -120,7 +128,34 @@ export const renderFor = (name, width, height) => {
     return renderMark(width, { fullBleed: true, contentScale: 0.62 });
   }
   if (name === 'splash.png') return renderSplash(width, height);
+  // iOS: иконка 1024 — квадрат до краёв (углы скругляет система), без прозрачности
+  if (name.startsWith('AppIcon')) return renderMark(width, { fullBleed: true, contentScale: 0.8 });
+  if (name.startsWith('splash-')) return renderSplash(width, height);
   return null;
+};
+
+/** Все PNG каталога ресурсов (рекурсивно). */
+const pngFiles = (dir) =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+    entry.isDirectory()
+      ? pngFiles(join(dir, entry.name))
+      : entry.name.endsWith('.png')
+        ? [{ dir, name: entry.name }]
+        : [],
+  );
+
+/** iOS: Assets.xcassets — иконка и экраны запуска, RGB без прозрачности. */
+const generateIos = () => {
+  let count = 0;
+  for (const { dir, name } of pngFiles(IOS_ASSETS)) {
+    const path = join(dir, name);
+    const { width, height } = pngSize(readFileSync(path));
+    const rgba = renderFor(name, width, height);
+    if (!rgba) continue;
+    writeFileSync(path, encodePngRect(rgba, width, height, { alpha: false }));
+    count++;
+  }
+  return count;
 };
 
 const main = () => {
@@ -142,7 +177,7 @@ const main = () => {
     join(RES, 'values', 'ic_launcher_background.xml'),
     `<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">${ICON_BG_HEX}</color>\n</resources>\n`,
   );
-  console.log(`Android: обновлено ${count} PNG`);
+  console.log(`Android: обновлено ${count} PNG; iOS: ${generateIos()} PNG`);
 };
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();

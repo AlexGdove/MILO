@@ -53,3 +53,6 @@ export const LEGACY_ROUTES = {
 } as const;
 
 export type AppRoute = (typeof ROUTES)[keyof typeof ROUTES];
+
+/** Версия приложения (решение №48): 1.0.0 — первый релиз, каждая функция — +1 к последней цифре. */
+export const APP_VERSION = import.meta.env.VITE_APP_VERSION;
