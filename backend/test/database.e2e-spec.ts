@@ -58,9 +58,9 @@ describe('База данных (e2e, PostgreSQL)', () => {
     ...overrides,
   });
 
-  it('GET /api/v1/health/ready → 200, база доступна', async () => {
+  it('GET /api/v1/health/ready → 200, база и Redis доступны', async () => {
     const res = await request(app.getHttpServer()).get('/api/v1/health/ready').expect(200);
-    expect(res.body).toEqual({ status: 'ok', checks: { database: 'ok' } });
+    expect(res.body).toEqual({ status: 'ok', checks: { database: 'ok', redis: 'ok' } });
   });
 
   it('рецепт со снимком ингредиентов сохраняется и читается по порядку', async () => {

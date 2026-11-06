@@ -41,6 +41,21 @@ export class EnvironmentVariables {
   /** PostgreSQL: postgresql://user:password@host:port/db */
   @Matches(/^postgres(ql)?:\/\/\S+$/, { message: 'DATABASE_URL must be a postgresql:// URL' })
   DATABASE_URL!: string;
+
+  /** Redis для счётчиков лимитов: redis://[:password@]host:port[/db] */
+  @Matches(/^rediss?:\/\/\S+$/, { message: 'REDIS_URL must be a redis:// or rediss:// URL' })
+  REDIS_URL!: string;
+
+  /**
+   * Сколько прокси (nginx, балансировщик) стоит перед сервером: Express берёт IP клиента из
+   * `X-Forwarded-For` только через столько звеньев. 0 — прокси нет, заголовок не учитывается
+   * (иначе клиент подделает IP и обойдёт лимиты).
+   */
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(10)
+  TRUST_PROXY: number = 0;
 }
 
 const ORIGIN_PATTERN = /^https?:\/\/[^\s/]+$/;
