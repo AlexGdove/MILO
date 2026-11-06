@@ -1,6 +1,6 @@
-# MILO для Android (Capacitor)
+# MILO для Android и iOS (Capacitor)
 
-Тот же фронтенд (`frontend/`) в нативной оболочке Capacitor 8 (решение №44): один код для веба (PWA) и приложения. iOS — позже (собирается только на macOS или в облаке).
+Тот же фронтенд (`frontend/`) в нативной оболочке Capacitor 8: один код для веба (PWA — устанавливается из браузера), Android (решение №44) и iOS (решение №47).
 
 ## Как получить APK
 
@@ -14,8 +14,9 @@ Workflow `.github/workflows/android.yml` запускается при push в `
 
 ```bash
 npm run build:mobile        # фронтенд в режиме mobile (без service worker) → cap sync android
-npm run icons -w mobile     # иконки и экран запуска из знака MILO (после cap add / смены знака)
+npm run icons -w mobile     # иконки и экраны запуска Android и iOS из знака MILO
 npm test -w mobile          # тесты генератора иконок (node:test)
+npm run build:web -w mobile && npm run sync:ios -w mobile   # веб-часть в iOS-проект
 ```
 
 Собрать APK на своей машине: Android Studio (с Android SDK) и JDK 21, затем `npm run open:android -w mobile` или `cd mobile/android && ./gradlew assembleDebug`.
@@ -28,11 +29,15 @@ npm test -w mobile          # тесты генератора иконок (node
 | Нативный проект Android (ведёт Capacitor, в git; ассеты сайта — нет) | `android/`                                                               |
 | Кнопка «Назад» Android: закрыть диалог → шаг назад → выход           | `frontend/src/app/layouts/useNativeBackButton.ts`                        |
 | Отступы под статус-бар и «чёлку» (Android 15+ edge-to-edge)          | `--safe-top` / `--safe-bottom` в `frontend/src/app/styles/variables.css` |
-| Иконки (обычная, круглая, адаптивная) и экран запуска                | `scripts/generate-android-icons.mjs`                                     |
+| Иконки (обычная, круглая, адаптивная) и экран запуска                | `scripts/generate-native-icons.mjs`                                      |
+
+## iOS
+
+Проект — `ios/` (Swift Package Manager, CocoaPods не нужен). Собрать можно только на macOS: workflow «iOS build» (`.github/workflows/ios.yml`) собирает приложение без подписи для симулятора — артефакт `milo-ios-simulator`. На iPhone до публикации — через TestFlight, для этого нужен аккаунт Apple Developer ($99 в год): подпись и выкладка — отдельной задачей. До тех пор на iPhone — PWA: Safari → «Поделиться» → «На экран „Домой“». Иконка iOS — без прозрачности (требование App Store).
 
 ## Сервер
 
-Приложение ходит на сервер по абсолютному адресу `VITE_API_URL` (в Actions — переменная репозитория `MILO_API_URL`). Пока сервер не развёрнут, поддержка в приложении показывает «недоступна», всё остальное работает на устройстве. При развёртывании в `CORS_ORIGINS` сервера нужно добавить `https://localhost` — адрес, с которого приложение Capacitor обращается к API на Android.
+Приложение ходит на сервер по абсолютному адресу `VITE_API_URL` (в Actions — переменная репозитория `MILO_API_URL`). Пока сервер не развёрнут, поддержка в приложении показывает «недоступна», всё остальное работает на устройстве. При развёртывании в `CORS_ORIGINS` сервера нужно добавить `https://localhost` (Android) и `capacitor://localhost` (iOS) — адреса, с которых приложение Capacitor обращается к API (проверку `CORS_ORIGINS` сервера тогда расширить: сейчас она пропускает только http/https).
 
 ## Перед публикацией в Google Play
 

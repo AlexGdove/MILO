@@ -4,5 +4,6 @@ dev-dist
 package-lock.json
 .claude
 backend/src/generated
-# Нативный Android-проект ведёт Capacitor (cap add / cap sync)
+# Нативные проекты Android и iOS ведёт Capacitor (cap add / cap sync)
 mobile/android
+mobile/ios

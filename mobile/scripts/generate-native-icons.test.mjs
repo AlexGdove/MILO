@@ -9,12 +9,12 @@ import {
   renderRound,
   renderSplash,
   SPLASH_BG,
-} from './generate-android-icons.mjs';
+} from './generate-native-icons.mjs';
 
 const pixel = (rgba, width, x, y) =>
   Array.from(rgba.subarray((y * width + x) * 4, (y * width + x) * 4 + 4));
 
-describe('Android-иконки MILO', () => {
+describe('Иконки MILO для Android и iOS', () => {
   it('PNG произвольного размера: сигнатура и размеры в заголовке', () => {
     const png = encodePngRect(Buffer.alloc(30 * 20 * 4), 30, 20);
     assert.deepEqual([...png.subarray(0, 8)], [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -50,5 +50,20 @@ describe('Android-иконки MILO', () => {
     const size = 108;
     const rgba = renderFor('ic_launcher_foreground.png', size, size);
     assert.equal(pixel(rgba, size, 0, 0)[3], 255);
+  });
+
+  it('iOS: иконка без прозрачности (RGB) — иначе App Store отклонит', () => {
+    const size = 64;
+    const png = encodePngRect(renderFor('AppIcon-512@2x.png', size, size), size, size, {
+      alpha: false,
+    });
+    assert.equal(png[25], 2); // тип цвета в IHDR: 2 = RGB
+    assert.deepEqual(pngSize(png), { width: size, height: size });
+    // Угол залит цветом знака, а не прозрачен: система сама скругляет
+    assert.equal(renderFor('AppIcon-512@2x.png', size, size)[3], 255);
+  });
+
+  it('iOS: экраны запуска перерисовываются', () => {
+    assert.ok(renderFor('splash-2732x2732-1.png', 100, 100));
   });
 });

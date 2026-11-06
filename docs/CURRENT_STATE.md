@@ -24,7 +24,7 @@
    - посмотреть на телефоне «Порции / Граммы» и тему;
    - вопросы этапов 6 и 8 «на подтверждение» (`docs/backend/progress/phase-06-products.md` §4, `phase-08-support.md` §5).
 
-Сводка: проект на GitHub **https://github.com/AlexGdove/MILO**.
+Сводка: проект на GitHub **https://github.com/AlexGdove/MILO**. **Версия 1.0.0 — первый релиз** (№48): каждая функция или исправление — `npm run version:patch`. Android APK — https://github.com/AlexGdove/MILO/releases/download/android-latest/milo.apk (№46); iOS — сборка для симулятора в CI (№47).
 
 **Бэкенд**:
 
