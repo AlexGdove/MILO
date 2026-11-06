@@ -21,7 +21,15 @@ export const Modal = ({ open, title, onClose, children }: ModalProps) => {
   }, [open]);
 
   return (
-    <dialog ref={dialogRef} className={styles.dialog} onClose={onClose} aria-label={title}>
+    <dialog
+      ref={dialogRef}
+      className={styles.dialog}
+      // React доносит close вложенного окна до внешнего — закрываемся только по своему
+      onClose={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      aria-label={title}
+    >
       <div className={styles.header}>
         <h2 className={styles.title}>{title}</h2>
         <button type="button" className={styles.close} onClick={onClose} aria-label="Закрыть">

@@ -38,11 +38,6 @@
   gap: var(--space-2);
 }
 
-.select {
-  flex: 1;
-  min-width: 0;
-}
-
 .amount {
   flex: 0 0 var(--recipe-amount-width);
 }
