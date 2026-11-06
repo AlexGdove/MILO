@@ -53,6 +53,30 @@ textarea {
   min-height: 100dvh;
 }
 
+/* Переход свайпом (useSwipeNavigation): новая страница въезжает с той стороны,
+   куда ушёл палец. Без анимации при «уменьшить движение» — правило ниже. */
+:root[data-swipe='left'] main {
+  animation: swipe-in-from-right var(--duration-base) var(--ease-standard);
+}
+
+:root[data-swipe='right'] main {
+  animation: swipe-in-from-left var(--duration-base) var(--ease-standard);
+}
+
+@keyframes swipe-in-from-right {
+  from {
+    opacity: 0.4;
+    transform: translateX(12%);
+  }
+}
+
+@keyframes swipe-in-from-left {
+  from {
+    opacity: 0.4;
+    transform: translateX(-12%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

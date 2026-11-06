@@ -15,7 +15,10 @@ interface NavItem {
   end?: boolean;
 }
 
-/** Навигация по решению №28: «Покупки» — вкладка кладовой, в шапке страниц — переход к приложению. */
+/**
+ * Навигация по решению №28: «Покупки» — вкладка кладовой, в шапке страниц — переход к приложению.
+ * Порядок совпадает с `MAIN_SECTIONS` — по нему же работает свайп между страницами.
+ */
 const NAV_ITEMS: NavItem[] = [
   { to: ROUTES.dashboard, label: 'Сегодня', icon: <TodayIcon />, end: true },
   { to: ROUTES.recipes, label: 'Рецепты', icon: <RecipesIcon /> },

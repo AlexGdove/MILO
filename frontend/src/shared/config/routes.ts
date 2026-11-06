@@ -10,6 +10,17 @@ export const ROUTES = {
   welcome: '/welcome',
 } as const;
 
+/**
+ * Разделы нижней навигации по порядку — и для вкладок, и для свайпа влево-вправо между
+ * страницами (свайп влево — следующий раздел).
+ */
+export const MAIN_SECTIONS = [
+  ROUTES.dashboard,
+  ROUTES.recipes,
+  ROUTES.pantry,
+  ROUTES.profile,
+] as const;
+
 /** «Покупки» — вкладка кладовой (решение №28). */
 export const SHOPPING_PATH = `/pantry?tab=shopping`;
 
