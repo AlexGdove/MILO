@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { ProfileWizard } from '@/features/edit-profile';
 import { ROUTES } from '@/shared/config';
-import { MiloMark } from '@/shared/ui';
+import { MiloMark, PrivacyNotice } from '@/shared/ui';
 
 import styles from './WelcomePage.module.css';
 
@@ -19,6 +19,7 @@ export const WelcomePage = () => {
           Расскажите немного о себе — рассчитаем дневную норму калорий и БЖУ. Данные можно поменять
           в любой момент в «Профиле».
         </p>
+        <PrivacyNotice variant="brief" />
       </div>
       <ProfileWizard onFinish={() => navigate(ROUTES.dashboard, { replace: true })} />
     </main>

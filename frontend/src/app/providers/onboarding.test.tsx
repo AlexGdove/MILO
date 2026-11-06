@@ -55,6 +55,11 @@ describe('первый запуск', () => {
     expect(screen.getByRole('heading', { name: 'Добро пожаловать в MILO' })).toBeInTheDocument();
   });
 
+  it('на приветствии — предупреждение: данные только на устройстве (решение №50)', () => {
+    renderApp('/');
+    expect(screen.getByText(/хранятся только на этом устройстве/)).toBeInTheDocument();
+  });
+
   it('анкета по шагам: проверка полей, расчёт нормы, переход на «Сегодня»', async () => {
     const { router, user } = renderApp('/');
 

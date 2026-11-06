@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { LanguageSwitcher } from '@/features/switch-language';
 import { ThemeSwitcher } from '@/features/switch-theme';
 import { APP_VERSION, ROUTES } from '@/shared/config';
-import { BackLink, Card, PageLayout } from '@/shared/ui';
+import { BackLink, Card, PageLayout, PrivacyNotice } from '@/shared/ui';
 
 import styles from './SettingsPage.module.css';
 
@@ -17,6 +17,10 @@ export const SettingsPage = () => (
     <Card className={styles.section}>
       <h2 className={styles.title}>Язык</h2>
       <LanguageSwitcher />
+    </Card>
+    <Card className={styles.section}>
+      <h2 className={styles.title}>Данные и конфиденциальность</h2>
+      <PrivacyNotice variant="full" />
     </Card>
     <Card className={styles.section}>
       <h2 className={styles.title}>Техподдержка</h2>

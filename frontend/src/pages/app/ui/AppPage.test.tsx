@@ -52,4 +52,9 @@ describe('Страница «Приложение»: APK для Android (реш�
     renderPage();
     expect(screen.queryByRole('link', { name: /Скачать для Android/ })).not.toBeInTheDocument();
   });
+
+  it('перед скачиванием — предупреждение: данные из браузера не переносятся', () => {
+    renderPage();
+    expect(screen.getByText(/данные из браузера в него не переносятся/)).toBeInTheDocument();
+  });
 });
