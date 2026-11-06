@@ -1,6 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+// Платформа Capacitor подменена: браузер или мобильное приложение
+const platform = vi.hoisted(() => ({ native: false }));
+vi.mock('@capacitor/core', () => ({ Capacitor: { isNativePlatform: () => platform.native } }));
 
 import { useMealEntryStore } from '@/entities/meal-entry';
 import { useUserGoalStore } from '@/entities/user-goal';
@@ -29,6 +33,7 @@ const renderHeader = () => {
 };
 
 beforeEach(() => {
+  platform.native = false;
   useMealEntryStore.setState(useMealEntryStore.getInitialState(), true);
   useUserGoalStore.setState(useUserGoalStore.getInitialState(), true);
   useUserGoalStore.getState().setGoal({ kcal: 2000, protein: 100, fat: 70, carbs: 250 });
@@ -39,6 +44,13 @@ describe('AppHeader', () => {
     renderHeader();
     expect(screen.getByRole('link', { name: 'MILO — на главную' })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: 'Приложение' })).toHaveAttribute('href', '/app');
+  });
+
+  it('в мобильном приложении кнопки «Приложение» нет — оно уже установлено', () => {
+    platform.native = true;
+    renderHeader();
+    expect(screen.queryByRole('link', { name: 'Приложение' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'MILO — на главную' })).toBeInTheDocument();
   });
 
   it('счётчик показывает съеденное сегодня из нормы (вчерашнее не считается)', () => {

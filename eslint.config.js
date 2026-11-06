@@ -19,8 +19,9 @@ export default tseslint.config(
       '**/node_modules',
       '**/dist',
       '**/dev-dist',
-      // Нативный Android-проект ведёт Capacitor; конфиг Capacitor проверяет tsc (mobile)
+      // Нативные проекты Android и iOS ведёт Capacitor; конфиг Capacitor проверяет tsc (mobile)
       'mobile/android',
+      'mobile/ios',
       'mobile/capacitor.config.ts',
       'backend/src/generated',
     ],

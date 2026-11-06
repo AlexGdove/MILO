@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { ProfilePage } from '@/pages/profile';
 import { SettingsPage } from '@/pages/settings';
-import { ROUTES } from '@/shared/config';
+import { APP_VERSION, ROUTES } from '@/shared/config';
 
 import { RootLayout } from '../layouts/RootLayout';
 
@@ -57,5 +57,11 @@ describe('Настройки (решение №43)', () => {
     ).toEqual(['Русский']);
 
     expect(screen.getByRole('heading', { name: 'Техподдержка' })).toBeInTheDocument();
+  });
+
+  it('внизу настроек — версия приложения из package.json (решение №48)', () => {
+    renderAt(ROUTES.settings);
+    expect(APP_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(screen.getByText(`MILO ${APP_VERSION}`)).toBeInTheDocument();
   });
 });
