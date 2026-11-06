@@ -21,6 +21,8 @@ export function configureApp(app: NestExpressApplication): AppConfig {
 
   app.useLogger(app.get(Logger));
   app.disable('x-powered-by');
+  // IP клиента (ключ лимитов) — из X-Forwarded-For только за доверенными прокси (TRUST_PROXY)
+  app.set('trust proxy', config.trustProxy);
   app.use(requestIdMiddleware);
   app.useBodyParser('json', { limit: BODY_LIMIT });
   // CSP мешает Swagger UI; там, где UI включён (не production), CSP не ставим

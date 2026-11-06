@@ -1,7 +1,11 @@
 import { toAppConfig } from './app-config.js';
 import { parseOrigins, validateEnv } from './env.validation.js';
 
-const DB = { DATABASE_URL: 'postgresql://milo:milo@localhost:5432/milo' };
+// Обязательные переменные (база и Redis) — общая основа каждого случая
+const DB = {
+  DATABASE_URL: 'postgresql://milo:milo@localhost:5432/milo',
+  REDIS_URL: 'redis://localhost:6379/0',
+};
 
 describe('validateEnv', () => {
   it('без переменных — значения по умолчанию', () => {
@@ -42,8 +46,10 @@ describe('validateEnv', () => {
   });
 
   it('DATABASE_URL — только postgresql://', () => {
-    expect(() => validateEnv({ DATABASE_URL: 'mysql://u:p@localhost/db' })).toThrow(/DATABASE_URL/);
-    expect(validateEnv({ DATABASE_URL: 'postgres://u:p@db:5432/milo' }).DATABASE_URL).toBe(
+    expect(() => validateEnv({ ...DB, DATABASE_URL: 'mysql://u:p@localhost/db' })).toThrow(
+      /DATABASE_URL/,
+    );
+    expect(validateEnv({ ...DB, DATABASE_URL: 'postgres://u:p@db:5432/milo' }).DATABASE_URL).toBe(
       'postgres://u:p@db:5432/milo',
     );
   });
