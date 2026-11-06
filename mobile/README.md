@@ -35,6 +35,13 @@ npm run build:web -w mobile && npm run sync:ios -w mobile   # веб-часть 
 
 Проект — `ios/` (Swift Package Manager, CocoaPods не нужен). Собрать можно только на macOS: workflow «iOS build» (`.github/workflows/ios.yml`) собирает приложение без подписи для симулятора — артефакт `milo-ios-simulator`. На iPhone до публикации — через TestFlight, для этого нужен аккаунт Apple Developer ($99 в год): подпись и выкладка — отдельной задачей. До тех пор на iPhone — PWA: Safari → «Поделиться» → «На экран „Домой“». Иконка iOS — без прозрачности (требование App Store).
 
+### Что нужно для iPhone (TestFlight / App Store)
+
+1. Аккаунт Apple Developer Program ($99 в год) на владельца.
+2. В App Store Connect — приложение с Bundle ID `com.alexgdove.milo`.
+3. Подпись: сертификат «Apple Distribution» и профиль (provisioning profile) — их выдаёт Apple, ключом-файлом, как у Android, не обойтись. Для CI — ключ App Store Connect API (секреты репозитория).
+4. Workflow собирает подписанный архив и выкладывает в TestFlight; оттуда — на iPhone тестировщиков или в App Store после проверки Apple.
+
 ## Сервер
 
 Приложение ходит на сервер по абсолютному адресу `VITE_API_URL` (в Actions — переменная репозитория `MILO_API_URL`). Пока сервер не развёрнут, поддержка в приложении показывает «недоступна», всё остальное работает на устройстве. При развёртывании в `CORS_ORIGINS` сервера нужно добавить `https://localhost` (Android) и `capacitor://localhost` (iOS) — адреса, с которых приложение Capacitor обращается к API (проверку `CORS_ORIGINS` сервера тогда расширить: сейчас она пропускает только http/https).

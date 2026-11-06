@@ -16,6 +16,6 @@ export {
   sumNutrients,
 } from './nutrition';
 export type { Nutrients } from './nutrition';
-export { isNativeApp } from './platform';
+export { isIos, isNativeApp } from './platform';
 export { adjacentSection, detectSwipe } from './swipe';
 export type { SwipeDirection, SwipeGesture } from './swipe';
