@@ -1,5 +1,5 @@
 export { cn } from './cn';
-export { createId } from './id';
+export { createId, createUuid } from './id';
 export { parseNumber } from './number';
 export { plural } from './plural';
 export { formatPortions, roundPortions } from './portions';

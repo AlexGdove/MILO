@@ -56,6 +56,19 @@ export class EnvironmentVariables {
   @Min(0)
   @Max(10)
   TRUST_PROXY: number = 0;
+
+  /**
+   * Служебные маршруты для локальной разработки (`/api/v1/dev/...`, например ответ «как
+   * оператор» без Telegram-бота). Только вне production — иначе процесс не стартует.
+   */
+  @IsOptional()
+  @IsIn(['true', 'false'])
+  DEV_TOOLS?: 'true' | 'false';
+}
+
+/** Служебные маршруты разработки включены (`DevToolsGuard` проверяет на каждом запросе). */
+export function devToolsEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env.DEV_TOOLS === 'true' && env.NODE_ENV !== 'production';
 }
 
 const ORIGIN_PATTERN = /^https?:\/\/[^\s/]+$/;
@@ -82,6 +95,10 @@ export function validateEnv(config: Record<string, unknown>): EnvironmentVariabl
   );
   if (badOrigins.length > 0) {
     problems.push(`CORS_ORIGINS: invalid origin(s) ${badOrigins.join(', ')}`);
+  }
+
+  if (env.NODE_ENV === 'production' && env.DEV_TOOLS === 'true') {
+    problems.push('DEV_TOOLS: development tools must not be enabled in production');
   }
 
   if (problems.length > 0) {

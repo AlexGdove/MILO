@@ -11,6 +11,8 @@ export default mergeConfig(
       include: ['src/**/*.test.{ts,tsx}', 'scripts/**/*.test.mjs'],
       restoreMocks: true,
       unstubGlobals: true,
+      // vi.stubEnv (VITE_API_URL в тестах API) сбрасывается после каждого теста
+      unstubEnvs: true,
     },
   }),
 );

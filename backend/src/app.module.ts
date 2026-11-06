@@ -9,6 +9,7 @@ import { createValidationPipe } from './common/validation/validation.pipe.js';
 import { getAppConfig } from './config/app-config.js';
 import { validateEnv } from './config/env.validation.js';
 import { HealthModule } from './health/health.module.js';
+import { DevToolsModule } from './modules/dev-tools/dev-tools.module.js';
 import { DeviceKeysModule } from './modules/device-keys/device-keys.module.js';
 import { ModerationModule } from './modules/moderation/moderation.module.js';
 import { ProductsModule } from './modules/products/products.module.js';
@@ -38,6 +39,8 @@ import { RedisModule } from './redis/redis.module.js';
     ProductsModule,
     ModerationModule,
     SupportModule,
+    // Служебные маршруты разработки: доступны только при DEV_TOOLS=true вне production (DevToolsGuard)
+    DevToolsModule,
   ],
   providers: [
     { provide: APP_PIPE, useFactory: createValidationPipe },

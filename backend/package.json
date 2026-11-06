@@ -16,7 +16,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:seed": "node dist/prisma/seed.js"
+    "db:seed": "node dist/prisma/seed.js",
+    "support:reply": "node scripts/support-reply.mjs"
   },
   "dependencies": {
     "@nestjs/common": "^12.3.3",

@@ -1,0 +1,13 @@
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--icon-button-size);
+  color: var(--color-primary);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+}
+
+.back:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}

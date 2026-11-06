@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+/** Куда прокси разработки отправляет API (другой порт backend — MILO_API_PROXY). */
+const API_PROXY = process.env.MILO_API_PROXY ?? 'http://localhost:3000';
+
 export default defineConfig({
   plugins: [
     react(),
@@ -45,5 +48,13 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  server: { host: true },
+  server: {
+    host: true,
+    // Разработка: API и WebSocket поддержки — на backend (npm run dev поднимает оба).
+    // Один адрес с фронтендом — без CORS (shared/api: в разработке API — /api/v1)
+    proxy: {
+      '/api': API_PROXY,
+      '/socket.io': { target: API_PROXY, ws: true },
+    },
+  },
 });

@@ -1,5 +1,5 @@
 import { toAppConfig } from './app-config.js';
-import { parseOrigins, validateEnv } from './env.validation.js';
+import { devToolsEnabled, parseOrigins, validateEnv } from './env.validation.js';
 
 // Обязательные переменные (база и Redis) — общая основа каждого случая
 const DB = {
@@ -56,6 +56,29 @@ describe('validateEnv', () => {
 
   it('посторонние переменные окружения не мешают', () => {
     expect(() => validateEnv({ ...DB, PATH: '/usr/bin', HOME: '/root' })).not.toThrow();
+  });
+});
+
+describe('DEV_TOOLS (служебные маршруты разработки)', () => {
+  it('в production запрещены — процесс не стартует', () => {
+    expect(() => validateEnv({ ...DB, NODE_ENV: 'production', DEV_TOOLS: 'true' })).toThrow(
+      /DEV_TOOLS/,
+    );
+    expect(() => validateEnv({ ...DB, NODE_ENV: 'production', DEV_TOOLS: 'false' })).not.toThrow();
+  });
+
+  it('только true / false', () => {
+    expect(() => validateEnv({ ...DB, DEV_TOOLS: 'yes' })).toThrow(/DEV_TOOLS/);
+  });
+
+  it.each([
+    [{ DEV_TOOLS: 'true', NODE_ENV: 'development' }, true],
+    [{ DEV_TOOLS: 'true', NODE_ENV: 'test' }, true],
+    [{ DEV_TOOLS: 'true', NODE_ENV: 'production' }, false],
+    [{ DEV_TOOLS: 'false', NODE_ENV: 'development' }, false],
+    [{ NODE_ENV: 'development' }, false],
+  ])('devToolsEnabled(%o) → %s', (env, expected) => {
+    expect(devToolsEnabled(env)).toBe(expected);
   });
 });
 
