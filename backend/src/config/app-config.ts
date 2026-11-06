@@ -9,13 +9,18 @@ export interface AppConfig {
   logLevel: LogLevel;
   corsOrigins: string[];
   swaggerEnabled: boolean;
+  /** Число доверенных прокси для `app.set('trust proxy', …)` */
+  trustProxy: number;
 }
 
 /** Итоговые настройки с вычисленными значениями по умолчанию. */
-export function toAppConfig(env: Omit<EnvironmentVariables, 'DATABASE_URL'>): AppConfig {
+export function toAppConfig(
+  env: Omit<EnvironmentVariables, 'DATABASE_URL' | 'REDIS_URL'>,
+): AppConfig {
   return {
     nodeEnv: env.NODE_ENV,
     port: env.PORT,
+    trustProxy: env.TRUST_PROXY,
     // В тестах логи по умолчанию выключены, чтобы не засорять вывод
     logLevel: env.LOG_LEVEL ?? (env.NODE_ENV === 'test' ? 'silent' : 'info'),
     corsOrigins: parseOrigins(env.CORS_ORIGINS),
@@ -33,5 +38,6 @@ export function getAppConfig(config: ConfigService): AppConfig {
     LOG_LEVEL: config.get('LOG_LEVEL'),
     CORS_ORIGINS: config.getOrThrow('CORS_ORIGINS'),
     SWAGGER_ENABLED: config.get('SWAGGER_ENABLED'),
+    TRUST_PROXY: config.getOrThrow('TRUST_PROXY'),
   });
 }

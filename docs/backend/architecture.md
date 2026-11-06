@@ -46,7 +46,7 @@ flowchart LR
 | `support`        | обращения, сообщения, WebSocket-шлюз                                                                            | device-keys, outbox    |
 | `telegram`       | бот (grammY): отправка в чат операторов, приём ответов и кнопок модерации, дедупликация обновлений              | support, moderation    |
 | `outbox`         | запись событий в транзакции, фоновая отправка с повторами                                                       | prisma                 |
-| `rate-limit`     | `@nestjs/throttler` с хранилищем в Redis, ключ лимита = IP или device key                                       | redis                  |
+| `rate-limit`     | свой глобальный guard (B-16), скользящее окно в Redis, ключ лимита = IP или device key                          | redis                  |
 
 Модули общаются через публичные сервисы и доменные события, без доступа к чужим таблицам. Каждый модуль лежит в `backend/src/modules/<name>/` и делится на `*.controller.ts`, `*.service.ts`, `dto/`, `*.spec.ts`.
 

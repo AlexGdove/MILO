@@ -24,5 +24,19 @@ services:
       timeout: 3s
       retries: 10
 
+  # Счётчики лимитов запросов (этап 5). База 0 — разработка, база 1 — автотесты.
+  # Данные не сохраняются на диск: после перезапуска счётчики начинаются заново.
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
 volumes:
   milo-postgres:
