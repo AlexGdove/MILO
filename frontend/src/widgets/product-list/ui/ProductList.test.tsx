@@ -1,11 +1,18 @@
-import { render, screen, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render as rtlRender, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import type { ReactElement } from 'react';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { selectProductById, useProductStore, type ProductDraft } from '@/entities/product';
 import { useShoppingStore } from '@/entities/shopping-item';
 
 import { ProductList } from './ProductList';
+
+// Кладовая показывает и найденное в Open Food Facts (TanStack Query) — нужен QueryClient.
+// В тестах сервер не подключён, поэтому блок Open Food Facts скрыт и проверки не меняются.
+const render = (ui: ReactElement) =>
+  rtlRender(<QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>);
 
 const per100g = { kcal: 100, protein: 1, fat: 1, carbs: 1 };
 const draft = (name: string, stock: number): ProductDraft => ({

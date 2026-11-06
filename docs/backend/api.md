@@ -90,6 +90,14 @@ interface SupportMessage {
 
 Решения оператора (`pending` → принять / отклонить) принимаются только в боте модерации — HTTP-маршрутов нет.
 
+## Каталог Open Food Facts (решение №53)
+
+| Метод и путь               | Ключ     | Параметры                   | Ответ                                                                   |
+| -------------------------- | -------- | --------------------------- | ----------------------------------------------------------------------- |
+| `GET /food-catalog/search` | не нужен | `?q=` (2–60, после обрезки) | `200 { items: CatalogFood[] }` — `{ code, name, brand, unit, per100g }` |
+
+Для браузера и PWA: поиск Open Food Facts закрыт CORS, сервер ходит сам (`search.openfoodfacts.org`, User-Agent MILO). Ответ кэшируется в Redis на сутки (ключ — запрос без учёта регистра и лишних пробелов). К Open Food Facts — не больше 8 новых запросов в минуту со всего сервера, сверх — `503 catalog_busy`; Open Food Facts не ответил — `503 catalog_unavailable` (не кэшируется). Товары без полного КБЖУ на 100 г или с невозможными цифрами отбрасываются. Лимит клиента — `catalogRead` (120 в минуту с IP). Приложение ищет напрямую, штрихкод — везде напрямую.
+
 ## Поддержка
 
 | Метод и путь                         | Ключ | Тело / параметры                           | Ответ                                                              |
@@ -123,6 +131,7 @@ interface SupportMessage {
 | `device_key_blocked`                         | 403    | заблокированный ключ на запись (удалить свои данные можно)                  |
 | `product_not_found`                          | 404    | нет продукта или id не UUID                                                 |
 | `ticket_not_found`                           | 404    | нет обращения, оно чужое или id не UUID                                     |
+| `catalog_busy` / `catalog_unavailable`       | 503    | лимит запросов к Open Food Facts / Open Food Facts не отвечает              |
 | `idempotency_mismatch`                       | 422    | тот же `Idempotency-Key` с другим запросом                                  |
 | `rate_limited`                               | 429    | превышен лимит; `Retry-After` — секунды                                     |
 | `service_unavailable`                        | 503    | база или Redis недоступны                                                   |

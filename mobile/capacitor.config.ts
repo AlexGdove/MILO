@@ -9,6 +9,10 @@ const config: CapacitorConfig = {
   appId: 'com.alexgdove.milo',
   appName: 'MILO',
   webDir: '../frontend/dist',
+  plugins: {
+    // fetch идёт через нативный HTTP: Open Food Facts без CORS-ограничений браузера (№53)
+    CapacitorHttp: { enabled: true },
+  },
 };
 
 export default config;
