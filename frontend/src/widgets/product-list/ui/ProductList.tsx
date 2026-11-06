@@ -24,11 +24,13 @@ const byStockThenName = (a: Product, b: Product) =>
 /**
  * Кладовая: без запроса — только продукты в наличии.
  * Поиск идёт по всем известным продуктам: найденное можно положить в кладовую или в покупки.
+ * Положили в кладовую или создали продукт из поиска — поиск сбрасывается, видна кладовая.
  */
 export const ProductList = () => {
   const products = useProductStore(selectProducts);
   const [query, setQuery] = useState('');
   const searching = query.trim() !== '';
+  const resetSearch = () => setQuery('');
 
   const visible = searching
     ? [...filterProducts(products, query)].sort(byStockThenName)
@@ -39,7 +41,9 @@ export const ProductList = () => {
       <EmptyState
         title="Ничего не найдено"
         description={`Продукта «${query.trim()}» ещё нет — создайте его`}
-        action={<AddProductButton initialName={query} label="Создать продукт" />}
+        action={
+          <AddProductButton initialName={query} label="Создать продукт" onCreated={resetSearch} />
+        }
       />
     ) : (
       <EmptyState
@@ -65,7 +69,7 @@ export const ProductList = () => {
                 stock={<SetStockButton product={product} />}
                 actions={
                   <>
-                    <AddToPantryButton product={product} />
+                    <AddToPantryButton product={product} onAdded={resetSearch} />
                     <AddToShoppingButton product={product} compact />
                     <EditProductButton product={product} />
                   </>

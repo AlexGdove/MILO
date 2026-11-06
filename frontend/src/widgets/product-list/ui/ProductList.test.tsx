@@ -57,7 +57,8 @@ describe('ProductList (кладовая)', () => {
     expect(screen.getByText('Найдено: 2')).toBeInTheDocument();
   });
 
-  it('из результатов поиска продукт можно положить в кладовую', async () => {
+  // Регрессия (2026-11-06): после «В кладовую» поиск оставался — теперь сбрасывается сам
+  it('из результатов поиска продукт можно положить в кладовую — поиск сбрасывается', async () => {
     const user = userEvent.setup();
     const buckwheat = products().addProduct(draft('Гречка', 0));
     render(<ProductList />);
@@ -70,8 +71,9 @@ describe('ProductList (кладовая)', () => {
     await user.click(screen.getByRole('button', { name: 'В кладовую' }));
 
     expect(selectProductById(buckwheat.id)(products())?.stock).toBe(900);
-    // после очистки поиска продукт виден в кладовой
-    await user.clear(screen.getByRole('searchbox', { name: 'Поиск продукта' }));
+    // поиск сброшен сам — видна кладовая с добавленным продуктом
+    expect(screen.getByRole('searchbox', { name: 'Поиск продукта' })).toHaveValue('');
+    expect(screen.getByText('В наличии: 1')).toBeInTheDocument();
     expect(names()).toEqual(['Гречка']);
   });
 
@@ -98,5 +100,35 @@ describe('ProductList (кладовая)', () => {
     await user.click(screen.getByRole('button', { name: 'Создать продукт' }));
 
     expect(screen.getByLabelText('Название')).toHaveValue('Киноа');
+  });
+
+  it('создали продукт из поиска — поиск сбрасывается', async () => {
+    const user = userEvent.setup();
+    render(<ProductList />);
+
+    await user.type(screen.getByRole('searchbox', { name: 'Поиск продукта' }), 'Киноа');
+    await user.click(screen.getByRole('button', { name: 'Создать продукт' }));
+    await user.type(screen.getByLabelText('Ккал / 100 г'), '368');
+    await user.type(screen.getByLabelText('Белки, г'), '14');
+    await user.type(screen.getByLabelText('Жиры, г'), '6');
+    await user.type(screen.getByLabelText('Углеводы, г'), '64');
+    await user.clear(screen.getByLabelText('В наличии, г'));
+    await user.type(screen.getByLabelText('В наличии, г'), '500');
+    await user.click(screen.getByRole('button', { name: 'Добавить' }));
+
+    expect(products().products.map((p) => p.name)).toEqual(['Киноа']);
+    expect(screen.getByRole('searchbox', { name: 'Поиск продукта' })).toHaveValue('');
+    expect(names()).toEqual(['Киноа']);
+  });
+
+  it('в покупки из поиска — поиск остаётся (можно добавить ещё)', async () => {
+    const user = userEvent.setup();
+    products().addProduct(draft('Гречка', 0));
+    render(<ProductList />);
+
+    await user.type(screen.getByRole('searchbox', { name: 'Поиск продукта' }), 'греч');
+    await user.click(screen.getByRole('button', { name: 'Гречка: в покупки' }));
+    await user.click(screen.getByRole('button', { name: 'В список покупок' }));
+    expect(screen.getByRole('searchbox', { name: 'Поиск продукта' })).toHaveValue('греч');
   });
 });
