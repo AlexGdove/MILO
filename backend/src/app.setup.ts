@@ -7,6 +7,7 @@ import { Logger } from 'nestjs-pino';
 
 import { ErrorResponseDto } from './common/errors/error-response.dto.js';
 import { REQUEST_ID_HEADER, requestIdMiddleware } from './common/logging/logger.options.js';
+import { MiloIoAdapter } from './common/websocket/milo-io.adapter.js';
 import { type AppConfig, getAppConfig } from './config/app-config.js';
 
 export const API_PREFIX = 'api/v1';
@@ -35,6 +36,8 @@ export function configureApp(app: NestExpressApplication): AppConfig {
     maxAge: 600,
   });
   app.setGlobalPrefix(API_PREFIX);
+  // WebSocket поддержки (`/socket.io`, пространство `/support`) — CORS как у HTTP
+  app.useWebSocketAdapter(new MiloIoAdapter(app, config.corsOrigins));
   app.enableShutdownHooks();
 
   if (config.swaggerEnabled) {

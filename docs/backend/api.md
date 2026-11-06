@@ -101,11 +101,16 @@ interface SupportMessage {
 | `POST /support/tickets/:id/messages` | да   | `{ text }`                                 | `201 SupportMessage`; в закрытое — переоткрывает (`status = open`) |
 | `POST /support/tickets/:id/close`    | да   | —                                          | `200 SupportTicket`                                                |
 
+Все маршруты — с `X-Device-Key`; **заблокированный ключ тоже может писать** — это путь обжалования блокировки (B-19). Чужое обращение неотличимо от несуществующего (`404 ticket_not_found`), id не UUID — тоже 404. `?after=` — сообщение этого обращения, иначе `400 validation_failed`; `limit` сообщений 1–100 (по умолчанию 50). Список обращений — по последней активности (`updatedAt`), курсорный. Лимиты: создание — `ticketCreate` (5 в сутки), сообщение и закрытие — `ticketMessage` (30 за 10 минут), чтение — `supportRead` (120 в минуту). `POST` создания принимают `Idempotency-Key`.
+
+Статусы: сообщение пользователя → `open` (в том числе переоткрывает закрытое); ответ оператора (бот поддержки, этап 9) → `answered`; `POST …/close` → `closed` (повтор ничего не меняет). События outbox для бота: `ticket.created`, `ticket.message_from_user`, `ticket.closed`.
+
 ### WebSocket `/support` (Socket.IO)
 
-- Подключение: `auth: { deviceKey }`; неверный ключ — отказ при рукопожатии.
+- Адрес: путь `/socket.io`, пространство `/support` (без префикса `/api/v1`); CORS — как у HTTP (`CORS_ORIGINS`).
+- Подключение: `auth: { deviceKey }`. Отказ при рукопожатии — `connect_error` с `message`: `device_key_required`, `device_key_invalid`, `rate_limited` (больше 30 подключений в минуту с IP), `service_unavailable`.
 - Клиент автоматически получает события своих обращений (комната по `device_key_id`):
-  - `message.created` → `{ ticketId, message: SupportMessage }`;
+  - `message.created` → `{ ticketId, message: SupportMessage }` — и своё сообщение, и ответ оператора;
   - `ticket.updated` → `{ ticketId, status, updatedAt }`.
 - Отправка сообщений — только через REST (идемпотентность, лимиты); WebSocket — только доставка. При обрыве клиент дочитывает `GET …/messages?after=`.
 
@@ -117,6 +122,7 @@ interface SupportMessage {
 | `device_key_required` / `device_key_invalid` | 401    | нет ключа / неверный или неизвестный                                        |
 | `device_key_blocked`                         | 403    | заблокированный ключ на запись (удалить свои данные можно)                  |
 | `product_not_found`                          | 404    | нет продукта или id не UUID                                                 |
+| `ticket_not_found`                           | 404    | нет обращения, оно чужое или id не UUID                                     |
 | `idempotency_mismatch`                       | 422    | тот же `Idempotency-Key` с другим запросом                                  |
 | `rate_limited`                               | 429    | превышен лимит; `Retry-After` — секунды                                     |
 | `service_unavailable`                        | 503    | база или Redis недоступны                                                   |

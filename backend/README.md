@@ -21,6 +21,7 @@ npm run dev:backend                      # nest start --watch, http://localhost:
 
 - Живость: `GET /api/v1/health` → `{ "status": "ok" }`; готовность (база и Redis доступны): `GET /api/v1/health/ready`.
 - Swagger UI: http://localhost:3000/api/docs (JSON — `/api/docs-json`); в production выключен.
+- WebSocket поддержки: Socket.IO, путь `/socket.io`, пространство `/support`, `auth: { deviceKey }`.
 - Остановить: `npm run db:down` (данные базы остаются в томе `milo-postgres`; счётчики Redis не сохраняются).
 - Ключ устройства: `POST /api/v1/device-keys` → `{ key }`; дальше заголовок `X-Device-Key`. Удалить всё своё: `DELETE /api/v1/device-keys/me`.
 
@@ -63,8 +64,10 @@ Jest работает в режиме ES-модулей (`--experimental-vm-modu
 | `src/modules/products/`    | общая база (поиск по названию / бренду / штрихкоду, курсор), предложения и автомодерация `automod.ts` (ADR-0005), outbox для бота |
 | `src/modules/moderation/`  | решения оператора по `pending`: принять / отклонить, (раз)блокировать ключ — для бота модерации (этап 9)                          |
 | `src/common/idempotency/`  | `Idempotency-Key`: повтор POST → тот же ответ, другой запрос → 422                                                                |
-| `src/common/pagination/`   | курсор страниц: время создания + id (base64url)                                                                                   |
+| `src/common/pagination/`   | курсор (время + id, base64url), `PageQueryDto`, `cursorPage`                                                                      |
+| `src/common/websocket/`    | `MiloIoAdapter`: Socket.IO с CORS из `CORS_ORIGINS`, сообщения ≤ 64 КБ                                                            |
 | `src/modules/rate-limit/`  | лимиты (`architecture.md` §5): глобальный guard, `@RateLimit(name)`, скользящее окно в Redis (B-16)                               |
+| `src/modules/support/`     | поддержка (B-19): REST `/support/tickets`, Socket.IO `/support` (доставка событий), ответ оператора для бота (этап 9)             |
 | `prisma/`                  | схема и миграции (CHECK-ограничения и `pg_trgm` — SQL в миграциях)                                                                |
 | `test/`                    | e2e: HTTP-уровень, интеграция с PostgreSQL и Redis, ключ устройства и лимиты                                                      |
 

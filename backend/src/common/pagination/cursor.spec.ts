@@ -6,14 +6,14 @@ const raw = (obj: unknown) => Buffer.from(JSON.stringify(obj), 'utf8').toString(
 
 describe('Кодирование и декодирование курсора', () => {
   it('encodeCursor и decodeCursor должны быть обратными функциями', () => {
-    const decoded = decodeCursor(encodeCursor({ createdAt: AT, id: ID }));
-    expect(decoded).toEqual({ createdAt: AT, id: ID });
-    expect(decoded?.createdAt.toISOString()).toBe('2026-11-05T12:00:00.000Z');
+    const decoded = decodeCursor(encodeCursor({ at: AT, id: ID }));
+    expect(decoded).toEqual({ at: AT, id: ID });
+    expect(decoded?.at.toISOString()).toBe('2026-11-05T12:00:00.000Z');
     expect(decoded?.id).toBe(ID);
   });
 
   it('encodeCursor возвращает строку только из символов base64url', () => {
-    expect(encodeCursor({ createdAt: AT, id: ID })).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(encodeCursor({ at: AT, id: ID })).toMatch(/^[A-Za-z0-9_-]+$/);
   });
 
   it.each([
