@@ -10,6 +10,8 @@ import { getAppConfig } from './config/app-config.js';
 import { validateEnv } from './config/env.validation.js';
 import { HealthModule } from './health/health.module.js';
 import { DeviceKeysModule } from './modules/device-keys/device-keys.module.js';
+import { ModerationModule } from './modules/moderation/moderation.module.js';
+import { ProductsModule } from './modules/products/products.module.js';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { RedisModule } from './redis/redis.module.js';
@@ -32,6 +34,8 @@ import { RedisModule } from './redis/redis.module.js';
     RateLimitModule,
     HealthModule,
     DeviceKeysModule,
+    ProductsModule,
+    ModerationModule,
   ],
   providers: [
     { provide: APP_PIPE, useFactory: createValidationPipe },

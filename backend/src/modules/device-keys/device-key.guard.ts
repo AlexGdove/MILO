@@ -13,6 +13,7 @@ import { type DeviceKeyIdentity, DeviceKeysService } from './device-keys.service
 import { AppException } from '../../common/errors/app.exception.js';
 
 const ALLOW_BLOCKED = 'milo:device-key-allow-blocked';
+const OPTIONAL = 'milo:device-key-optional';
 const READ_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 interface RequestWithDeviceKey {
@@ -26,6 +27,12 @@ interface RequestWithDeviceKey {
  * (`DELETE /device-keys/me`): право стереть данные не зависит от блокировки.
  */
 export const AllowBlockedDeviceKey = () => SetMetadata(ALLOW_BLOCKED, true);
+
+/**
+ * Ключ необязателен: без заголовка запрос проходит без устройства (`request.deviceKey`
+ * пуст, `@CurrentDeviceKey()` → `undefined`); присланный ключ проверяется как обычно.
+ */
+export const OptionalDeviceKey = () => SetMetadata(OPTIONAL, true);
 
 /**
  * Требует `X-Device-Key` (`docs/backend/api.md`): нет заголовка — `401 device_key_required`;
@@ -42,8 +49,10 @@ export class DeviceKeyGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<RequestWithDeviceKey>();
     const header = request.headers[DEVICE_KEY_HEADER];
+    const targets = [context.getHandler(), context.getClass()];
 
     if (header === undefined || header === '') {
+      if (this.reflector.getAllAndOverride<boolean>(OPTIONAL, targets)) return true;
       throw new AppException(
         HttpStatus.UNAUTHORIZED,
         'device_key_required',
@@ -55,10 +64,7 @@ export class DeviceKeyGuard implements CanActivate {
       throw new AppException(HttpStatus.UNAUTHORIZED, 'device_key_invalid', 'Unknown device key');
     }
 
-    const allowBlocked = this.reflector.getAllAndOverride<boolean>(ALLOW_BLOCKED, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const allowBlocked = this.reflector.getAllAndOverride<boolean>(ALLOW_BLOCKED, targets);
     if (identity.blocked && !allowBlocked && !READ_METHODS.has(request.method)) {
       throw new AppException(HttpStatus.FORBIDDEN, 'device_key_blocked', 'Device key is blocked');
     }
@@ -78,4 +84,10 @@ export const CurrentDeviceKey = createParamDecorator(
     }
     return identity;
   },
+);
+
+/** Устройство, если ключ прислан (маршруты с `@OptionalDeviceKey()`). */
+export const OptionalCurrentDeviceKey = createParamDecorator(
+  (_data: unknown, context: ExecutionContext): DeviceKeyIdentity | undefined =>
+    context.switchToHttp().getRequest<RequestWithDeviceKey>().deviceKey,
 );

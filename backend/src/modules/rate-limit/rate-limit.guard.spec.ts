@@ -108,11 +108,11 @@ describe('трекеры лимитов', () => {
   });
 
   it('ключ счётчика не зависит от маршрута, но разный у разных действий', () => {
-    expect(rateLimitKey('recipeWrite', RATE_LIMIT_POLICIES.recipeWrite, REQ)).toBe(
-      rateLimitKey('recipeWrite', RATE_LIMIT_POLICIES.recipeWrite, REQ),
+    expect(rateLimitKey('productSubmit', RATE_LIMIT_POLICIES.productSubmit, REQ)).toBe(
+      rateLimitKey('productSubmit', RATE_LIMIT_POLICIES.productSubmit, REQ),
     );
-    expect(rateLimitKey('recipeWrite', RATE_LIMIT_POLICIES.recipeWrite, REQ)).not.toBe(
-      rateLimitKey('recipePublish', RATE_LIMIT_POLICIES.recipePublish, REQ),
+    expect(rateLimitKey('productSubmit', RATE_LIMIT_POLICIES.productSubmit, REQ)).not.toBe(
+      rateLimitKey('ticketCreate', RATE_LIMIT_POLICIES.ticketCreate, REQ),
     );
   });
 });

@@ -19,15 +19,16 @@ export const GLOBAL_RATE_LIMIT = 'all';
 /**
  * Лимиты из `docs/backend/architecture.md` §5. Действие подключается к маршруту декоратором
  * `@RateLimit(name)`; один счётчик на действие, общий для всех его маршрутов.
- * Лимиты поддержки — в отдельном сервисе `support/` (B-15).
+ * Поддержка — на этом же сервере (B-18); её лимиты подключаются на этапе 8.
  */
 export const RATE_LIMIT_POLICIES = {
   [GLOBAL_RATE_LIMIT]: { limit: 600, ttl: MINUTE, tracker: 'ip' },
   deviceKeyIssue: { limit: 5, ttl: HOUR, tracker: 'ip' },
+  deviceDataDelete: { limit: 10, ttl: HOUR, tracker: 'device' },
   catalogRead: { limit: 120, ttl: MINUTE, tracker: 'ip' },
-  recipePublish: { limit: 10, ttl: DAY, tracker: 'device' },
-  recipeWrite: { limit: 60, ttl: HOUR, tracker: 'device' },
-  recipeReport: { limit: 20, ttl: DAY, tracker: 'device' },
+  productSubmit: { limit: 20, ttl: DAY, tracker: 'device' },
+  ticketCreate: { limit: 5, ttl: DAY, tracker: 'device' },
+  ticketMessage: { limit: 30, ttl: 10 * MINUTE, tracker: 'device' },
 } as const satisfies Record<string, RateLimitPolicy>;
 
 export type RateLimitPolicyName = Exclude<
