@@ -2,8 +2,9 @@ import { defineConfig, mergeConfig } from 'vitest/config';
 
 import viteConfig from './vite.config.ts';
 
+// vite.config — функция от режима (mobile отключает PWA); тесты — режим test
 export default mergeConfig(
-  viteConfig,
+  viteConfig({ mode: 'test', command: 'serve' }),
   defineConfig({
     test: {
       environment: 'jsdom',
