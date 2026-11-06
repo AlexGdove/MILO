@@ -1,14 +1,15 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 
 import type { Product } from '@/entities/product';
 import type { RecipeDraft } from '@/entities/recipe';
 import { createId, parseNumber, roundAmount, unitLabel } from '@/shared/lib';
-import { Button, Input, Select } from '@/shared/ui';
+import { Button, Input } from '@/shared/ui';
 
+import { IngredientPicker } from './IngredientPicker';
 import styles from './RecipeForm.module.css';
 
 interface RecipeFormProps {
-  /** Все продукты кладовой (и закончившиеся): ингредиент выбирается из них */
+  /** Все продукты кладовой (и закончившиеся); найденное в базах добавляется к ним (№55) */
   products: readonly Product[];
   initial?: RecipeDraft;
   submitLabel: string;
@@ -38,14 +39,12 @@ const toRows = (draft?: RecipeDraft): IngredientRow[] =>
     : [{ key: createId(), productId: '', amount: '' }];
 
 export const RecipeForm = ({ products, initial, submitLabel, onSubmit }: RecipeFormProps) => {
-  const formId = useId();
   const [name, setName] = useState(initial?.name ?? '');
   const [servings, setServings] = useState(String(initial?.servings ?? 2));
   const [rows, setRows] = useState<IngredientRow[]>(() => toRows(initial));
   const [errors, setErrors] = useState<Errors>({});
 
   const productById = new Map(products.map((product) => [product.id, product]));
-  const sortedProducts = [...products].sort((a, b) => a.name.localeCompare(b.name, 'ru-RU'));
 
   const updateRow = (key: string, patch: Partial<IngredientRow>) =>
     setRows((current) => current.map((row) => (row.key === key ? { ...row, ...patch } : row)));
@@ -112,33 +111,22 @@ export const RecipeForm = ({ products, initial, submitLabel, onSubmit }: RecipeF
 
       <fieldset className={styles.ingredients}>
         <legend className={styles.legend}>Ингредиенты (на все порции)</legend>
-        {products.length === 0 && (
-          <p className={styles.hint}>
-            Сначала добавьте продукты в кладовую — ингредиенты берутся из них.
-          </p>
-        )}
+        <p className={styles.hint}>
+          Продукт ищется среди ваших, в общей базе MILO и в Open Food Facts.
+        </p>
         {rows.map((row, index) => {
           const product = productById.get(row.productId);
-          const selectId = `${formId}-product-${row.key}`;
           const rowError = errors.rows?.[row.key];
           return (
             <div key={row.key} className={styles.row}>
               <div className={styles.rowFields}>
-                <Select
-                  id={selectId}
-                  aria-label={`Продукт ${index + 1}`}
-                  className={styles.select}
+                <IngredientPicker
+                  label={`Продукт ${index + 1}`}
+                  products={products}
                   value={row.productId}
-                  onChange={(event) => updateRow(row.key, { productId: event.target.value })}
-                  aria-invalid={Boolean(rowError)}
-                >
-                  <option value="">Продукт…</option>
-                  {sortedProducts.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-                </Select>
+                  invalid={Boolean(rowError)}
+                  onChange={(productId) => updateRow(row.key, { productId })}
+                />
                 <Input
                   className={styles.amount}
                   aria-label={`Количество ${index + 1}`}
