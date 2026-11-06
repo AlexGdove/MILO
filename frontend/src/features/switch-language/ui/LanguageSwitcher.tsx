@@ -1,3 +1,5 @@
+import { Select } from '@/shared/ui';
+
 import styles from './LanguageSwitcher.module.css';
 import { LANGUAGES } from '../model/languages';
 
@@ -7,18 +9,13 @@ export const LanguageSwitcher = () => (
     <label className={styles.label} htmlFor="app-language">
       Язык интерфейса
     </label>
-    <select
-      id="app-language"
-      className={styles.select}
-      defaultValue="ru"
-      disabled={LANGUAGES.length < 2}
-    >
+    <Select id="app-language" defaultValue="ru" disabled={LANGUAGES.length < 2}>
       {LANGUAGES.map((language) => (
         <option key={language.value} value={language.value}>
           {language.label}
         </option>
       ))}
-    </select>
+    </Select>
     <p className={styles.hint}>Другие языки появятся позже.</p>
   </div>
 );

@@ -3,7 +3,7 @@ import { useId, useState, type FormEvent } from 'react';
 import type { Product } from '@/entities/product';
 import type { RecipeDraft } from '@/entities/recipe';
 import { createId, parseNumber, roundAmount, unitLabel } from '@/shared/lib';
-import { Button, Input } from '@/shared/ui';
+import { Button, Input, Select } from '@/shared/ui';
 
 import styles from './RecipeForm.module.css';
 
@@ -13,7 +13,6 @@ interface RecipeFormProps {
   initial?: RecipeDraft;
   submitLabel: string;
   onSubmit: (draft: RecipeDraft) => void;
-  onDelete?: () => void;
 }
 
 interface IngredientRow {
@@ -38,13 +37,7 @@ const toRows = (draft?: RecipeDraft): IngredientRow[] =>
       }))
     : [{ key: createId(), productId: '', amount: '' }];
 
-export const RecipeForm = ({
-  products,
-  initial,
-  submitLabel,
-  onSubmit,
-  onDelete,
-}: RecipeFormProps) => {
+export const RecipeForm = ({ products, initial, submitLabel, onSubmit }: RecipeFormProps) => {
   const formId = useId();
   const [name, setName] = useState(initial?.name ?? '');
   const [servings, setServings] = useState(String(initial?.servings ?? 2));
@@ -131,7 +124,7 @@ export const RecipeForm = ({
           return (
             <div key={row.key} className={styles.row}>
               <div className={styles.rowFields}>
-                <select
+                <Select
                   id={selectId}
                   aria-label={`Продукт ${index + 1}`}
                   className={styles.select}
@@ -145,7 +138,7 @@ export const RecipeForm = ({
                       {option.name}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <Input
                   className={styles.amount}
                   aria-label={`Количество ${index + 1}`}
@@ -183,11 +176,6 @@ export const RecipeForm = ({
       <Button type="submit" fullWidth>
         {submitLabel}
       </Button>
-      {onDelete && (
-        <Button variant="danger" fullWidth onClick={onDelete}>
-          Удалить рецепт
-        </Button>
-      )}
     </form>
   );
 };
