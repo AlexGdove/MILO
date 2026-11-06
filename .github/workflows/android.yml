@@ -1,9 +1,9 @@
-# Сборка Android-приложения MILO (Capacitor, решение №44): отладочный APK.
+# Сборка Android-приложения MILO (Capacitor, решения №44, №52): release APK, подписанный
+# постоянным ключом из секретов репозитория (без секретов — отладочным).
 # После каждой сборки из push файл milo.apk заменяется в релизе android-latest (решение №46) —
 # постоянная ссылка для страницы «Приложение», скачивается без входа:
 #   https://github.com/AlexGdove/MILO/releases/download/android-latest/milo.apk
-# Ещё он лежит как файл запуска: Actions → «Android APK» → Artifacts → milo-debug-apk.
-# Подписанный релиз для магазинов — отдельной задачей (ключ подписи — секрет репозитория).
+# Ещё он лежит как файл запуска: Actions → «Android APK» → Artifacts → milo-apk.
 name: Android APK
 
 on:
@@ -57,17 +57,44 @@ jobs:
       - name: Build web app (mode mobile) and sync into Android project
         run: npm run build:mobile
 
-      - name: Build debug APK
+      # Ключ подписи (решение №52) — из секретов репозитория во временный файл раннера, не в git.
+      # Без секретов — предупреждение и подпись отладочным ключом (обновление поверх не встанет).
+      - name: Prepare signing key
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::warning::Нет секрета ANDROID_KEYSTORE_BASE64 — APK подписан отладочным ключом (mobile/README.md, «Ключ подписи»)"
+            echo "keystore=" >> "$GITHUB_OUTPUT"
+          else
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/milo-release.jks"
+            echo "keystore=$RUNNER_TEMP/milo-release.jks" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release APK
         working-directory: mobile/android
+        env:
+          MILO_KEYSTORE_FILE: ${{ steps.signing.outputs.keystore }}
+          MILO_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          MILO_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          MILO_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/milo.apk"
+
+      # Отпечаток сертификата в лог: по нему видно, что подпись постоянная (не меняется от сборки к сборке)
+      - name: Show signing certificate
+        run: |
+          BUILD_TOOLS="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          "$BUILD_TOOLS/apksigner" verify --print-certs milo.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
-          name: milo-debug-apk
-          path: mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          name: milo-apk
+          path: milo.apk
           retention-days: 14
           if-no-files-found: error
 
@@ -77,10 +104,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.sha }}
         run: |
-          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk milo.apk
           if ! gh release view android-latest >/dev/null 2>&1; then
             gh release create android-latest --prerelease --target "$SHA" \
               --title "MILO для Android — последняя сборка" \
-              --notes "Отладочная сборка из ветки разработки, обновляется автоматически. Скачать: milo.apk."
+              --notes "Сборка из ветки разработки, обновляется автоматически. Скачать: milo.apk."
           fi
           gh release upload android-latest milo.apk --clobber
