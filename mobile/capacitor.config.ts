@@ -9,10 +9,6 @@ const config: CapacitorConfig = {
   appId: 'com.alexgdove.milo',
   appName: 'MILO',
   webDir: '../frontend/dist',
-  android: {
-    // Отладочные сборки можно смотреть через chrome://inspect
-    webContentsDebuggingEnabled: true,
-  },
 };
 
 export default config;

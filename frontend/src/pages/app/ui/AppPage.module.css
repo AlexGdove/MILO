@@ -73,3 +73,34 @@
   outline: var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
 }
+
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.downloadSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-height);
+  border: var(--border-width) solid var(--color-primary);
+  border-radius: var(--radius-md);
+  color: var(--color-primary);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+}
+
+.downloadSecondary:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Инструкция для iPhone подсвечивается, когда к ней перешли кнопкой «Установить на iPhone» */
+.platform:focus,
+.platform:target {
+  outline: 2px solid var(--color-primary);
+  outline-offset: var(--space-2);
+  border-radius: var(--radius-md);
+}

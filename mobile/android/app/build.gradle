@@ -1,5 +1,9 @@
 apply plugin: 'com.android.application'
 
+// Ключ подписи (решение №52): в CI — из секретов репозитория (.github/workflows/android.yml),
+// локально — из тех же переменных окружения. Без них release подписывается отладочным ключом.
+def miloKeystore = System.getenv('MILO_KEYSTORE_FILE')
+
 android {
     namespace = "com.alexgdove.milo"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,8 +11,8 @@ android {
         applicationId "com.alexgdove.milo"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 10002
-        versionName "1.0.2"
+        versionCode 10004
+        versionName "1.0.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +20,19 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (miloKeystore) {
+                storeFile file(miloKeystore)
+                storePassword System.getenv('MILO_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('MILO_KEY_ALIAS')
+                keyPassword System.getenv('MILO_KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
+            signingConfig miloKeystore ? signingConfigs.release : signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
