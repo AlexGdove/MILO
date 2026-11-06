@@ -4,13 +4,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useCookedDishStore } from '@/entities/cooked-dish';
 import { useMealEntryStore } from '@/entities/meal-entry';
-import { selectProductById, useProductStore } from '@/entities/product';
+import { useProductStore } from '@/entities/product';
 import { useRecipeStore } from '@/entities/recipe';
 
 import { AddMealEntryForm } from './AddMealEntryForm';
 
 const DATE = '2026-11-05';
-const SEARCH = { name: 'Найти продукт, блюдо или рецепт' };
+const SEARCH = { name: 'Найти продукт или блюдо' };
 
 const products = () => useProductStore.getState();
 const entries = () => useMealEntryStore.getState().entries;
@@ -50,8 +50,6 @@ const renderForm = () => {
   return { user: userEvent.setup(), onDone };
 };
 
-const stockOf = (id: string) => selectProductById(id)(products())?.stock;
-
 beforeEach(() => {
   useProductStore.setState({ products: [] });
   useRecipeStore.setState(useRecipeStore.getInitialState(), true);
@@ -59,9 +57,8 @@ beforeEach(() => {
   useMealEntryStore.setState(useMealEntryStore.getInitialState(), true);
 });
 
-describe('AddMealEntryForm: блюда и рецепты', () => {
-  it('у блюда и рецепта своя подпись возврата; возврат — к тому же варианту', async () => {
-    setupOmelet();
+describe('AddMealEntryForm: приготовленные блюда (рецептов в окне нет, решение №45)', () => {
+  it('у блюда своя подпись возврата; возврат — к тому же варианту', async () => {
     useCookedDishStore.getState().addDish({
       recipeId: 'r',
       name: 'Суп',
@@ -74,14 +71,10 @@ describe('AddMealEntryForm: блюда и рецепты', () => {
     await user.click(screen.getByRole('button', { name: /Суп/ }));
     await user.click(screen.getByRole('button', { name: '← Другое блюдо' }));
     expect(screen.getByRole('button', { name: /Суп/ })).toHaveFocus();
-
-    await user.click(screen.getByRole('button', { name: /Омлет/ }));
-    await user.click(screen.getByRole('button', { name: '← Другой рецепт' }));
-    expect(screen.getByRole('button', { name: /Омлет/ })).toHaveFocus();
     expect(entries()).toHaveLength(0);
   });
 
-  it('показывает группы: приготовленные блюда, рецепты, продукты', () => {
+  it('показывает только приготовленные блюда и продукты — неприготовленных рецептов нет', () => {
     setupOmelet();
     useCookedDishStore.getState().addDish({
       recipeId: 'r',
@@ -95,9 +88,9 @@ describe('AddMealEntryForm: блюда и рецепты', () => {
     expect(
       within(screen.getByRole('region', { name: 'Приготовленные блюда' })).getByText('Суп'),
     ).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('region', { name: 'Рецепты' })).getByText('Омлет'),
-    ).toBeInTheDocument();
+    // Рецепт «Омлет» есть, но не приготовлен — его в окне нет
+    expect(screen.queryByRole('region', { name: 'Рецепты' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Омлет')).not.toBeInTheDocument();
     expect(
       within(screen.getByRole('region', { name: 'Продукты' })).getByText('Яйца'),
     ).toBeInTheDocument();
@@ -200,60 +193,11 @@ describe('AddMealEntryForm: блюда и рецепты', () => {
     });
   });
 
-  it('рецепт со списанием: продукты на порцию уходят из кладовой, блюдо — в историю', async () => {
-    const { eggs, milk, recipe } = setupOmelet();
+  it('поиск по названию неприготовленного рецепта — подсказка приготовить его в «Рецептах»', async () => {
+    setupOmelet();
     const { user } = renderForm();
-
     await user.type(screen.getByRole('searchbox', SEARCH), 'омл');
-    await user.click(screen.getByRole('button', { name: /Омлет/ }));
-    // 1 порция = 2 яйца + 50 мл — всё есть
-    expect(screen.getByRole('checkbox', { name: /Списать продукты/ })).toBeChecked();
-    await user.click(screen.getByRole('button', { name: 'Добавить' }));
-
-    expect(stockOf(eggs.id)).toBe(0);
-    expect(stockOf(milk.id)).toBe(950);
-    expect(dishes()).toMatchObject([{ recipeId: recipe.id, servingsTotal: 1, servingsLeft: 0 }]);
-    // 2 яйца (100 г, 150 ккал) + 50 мл (25 ккал) = 150 г, 175 ккал
-    expect(entries()[0]).toMatchObject({
-      source: { id: dishes()[0]?.id },
-      grams: 150,
-      stockDeducted: 1,
-    });
-    expect(entries()[0]?.per100g.kcal).toBeCloseTo((175 / 150) * 100);
-  });
-
-  it('рецепт без списания: только КБЖУ по рецепту, кладовая не меняется', async () => {
-    const { eggs, milk, recipe } = setupOmelet();
-    const { user } = renderForm();
-
-    await user.click(screen.getByRole('button', { name: /Омлет/ }));
-    await user.click(screen.getByRole('checkbox', { name: /Списать продукты/ }));
-    await user.click(screen.getByRole('button', { name: 'Добавить' }));
-
-    expect(stockOf(eggs.id)).toBe(2);
-    expect(stockOf(milk.id)).toBe(1000);
-    expect(dishes()).toEqual([]);
-    // Порция по рецепту: (4×50 г + 100 мл) / 2 = 150 г; (300 + 50) / 2 = 175 ккал
-    expect(entries()[0]).toMatchObject({
-      source: { type: 'recipe', id: recipe.id },
-      grams: 150,
-      stockDeducted: 0,
-    });
-    expect(entries()[0]?.per100g.kcal).toBeCloseTo((175 / 150) * 100);
-  });
-
-  it('если продуктов не хватает — списывается то, что есть', async () => {
-    const { eggs, milk } = setupOmelet();
-    const { user } = renderForm();
-
-    await user.click(screen.getByRole('button', { name: /Омлет/ }));
-    await user.click(screen.getByRole('button', { name: 'Порций: больше' }));
-    expect(screen.getByRole('checkbox', { name: /спишется то, что есть/ })).toBeChecked();
-    await user.click(screen.getByRole('button', { name: 'Добавить' }));
-
-    // на 2 порции нужно 4 яйца — есть 2
-    expect(stockOf(eggs.id)).toBe(0);
-    expect(stockOf(milk.id)).toBe(900);
-    expect(dishes()[0]).toMatchObject({ servingsTotal: 2, servingsLeft: 0 });
+    expect(screen.queryByRole('button', { name: /Омлет/ })).not.toBeInTheDocument();
+    expect(screen.getByText(/приготовьте блюдо в «Рецептах»/)).toBeInTheDocument();
   });
 });
