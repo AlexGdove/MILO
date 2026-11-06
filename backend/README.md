@@ -1,6 +1,6 @@
 # Backend MILO
 
-API для публичных рецептов и поддержки. Личные данные пользователя сервер не хранит — они остаются на устройстве (решения B-6…B-11). Документация: `docs/backend/` (архитектура, БД, API, план, прогресс).
+API общей базы продуктов (предложения с автомодерацией, B-18) и анонимной поддержки; один ключ устройства. Личные данные пользователя сервер не хранит — они остаются на устройстве (решения B-6…B-11). Документация: `docs/backend/` (архитектура, БД, API, план, прогресс).
 
 ## Стек
 
@@ -15,7 +15,7 @@ npm install                              # заодно генерирует к�
 cp backend/.env.example backend/.env     # при необходимости поправить
 npm run db:up                            # PostgreSQL 17 (базы milo, milo_test) и Redis 8 (compose.yaml)
 npm run db:migrate                       # применить миграции к milo (prisma migrate dev)
-npm run db:seed                          # необязательно: 3 демо-рецепта
+npm run db:seed                          # необязательно: 6 демо-продуктов общей базы
 npm run dev:backend                      # nest start --watch, http://localhost:3000
 ```
 
@@ -47,22 +47,25 @@ Jest работает в режиме ES-модулей (`--experimental-vm-modu
 
 ## Устройство
 
-| Путь                       | Назначение                                                                                                 |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `src/main.ts`              | запуск                                                                                                     |
-| `src/app.setup.ts`         | HTTP-уровень (общий для запуска и e2e): id запроса, JSON ≤ 64 КБ, helmet, CORS, префикс `/api/v1`, Swagger |
-| `src/app.module.ts`        | конфигурация с проверкой ENV, логирование, база, глобальные `ValidationPipe` и фильтр ошибок               |
-| `src/config/`              | проверка переменных окружения (`validateEnv`) и итоговые настройки                                         |
-| `src/common/errors/`       | единый формат ошибок `{ error: { code, message, details?, requestId } }`                                   |
-| `src/common/validation/`   | `ValidationPipe`: лишние поля — ошибка, детали по полям                                                    |
-| `src/common/logging/`      | pino: id запроса (`X-Request-Id`), без ключа устройства и тел запросов                                     |
-| `src/prisma/`              | `PrismaService`, ошибки базы → HTTP (`P2002`/`P2003` → 409, `P2025` → 404, нет связи → 503), seed          |
-| `src/public-recipes/`      | расчёт КБЖУ на порцию по снимку ингредиентов (формулы как на клиенте)                                      |
-| `src/health/`              | `GET /api/v1/health`, `GET /api/v1/health/ready` (база и Redis); без общего лимита                         |
-| `src/redis/`               | `RedisService` (ioredis): фоновое подключение, ответ или ошибка за 1 с                                     |
-| `src/modules/device-keys/` | ключ устройства (ADR-0001): выдача, `DeviceKeyGuard` + `@CurrentDeviceKey()`, блокировка, удаление         |
-| `src/modules/rate-limit/`  | лимиты (`architecture.md` §5): глобальный guard, `@RateLimit(name)`, скользящее окно в Redis (B-16)        |
-| `prisma/`                  | схема и миграции (CHECK-ограничения и `pg_trgm` — SQL в миграциях)                                         |
-| `test/`                    | e2e: HTTP-уровень, интеграция с PostgreSQL и Redis, ключ устройства и лимиты                               |
+| Путь                       | Назначение                                                                                                                        |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `src/main.ts`              | запуск                                                                                                                            |
+| `src/app.setup.ts`         | HTTP-уровень (общий для запуска и e2e): id запроса, JSON ≤ 64 КБ, helmet, CORS, префикс `/api/v1`, Swagger                        |
+| `src/app.module.ts`        | конфигурация с проверкой ENV, логирование, база, глобальные `ValidationPipe` и фильтр ошибок                                      |
+| `src/config/`              | проверка переменных окружения (`validateEnv`) и итоговые настройки                                                                |
+| `src/common/errors/`       | единый формат ошибок `{ error: { code, message, details?, requestId } }`                                                          |
+| `src/common/validation/`   | `ValidationPipe`: лишние поля — ошибка, детали по полям                                                                           |
+| `src/common/logging/`      | pino: id запроса (`X-Request-Id`), без ключа устройства и тел запросов                                                            |
+| `src/prisma/`              | `PrismaService`, ошибки базы → HTTP (`P2002`/`P2003` → 409, `P2025` → 404, нет связи → 503), seed                                 |
+| `src/health/`              | `GET /api/v1/health`, `GET /api/v1/health/ready` (база и Redis); без общего лимита                                                |
+| `src/redis/`               | `RedisService` (ioredis): фоновое подключение, ответ или ошибка за 1 с                                                            |
+| `src/modules/device-keys/` | ключ устройства (ADR-0001): выдача, `DeviceKeyGuard` + `@CurrentDeviceKey()`, блокировка, удаление                                |
+| `src/modules/products/`    | общая база (поиск по названию / бренду / штрихкоду, курсор), предложения и автомодерация `automod.ts` (ADR-0005), outbox для бота |
+| `src/modules/moderation/`  | решения оператора по `pending`: принять / отклонить, (раз)блокировать ключ — для бота модерации (этап 9)                          |
+| `src/common/idempotency/`  | `Idempotency-Key`: повтор POST → тот же ответ, другой запрос → 422                                                                |
+| `src/common/pagination/`   | курсор страниц: время создания + id (base64url)                                                                                   |
+| `src/modules/rate-limit/`  | лимиты (`architecture.md` §5): глобальный guard, `@RateLimit(name)`, скользящее окно в Redis (B-16)                               |
+| `prisma/`                  | схема и миграции (CHECK-ограничения и `pg_trgm` — SQL в миграциях)                                                                |
+| `test/`                    | e2e: HTTP-уровень, интеграция с PostgreSQL и Redis, ключ устройства и лимиты                                                      |
 
 Импорты внутри `src` пишутся с расширением `.js` (NodeNext).

@@ -1,71 +1,42 @@
 // Демо-данные для локальной разработки: `npm run db:seed` (из корня — сборка и запуск).
-// Три публичных рецепта от демо-устройства. Повторный запуск ничего не меняет;
-// в production и с непустым каталогом не выполняется.
-import { createHash, randomBytes } from 'node:crypto';
-
+// Несколько продуктов общей базы (как будто принятых модерацией). Повторный запуск ничего не
+// меняет; в production и с непустой базой продуктов не выполняется.
 import { PrismaPg } from '@prisma/adapter-pg';
 
 import { PrismaClient, type Unit } from '../generated/prisma/client.js';
-import {
-  perServingNutrition,
-  type IngredientSnapshot,
-} from '../public-recipes/recipe-nutrition.js';
 
-interface DemoIngredient extends IngredientSnapshot {
+interface DemoProduct {
   name: string;
+  brand: string | null;
+  barcode: string | null;
   unit: Unit;
+  pieceWeight: number | null;
+  kcal: number;
+  protein: number;
+  fat: number;
+  carbs: number;
 }
 
-const g = (
-  name: string,
-  amount: number,
-  kcal: number,
-  protein: number,
-  fat: number,
-  carbs: number,
-) =>
-  ({ name, amount, unit: 'g', pieceWeight: null, per100g: { kcal, protein, fat, carbs } }) as const;
+const g = (name: string, kcal: number, protein: number, fat: number, carbs: number) =>
+  ({
+    name,
+    brand: null,
+    barcode: null,
+    unit: 'g',
+    pieceWeight: null,
+    kcal,
+    protein,
+    fat,
+    carbs,
+  }) as const;
 
-const DEMO_RECIPES: Array<{ name: string; servings: number; ingredients: DemoIngredient[] }> = [
-  {
-    name: 'Овсяная каша с бананом',
-    servings: 2,
-    ingredients: [
-      g('Овсяные хлопья', 100, 366, 12.3, 6.2, 61.8),
-      { ...g('Молоко 2,5%', 400, 52, 2.8, 2.5, 4.7), unit: 'ml' },
-      {
-        name: 'Банан',
-        amount: 1,
-        unit: 'pcs',
-        pieceWeight: 120,
-        per100g: { kcal: 95, protein: 1.5, fat: 0.2, carbs: 21.8 },
-      },
-    ],
-  },
-  {
-    name: 'Омлет с помидорами',
-    servings: 1,
-    ingredients: [
-      {
-        name: 'Яйцо куриное',
-        amount: 3,
-        unit: 'pcs',
-        pieceWeight: 55,
-        per100g: { kcal: 157, protein: 12.7, fat: 11.5, carbs: 0.7 },
-      },
-      g('Помидоры', 150, 20, 1.1, 0.2, 3.7),
-      { ...g('Молоко 2,5%', 50, 52, 2.8, 2.5, 4.7), unit: 'ml' },
-    ],
-  },
-  {
-    name: 'Гречка с курицей',
-    servings: 3,
-    ingredients: [
-      g('Гречка', 200, 313, 12.6, 3.3, 57.1),
-      g('Куриное филе', 400, 113, 23.6, 1.9, 0.4),
-      g('Лук репчатый', 80, 41, 1.4, 0.2, 8.2),
-    ],
-  },
+const DEMO_PRODUCTS: DemoProduct[] = [
+  { ...g('Гречка ядрица', 343, 12.6, 3.3, 62.1), barcode: '4600682000013' },
+  g('Овсяные хлопья', 366, 12.3, 6.2, 61.8),
+  { ...g('Молоко 2,5%', 52, 2.8, 2.5, 4.7), unit: 'ml' },
+  { ...g('Яйцо куриное', 157, 12.7, 11.5, 0.7), unit: 'pcs', pieceWeight: 55 },
+  { ...g('Банан', 95, 1.5, 0.2, 21.8), unit: 'pcs', pieceWeight: 120 },
+  g('Куриное филе', 113, 23.6, 1.9, 0.4),
 ];
 
 async function main(): Promise<void> {
@@ -77,40 +48,17 @@ async function main(): Promise<void> {
 
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: url }) });
   try {
-    if ((await prisma.publicRecipe.count()) > 0) {
-      console.log('Seed skipped: public recipes already exist');
+    if ((await prisma.product.count()) > 0) {
+      console.log('Seed skipped: products already exist');
       return;
     }
-    // Ключ демо-устройства нигде не нужен — храним только хэш, как и для настоящих ключей
-    const keyHash = createHash('sha256').update(randomBytes(32)).digest('hex');
     await prisma.$transaction(async (tx) => {
-      const author = await tx.deviceKey.create({ data: { keyHash } });
-      for (const recipe of DEMO_RECIPES) {
-        const perServing = perServingNutrition(recipe.ingredients, recipe.servings);
-        await tx.publicRecipe.create({
-          data: {
-            authorKeyId: author.id,
-            name: recipe.name,
-            servings: recipe.servings,
-            kcalPerServing: perServing.kcal,
-            proteinPerServing: perServing.protein,
-            fatPerServing: perServing.fat,
-            carbsPerServing: perServing.carbs,
-            ingredients: {
-              create: recipe.ingredients.map((ingredient, position) => ({
-                position,
-                name: ingredient.name,
-                amount: ingredient.amount,
-                unit: ingredient.unit,
-                pieceWeight: ingredient.pieceWeight,
-                ...ingredient.per100g,
-              })),
-            },
-          },
-        });
+      for (const product of DEMO_PRODUCTS) {
+        // Миллисекунды, как у продуктов через API (курсор страниц — с точностью Date)
+        await tx.product.create({ data: { ...product, createdAt: new Date() } });
       }
     });
-    console.log(`Seed done: ${DEMO_RECIPES.length} public recipes`);
+    console.log(`Seed done: ${DEMO_PRODUCTS.length} products`);
   } finally {
     await prisma.$disconnect();
   }

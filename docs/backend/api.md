@@ -1,20 +1,19 @@
-# API backend MILO — контракты (этап 2)
+# API backend MILO — контракты
 
-Базовый путь `/api/v1`, JSON, UTF-8. Концепция — `DECISIONS.md` B-6…B-11, данные — `database.md`. Swagger (`/api/docs`) генерируется из DTO на этапе 3 и должен совпадать с этим документом.
+Базовый путь `/api/v1`, JSON, UTF-8. Концепция — `DECISIONS.md` B-6, B-8, B-10, B-18 (ADR-0005), данные — `database.md`. Swagger (`/api/docs`) генерируется из DTO на этапе 3 и должен совпадать с этим документом.
 
 ## Общие правила
 
-| Тема                     | Правило                                                                                                                                                                           |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ключ устройства          | Заголовок `X-Device-Key: mk_<43 символа base64url>`. Нет или неизвестен → `401 device_key_required` / `401 device_key_invalid`. Заблокирован → `403 device_key_blocked` на запись |
-| Идемпотентность          | `POST` с созданием (рецепт, жалоба, обращение, сообщение) принимает `Idempotency-Key: <uuid>`; повтор с тем же телом → тот же ответ; с другим телом → `422 idempotency_mismatch`  |
-| Оптимистичная блокировка | Правка рецепта передаёт `version`; расхождение → `409 version_conflict` с текущей версией                                                                                         |
-| Пагинация                | Курсорная: `?limit=20&cursor=<opaque>` (limit 1–50, по умолчанию 20) → `{ items, nextCursor \| null }`                                                                            |
-| Числа                    | КБЖУ и количества — JSON-числа, не более 2 знаков после запятой                                                                                                                   |
-| Время                    | ISO 8601 UTC (`2026-11-05T12:00:00.000Z`)                                                                                                                                         |
-| Ошибки                   | `{ "error": { "code": "snake_case", "message": "для разработчика", "details"?: [...], "requestId": "..." } }`. Тексты для людей — на клиенте по `code`                            |
-| Лимиты                   | `429 rate_limited` + `Retry-After`. Таблица — `architecture.md` §5                                                                                                                |
-| CORS                     | Только адреса фронтенда из ENV (`CORS_ORIGINS`)                                                                                                                                   |
+| Тема            | Правило                                                                                                                                                                                |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ключ устройства | Заголовок `X-Device-Key: mk_<43 символа base64url>`. Нет или неизвестен → `401 device_key_required` / `401 device_key_invalid`. Заблокирован → `403 device_key_blocked` на запись      |
+| Идемпотентность | `POST` с созданием (предложение продукта, обращение, сообщение) принимает `Idempotency-Key: <uuid>`; повтор с тем же телом → тот же ответ; с другим телом → `422 idempotency_mismatch` |
+| Пагинация       | Курсорная: `?limit=20&cursor=<opaque>` (limit 1–50, по умолчанию 20) → `{ items, nextCursor \| null }`                                                                                 |
+| Числа           | КБЖУ и количества — JSON-числа, не более 2 знаков после запятой                                                                                                                        |
+| Время           | ISO 8601 UTC (`2026-11-05T12:00:00.000Z`)                                                                                                                                              |
+| Ошибки          | `{ "error": { "code": "snake_case", "message": "для разработчика", "details"?: [...], "requestId": "..." } }`. Тексты для людей — на клиенте по `code`                                 |
+| Лимиты          | `429 rate_limited` + `Retry-After`. Таблица — `architecture.md` §5                                                                                                                     |
+| CORS            | Только адреса фронтенда из ENV (`CORS_ORIGINS`)                                                                                                                                        |
 
 ## Модели ответов
 
@@ -22,30 +21,38 @@
 type Unit = 'g' | 'ml' | 'pcs';
 type Nutrients = { kcal: number; protein: number; fat: number; carbs: number };
 
-interface PublicIngredient {
-  name: string; // 1–80
-  amount: number; // > 0, ≤ 100 000, на весь рецепт
-  unit: Unit;
-  pieceWeight: number | null; // обязателен при pcs
-  per100g: Nutrients; // kcal 0–900; БЖУ 0–100, сумма ≤ 100
-}
-
-interface PublicRecipeSummary {
+interface Product {
   id: string;
-  name: string;
-  servings: number;
-  ingredientCount: number;
-  perServing: Nutrients; // вычислено сервером
-  publishedAt: string;
+  name: string; // 1–120
+  brand: string | null; // ≤ 80
+  barcode: string | null; // EAN-8 / UPC-A / EAN-13 / GTIN-14, контрольная цифра верна
+  unit: Unit;
+  pieceWeight: number | null; // обязателен при pcs, ≤ 5000 г
+  per100g: Nutrients; // kcal 0–900; БЖУ 0–100, сумма ≤ 100
+  createdAt: string;
 }
 
-interface PublicRecipe extends PublicRecipeSummary {
-  ingredients: PublicIngredient[]; // 1–50, по порядку
-  version: number;
-  updatedAt: string;
-  isMine: boolean; // true, если запрос с ключом автора
-  status: 'published' | 'hidden'; // hidden виден только автору
+interface ProductSubmission {
+  id: string;
+  status: 'pending' | 'approved' | 'rejected'; // pending — ждёт человека
+  flags: AutomodFlag[]; // замечания автомодерации
+  reviewedBy: 'auto' | 'operator' | null;
+  productId: string | null; // продукт общей базы (при approved)
+  name: string;
+  brand: string | null;
+  barcode: string | null;
+  createdAt: string;
 }
+
+type AutomodFlag =
+  | 'banned_words' // → rejected
+  | 'link_or_contact' // → rejected
+  | 'gibberish' // → rejected
+  | 'suspicious_text' // → pending
+  | 'energy_mismatch' // → pending
+  | 'barcode_conflict' // → pending
+  | 'name_conflict' // → pending
+  | 'untrusted_author'; // → pending
 
 interface SupportTicket {
   id: string;
@@ -67,24 +74,21 @@ interface SupportMessage {
 
 ## Ключ устройства
 
-| Метод и путь             | Ключ | Тело / параметры | Ответ                                                                                                       |
-| ------------------------ | ---- | ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| `POST /device-keys`      | —    | —                | `201 { key }` — показывается один раз; клиент создаёт ключ лениво (первая публикация, жалоба или обращение) |
-| `DELETE /device-keys/me` | да   | —                | `204`; удаляет ключ и каскадом рецепты, жалобы, обращения устройства (`database.md`)                        |
+| Метод и путь             | Ключ | Тело / параметры | Ответ                                                                                                         |
+| ------------------------ | ---- | ---------------- | ------------------------------------------------------------------------------------------------------------- |
+| `POST /device-keys`      | —    | —                | `201 { key }` — показывается один раз; клиент создаёт ключ лениво (первое предложение продукта или обращение) |
+| `DELETE /device-keys/me` | да   | —                | `204`; удаляет ключ и каскадом предложения и обращения устройства; принятые продукты остаются в общей базе    |
 
-## Публичные рецепты
+## Общая база продуктов (B-18, ADR-0005)
 
-| Метод и путь                       | Ключ         | Тело / параметры                                                         | Ответ                                                                                     |
-| ---------------------------------- | ------------ | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `GET /public-recipes`              | не нужен     | `?q=` (2–60 символов, поиск по названию), `limit`, `cursor`              | `200 { items: PublicRecipeSummary[], nextCursor }` — только `published`, новые сверху     |
-| `GET /public-recipes/:id`          | необязателен | —                                                                        | `200 PublicRecipe`; `hidden` — только автору, иначе `404 recipe_not_found`                |
-| `POST /public-recipes`             | да           | `{ name, servings, ingredients: PublicIngredient[] }`                    | `201 PublicRecipe`; `400 validation_failed` с `details`                                   |
-| `PUT /public-recipes/:id`          | да, автор    | то же + `version`                                                        | `200 PublicRecipe` (version + 1); `403 not_author`; `409 version_conflict`                |
-| `DELETE /public-recipes/:id`       | да, автор    | —                                                                        | `204`; `403 not_author`                                                                   |
-| `GET /me/public-recipes`           | да           | `limit`, `cursor`                                                        | `200 { items: (PublicRecipeSummary & { status })[], nextCursor }` — свои, включая скрытые |
-| `POST /public-recipes/:id/reports` | да           | `{ reason: 'spam'\|'offensive'\|'not_food'\|'other', comment? (≤ 500) }` | `201 { id }`; `409 already_reported`; на свой рецепт — `400 cannot_report_own`            |
+| Метод и путь                  | Ключ     | Тело / параметры                                                            | Ответ                                                                                      |
+| ----------------------------- | -------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `GET /products`               | не нужен | `?q=` (2–60, подстрока названия или бренда), `?barcode=`, `limit`, `cursor` | `200 { items: Product[], nextCursor }` — только принятые, новые сверху                     |
+| `GET /products/:id`           | не нужен | —                                                                           | `200 Product`; нет или id не UUID — `404 product_not_found`                                |
+| `POST /product-submissions`   | да       | `{ name, brand?, barcode?, unit, pieceWeight, per100g }`                    | `201 ProductSubmission` — решение автомодерации сразу; `400 validation_failed` с `details` |
+| `GET /me/product-submissions` | да       | `limit`, `cursor`                                                           | `200 { items: ProductSubmission[], nextCursor }` — свои, новые сверху                      |
 
-Правка скрытого рецепта автором допускается, но статус остаётся `hidden` — вернуть может только оператор.
+Решения оператора (`pending` → принять / отклонить) принимаются только в боте модерации — HTTP-маршрутов нет.
 
 ## Поддержка
 
@@ -105,14 +109,26 @@ interface SupportMessage {
   - `ticket.updated` → `{ ticketId, status, updatedAt }`.
 - Отправка сообщений — только через REST (идемпотентность, лимиты); WebSocket — только доставка. При обрыве клиент дочитывает `GET …/messages?after=`.
 
+## Коды ошибок
+
+| Код                                          | Статус | Когда                                                                       |
+| -------------------------------------------- | ------ | --------------------------------------------------------------------------- |
+| `validation_failed`                          | 400    | тело, параметры, курсор или `Idempotency-Key` неверны; `details` — по полям |
+| `device_key_required` / `device_key_invalid` | 401    | нет ключа / неверный или неизвестный                                        |
+| `device_key_blocked`                         | 403    | заблокированный ключ на запись (удалить свои данные можно)                  |
+| `product_not_found`                          | 404    | нет продукта или id не UUID                                                 |
+| `idempotency_mismatch`                       | 422    | тот же `Idempotency-Key` с другим запросом                                  |
+| `rate_limited`                               | 429    | превышен лимит; `Retry-After` — секунды                                     |
+| `service_unavailable`                        | 503    | база или Redis недоступны                                                   |
+
 ## Служебные
 
-| Метод и путь             | Назначение                                                                                                  |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| `GET /health`            | живость процесса (`200 { status: 'ok' }`)                                                                   |
-| `GET /health/ready`      | готовность: база и Redis доступны                                                                           |
-| `POST /telegram/webhook` | только для Telegram: проверка `X-Telegram-Bot-Api-Secret-Token`; в разработке вместо webhook — long polling |
+| Метод и путь             | Назначение                                                                                                        |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `GET /health`            | живость процесса (`200 { status: 'ok' }`)                                                                         |
+| `GET /health/ready`      | готовность: база и Redis доступны                                                                                 |
+| `POST /telegram/webhook` | два бота (поддержка и модерация, этап 9): проверка `X-Telegram-Bot-Api-Secret-Token`; в разработке — long polling |
 
 ## Чего в API нет (B-6)
 
-Регистрация, вход, профиль, норма, кладовая, дневник, покупки, приготовленные блюда, история, личные рецепты, импорт локальных данных — всё это остаётся на устройстве.
+Регистрация, вход, профиль, норма, кладовая, дневник, покупки, приготовленные блюда, история, рецепты (публикации рецептов нет, B-18), импорт локальных данных — всё это остаётся на устройстве.

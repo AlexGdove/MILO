@@ -1,6 +1,6 @@
-# База данных backend MILO (этап 2)
+# База данных backend MILO
 
-PostgreSQL 17, Prisma 7.10.1 (драйвер `@prisma/adapter-pg`). Рабочая схема — `backend/prisma/schema.prisma`, миграции — `backend/prisma/migrations/` (CHECK-ограничения и `pg_trgm` — SQL в миграциях). Концепция — `DECISIONS.md` B-6…B-11: личных данных пользователя (профиль, кладовая, дневник, покупки, личные рецепты) в базе **нет**. Хранятся только опубликованные рецепты, жалобы, анонимные обращения в поддержку и служебные таблицы. Черновик схемы — `schema.draft.prisma`.
+PostgreSQL 17, Prisma 7.10.1 (драйвер `@prisma/adapter-pg`). Рабочая схема — `backend/prisma/schema.prisma`, миграции — `backend/prisma/migrations/` (CHECK-ограничения и `pg_trgm` — SQL в миграциях). Концепция — `DECISIONS.md` B-6…B-11: личных данных пользователя (профиль, кладовая, дневник, покупки, личные рецепты) в базе **нет**. Хранятся только общая база продуктов и предложения в неё (B-18, ADR-0005), анонимные обращения в поддержку, журнал модерации и служебные таблицы. Черновик схемы — `schema.draft.prisma`.
 
 ## Соглашения
 
@@ -14,12 +14,10 @@ PostgreSQL 17, Prisma 7.10.1 (драйвер `@prisma/adapter-pg`). Рабоча
 
 ```mermaid
 erDiagram
-  device_keys ||--o{ public_recipes : "автор"
-  device_keys ||--o{ recipe_reports : "жалуется"
+  device_keys ||--o{ product_submissions : "предлагает"
   device_keys ||--o{ support_tickets : "открывает"
-  public_recipes ||--|{ public_recipe_ingredients : "состоит из"
-  public_recipes ||--o{ recipe_reports : "получает"
-  public_recipes ||--o{ moderation_actions : "модерируется"
+  products ||--o{ product_submissions : "принятые"
+  product_submissions ||--o{ moderation_actions : "решения оператора"
   operators ||--o{ moderation_actions : "выполняет"
   operators ||--o{ support_messages : "отвечает"
   support_tickets ||--|{ support_messages : "содержит"
@@ -39,56 +37,41 @@ erDiagram
 | `id`           | uuid PK          |                                                                          |
 | `key_hash`     | char(64) UNIQUE  | SHA-256 (hex) от ключа; сам ключ сервер не хранит                        |
 | `created_at`   | timestamptz      | default now()                                                            |
-| `last_seen_at` | timestamptz NULL | обновляется не чаще раза в сутки (без истории)                           |
+| `last_seen_at` | timestamptz NULL | обновляется не чаще раза в час (без истории)                             |
 | `blocked_at`   | timestamptz NULL | ключ заблокирован оператором за спам: запись запрещена, чтение разрешено |
 
-### `public_recipes` — опубликованный рецепт (B-7)
+### `products` — общая база продуктов (B-18)
 
-| Колонка                                                       | Тип                   | Ограничения / смысл                                                             |
-| ------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------- |
-| `id`                                                          | uuid PK               |                                                                                 |
-| `author_key_id`                                               | uuid FK → device_keys | ON DELETE CASCADE                                                               |
-| `name`                                                        | varchar(120)          | 1–120 символов после обрезки пробелов                                           |
-| `servings`                                                    | smallint              | 1–100                                                                           |
-| `kcal_per_serving`                                            | numeric(8,2)          | вычисляет сервер из снимка ингредиентов (для сортировки и карточки каталога)    |
-| `protein_per_serving`, `fat_per_serving`, `carbs_per_serving` | numeric(8,2)          | то же                                                                           |
-| `status`                                                      | enum `recipe_status`  | `published` \| `hidden` (скрыт оператором); default `published`                 |
-| `version`                                                     | integer               | default 1; +1 при каждой правке (оптимистичная блокировка, 409 при расхождении) |
-| `published_at`                                                | timestamptz           | default now()                                                                   |
-| `updated_at`                                                  | timestamptz           | `@updatedAt`                                                                    |
+| Колонка                   | Тип               | Ограничения / смысл                                                    |
+| ------------------------- | ----------------- | ---------------------------------------------------------------------- |
+| `id`                      | uuid PK           |                                                                        |
+| `name`                    | varchar(120)      | 1–120 символов после обрезки пробелов                                  |
+| `brand`                   | varchar(80) NULL  | 1–80 символов, если задан                                              |
+| `barcode`                 | varchar(14) NULL  | UNIQUE; 8, 12, 13 или 14 цифр (CHECK); контрольную цифру проверяет API |
+| `unit`                    | enum `unit`       | `g` \| `ml` \| `pcs`                                                   |
+| `piece_weight`            | numeric(8,2) NULL | обязателен при `pcs`: > 0, ≤ 5000 г; иначе NULL                        |
+| `kcal`                    | numeric(6,2)      | на 100 г: 0–900                                                        |
+| `protein`, `fat`, `carbs` | numeric(6,2)      | на 100 г: 0–100, сумма ≤ 100                                           |
+| `created_at`              | timestamptz       | задаёт приложение с точностью до мс (курсор страниц), без default      |
+| `updated_at`              | timestamptz       | `@updatedAt`                                                           |
 
-Индексы: `(status, published_at DESC, id)` — лента каталога; GIN `gin_trgm_ops` по `name` — поиск по подстроке без учёта регистра (`ILIKE`, триграммы его поддерживают; индекс описан в схеме Prisma, расширение `pg_trgm` — в начальной миграции); `(author_key_id)`.
+Индексы: `(created_at DESC, id)` — лента и курсор; GIN `gin_trgm_ops` по `name` — поиск по подстроке (`ILIKE`); UNIQUE `barcode`.
 
-### `public_recipe_ingredients` — снимок ингредиента (ADR-0002)
+### `product_submissions` — предложения продуктов (B-18, ADR-0005)
 
-| Колонка                   | Тип                      | Ограничения / смысл                                       |
-| ------------------------- | ------------------------ | --------------------------------------------------------- |
-| `id`                      | uuid PK                  |                                                           |
-| `recipe_id`               | uuid FK → public_recipes | ON DELETE CASCADE                                         |
-| `position`                | smallint                 | порядок в рецепте, 0…49; UNIQUE (`recipe_id`, `position`) |
-| `name`                    | varchar(80)              | название продукта на момент публикации                    |
-| `amount`                  | numeric(10,2)            | > 0, ≤ 100 000; на весь рецепт, в единице `unit`          |
-| `unit`                    | enum `unit`              | `g` \| `ml` \| `pcs`                                      |
-| `piece_weight`            | numeric(8,2) NULL        | обязателен при `pcs`: > 0, ≤ 5000 г; иначе NULL           |
-| `kcal`                    | numeric(6,2)             | на 100 г: 0–900                                           |
-| `protein`, `fat`, `carbs` | numeric(6,2)             | на 100 г: 0–100, сумма ≤ 100                              |
+Те же поля продукта и те же CHECK, плюс:
 
-Рецепт содержит 1–50 ингредиентов. При правке набор ингредиентов заменяется целиком (в одной транзакции с `version + 1`).
+| Колонка         | Тип                      | Ограничения / смысл                                                   |
+| --------------- | ------------------------ | --------------------------------------------------------------------- |
+| `device_key_id` | uuid FK → device_keys    | ON DELETE CASCADE                                                     |
+| `status`        | enum `submission_status` | `pending` (ждёт человека) \| `approved` \| `rejected`                 |
+| `flags`         | text[]                   | коды замечаний автомодерации (`automod.ts`)                           |
+| `reviewed_by`   | enum `reviewed_by` NULL  | `auto` \| `operator`; у `pending` NULL, у решённых обязателен (CHECK) |
+| `reviewed_at`   | timestamptz NULL         | так же                                                                |
+| `product_id`    | uuid NULL FK → products  | принятое → продукт (новый или существующий); ON DELETE SET NULL       |
+| `created_at`    | timestamptz              | задаёт приложение (мс)                                                |
 
-### `recipe_reports` — жалобы (B-9)
-
-| Колонка           | Тип                      | Ограничения / смысл                                                                    |
-| ----------------- | ------------------------ | -------------------------------------------------------------------------------------- |
-| `id`              | uuid PK                  |                                                                                        |
-| `recipe_id`       | uuid FK → public_recipes | ON DELETE CASCADE                                                                      |
-| `reporter_key_id` | uuid FK → device_keys    | ON DELETE CASCADE; UNIQUE (`recipe_id`, `reporter_key_id`) — одна жалоба от устройства |
-| `reason`          | enum `report_reason`     | `spam` \| `offensive` \| `not_food` \| `other`                                         |
-| `comment`         | varchar(500) NULL        |                                                                                        |
-| `status`          | enum `report_status`     | `open` \| `accepted` (рецепт скрыт) \| `dismissed`; default `open`                     |
-| `created_at`      | timestamptz              |                                                                                        |
-| `resolved_at`     | timestamptz NULL         |                                                                                        |
-
-Индекс: `(status, created_at)`.
+Индексы: `(device_key_id, created_at DESC, id)` — «мои предложения»; `(status, created_at)` — очередь человека; `(barcode)`. Штрихкод здесь не уникален: несколько устройств могут предложить один товар.
 
 ### `operators` — операторы в Telegram (B-10)
 
@@ -96,7 +79,7 @@ erDiagram
 | ------------------ | ------------- | --------------------------------------------------------- |
 | `id`               | uuid PK       |                                                           |
 | `telegram_user_id` | bigint UNIQUE | id пользователя Telegram                                  |
-| `display_name`     | varchar(64)   | имя для ответа в чате поддержки («Оператор Анна»)         |
+| `display_name`     | varchar(64)   | имя в ответах поддержки и журнале («Оператор Анна»)       |
 | `active`           | boolean       | default true; неактивный не может модерировать и отвечать |
 | `created_at`       | timestamptz   |                                                           |
 
@@ -104,14 +87,14 @@ erDiagram
 
 ### `moderation_actions` — журнал модерации
 
-| Колонка         | Тип                           | Ограничения / смысл                                                                    |
-| --------------- | ----------------------------- | -------------------------------------------------------------------------------------- |
-| `id`            | uuid PK                       |                                                                                        |
-| `operator_id`   | uuid FK → operators           | ON DELETE RESTRICT                                                                     |
-| `recipe_id`     | uuid NULL FK → public_recipes | ON DELETE SET NULL (журнал переживает удаление рецепта)                                |
-| `device_key_id` | uuid NULL                     | для действий с ключом; без FK (ключ может быть удалён)                                 |
-| `action`        | enum `moderation_action`      | `hide_recipe` \| `restore_recipe` \| `dismiss_reports` \| `block_key` \| `unblock_key` |
-| `created_at`    | timestamptz                   |                                                                                        |
+| Колонка         | Тип                                | Ограничения / смысл                                                         |
+| --------------- | ---------------------------------- | --------------------------------------------------------------------------- |
+| `id`            | uuid PK                            |                                                                             |
+| `operator_id`   | uuid FK → operators                | ON DELETE RESTRICT                                                          |
+| `submission_id` | uuid NULL FK → product_submissions | ON DELETE SET NULL (журнал переживает удаление предложения)                 |
+| `device_key_id` | uuid NULL                          | для действий с ключом; без FK (ключ может быть удалён)                      |
+| `action`        | enum `moderation_action`           | `approve_submission` \| `reject_submission` \| `block_key` \| `unblock_key` |
+| `created_at`    | timestamptz                        |                                                                             |
 
 ### `support_tickets` — обращение (B-10)
 
@@ -139,17 +122,17 @@ erDiagram
 
 Индекс: `(ticket_id, created_at, id)` — подгрузка «после сообщения X». Вложений нет (решение этапа 2: фото могут содержать личные данные; добавлять — отдельным решением).
 
-### `telegram_message_links` — связь сообщений бота с обращениями и жалобами
+### `telegram_message_links` — связь сообщений ботов с обращениями и предложениями
 
-| Колонка      | Тип                            | Ограничения / смысл          |
-| ------------ | ------------------------------ | ---------------------------- |
-| `chat_id`    | bigint                         | PK (`chat_id`, `message_id`) |
-| `message_id` | integer                        |                              |
-| `ticket_id`  | uuid NULL FK → support_tickets | ON DELETE CASCADE            |
-| `report_id`  | uuid NULL FK → recipe_reports  | ON DELETE CASCADE            |
-| `created_at` | timestamptz                    |                              |
+| Колонка         | Тип                                | Ограничения / смысл              |
+| --------------- | ---------------------------------- | -------------------------------- |
+| `chat_id`       | bigint                             | PK (`chat_id`, `message_id`)     |
+| `message_id`    | integer                            |                                  |
+| `ticket_id`     | uuid NULL FK → support_tickets     | бот поддержки; ON DELETE CASCADE |
+| `submission_id` | uuid NULL FK → product_submissions | бот модерации; ON DELETE CASCADE |
+| `created_at`    | timestamptz                        |                                  |
 
-Ровно одно из `ticket_id` / `report_id` заполнено (CHECK в миграции). Оператор отвечает «ответом» (reply) на сообщение бота — по этой таблице сервер находит обращение.
+Ровно одно из `ticket_id` / `submission_id` заполнено (CHECK в миграции). Ботов два (B-18), у каждого свой чат, поэтому пары (`chat_id`, `message_id`) не пересекаются.
 
 ### `telegram_updates` — дедупликация обновлений Telegram
 
@@ -163,7 +146,7 @@ erDiagram
 | Колонка        | Тип               | Смысл                                                                  |
 | -------------- | ----------------- | ---------------------------------------------------------------------- |
 | `id`           | uuid PK           |                                                                        |
-| `type`         | varchar(64)       | `recipe.reported`, `ticket.created`, `ticket.message_from_user`, …     |
+| `type`         | varchar(64)       | `product_submission.review_requested`, `ticket.created`, …             |
 | `payload`      | jsonb             | id сущностей, без текстов (текст читается из базы при отправке)        |
 | `created_at`   | timestamptz       |                                                                        |
 | `processed_at` | timestamptz NULL  | NULL — ещё не отправлено                                               |
@@ -185,4 +168,4 @@ erDiagram
 
 ## Удаление данных
 
-`DELETE /api/v1/device-keys/me` удаляет ключ; каскадом — рецепты автора (с ингредиентами, жалобами на них), жалобы и обращения с этого устройства, ключи идемпотентности. Журнал модерации сохраняется без связи с рецептом.
+`DELETE /api/v1/device-keys/me` удаляет ключ; каскадом — предложения продуктов и обращения с этого устройства, ключи идемпотентности. Принятые продукты остаются в общей базе (без автора); журнал модерации сохраняется без связи с предложением.

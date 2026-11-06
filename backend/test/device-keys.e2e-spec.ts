@@ -166,7 +166,7 @@ describe('Ключ устройства и лимиты (e2e)', () => {
   });
 
   describe('DELETE /api/v1/device-keys/me', () => {
-    it('удаляет ключ и каскадом его рецепты; ключ больше не работает', async () => {
+    it('удаляет ключ и каскадом его предложения и обращения; ключ больше не работает', async () => {
       const key = await issueKey();
       const other = await issueKey();
       const [mine, theirs] = await Promise.all(
@@ -174,24 +174,27 @@ describe('Ключ устройства и лимиты (e2e)', () => {
           prisma.deviceKey.findUniqueOrThrow({ where: { keyHash: hashDeviceKey(k) } }),
         ),
       );
-      const recipe = (authorKeyId: string) => ({
-        authorKeyId,
+      const submission = (deviceKeyId: string) => ({
+        deviceKeyId,
         name: 'Гречка',
-        servings: 1,
-        kcalPerServing: 100,
-        proteinPerServing: 1,
-        fatPerServing: 1,
-        carbsPerServing: 1,
+        unit: 'g' as const,
+        kcal: 343,
+        protein: 12.6,
+        fat: 3.3,
+        carbs: 62.1,
+        createdAt: new Date(),
       });
-      await prisma.publicRecipe.create({ data: recipe(mine!.id) });
-      await prisma.publicRecipe.create({ data: recipe(theirs!.id) });
+      await prisma.productSubmission.create({ data: submission(mine!.id) });
+      await prisma.productSubmission.create({ data: submission(theirs!.id) });
+      await prisma.supportTicket.create({ data: { deviceKeyId: mine!.id } });
 
       await request(server()).delete('/api/v1/device-keys/me').set('X-Device-Key', key).expect(204);
 
       expect(await prisma.deviceKey.findUnique({ where: { id: mine!.id } })).toBeNull();
-      expect(await prisma.publicRecipe.count({ where: { authorKeyId: mine!.id } })).toBe(0);
+      expect(await prisma.productSubmission.count({ where: { deviceKeyId: mine!.id } })).toBe(0);
+      expect(await prisma.supportTicket.count()).toBe(0);
       // Чужие данные не тронуты
-      expect(await prisma.publicRecipe.count({ where: { authorKeyId: theirs!.id } })).toBe(1);
+      expect(await prisma.productSubmission.count({ where: { deviceKeyId: theirs!.id } })).toBe(1);
 
       const again = await request(server())
         .delete('/api/v1/device-keys/me')
