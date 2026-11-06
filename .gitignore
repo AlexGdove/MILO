@@ -16,3 +16,7 @@ Thumbs.db
 
 # Сгенерированный клиент Prisma (npm install → prisma generate)
 backend/src/generated/
+
+# Ключ подписи Android — только в секретах GitHub и в резервной копии владельца, не в git
+*.jks
+*.keystore
