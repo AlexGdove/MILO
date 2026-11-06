@@ -1,7 +1,7 @@
 import { InstallAppCard } from '@/features/install-app';
 import { ANDROID_APK_URL } from '@/shared/config';
 import { isNativeApp } from '@/shared/lib';
-import { Card, MiloMark, PageLayout } from '@/shared/ui';
+import { Card, MiloMark, PageLayout, PrivacyNotice } from '@/shared/ui';
 
 import styles from './AppPage.module.css';
 
@@ -52,6 +52,7 @@ export const AppPage = () => (
             Откройте скачанный файл и разрешите установку из этого источника — Android спросит один
             раз. Это последняя сборка; в магазинах приложение появится позже.
           </p>
+          <PrivacyNotice variant="install" />
         </>
       )}
       <div className={styles.stores} aria-label="Магазины приложений">

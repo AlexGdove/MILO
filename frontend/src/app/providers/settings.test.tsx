@@ -64,4 +64,12 @@ describe('Настройки (решение №43)', () => {
     expect(APP_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
     expect(screen.getByText(`MILO ${APP_VERSION}`)).toBeInTheDocument();
   });
+
+  it('в настройках — «Данные и конфиденциальность» (решение №50)', () => {
+    renderAt(ROUTES.settings);
+    expect(
+      screen.getByRole('heading', { name: 'Данные и конфиденциальность' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/нет регистрации, имени и контактов/)).toBeInTheDocument();
+  });
 });
