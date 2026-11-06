@@ -1,6 +1,6 @@
 import { useApplyTheme } from '@/features/switch-theme';
 
-import { AppRouter, ErrorBoundary } from './providers';
+import { AppRouter, ErrorBoundary, QueryProvider } from './providers';
 import './styles/global.css';
 
 export const App = () => {
@@ -9,7 +9,9 @@ export const App = () => {
 
   return (
     <ErrorBoundary>
-      <AppRouter />
+      <QueryProvider>
+        <AppRouter />
+      </QueryProvider>
     </ErrorBoundary>
   );
 };

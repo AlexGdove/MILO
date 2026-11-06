@@ -22,6 +22,7 @@ npm run dev:backend                      # nest start --watch, http://localhost:
 - Живость: `GET /api/v1/health` → `{ "status": "ok" }`; готовность (база и Redis доступны): `GET /api/v1/health/ready`.
 - Swagger UI: http://localhost:3000/api/docs (JSON — `/api/docs-json`); в production выключен.
 - WebSocket поддержки: Socket.IO, путь `/socket.io`, пространство `/support`, `auth: { deviceKey }`.
+- Ответ в обращение «как оператор» без Telegram-бота: `DEV_TOOLS=true` в `.env`, затем `npm run support:reply -w backend -- <номер> "Текст"` (служебный маршрут `POST /api/v1/dev/support/tickets/:number/reply`; выключен — 404; в production `DEV_TOOLS=true` не даёт серверу стартовать).
 - Остановить: `npm run db:down` (данные базы остаются в томе `milo-postgres`; счётчики Redis не сохраняются).
 - Ключ устройства: `POST /api/v1/device-keys` → `{ key }`; дальше заголовок `X-Device-Key`. Удалить всё своё: `DELETE /api/v1/device-keys/me`.
 
@@ -68,6 +69,7 @@ Jest работает в режиме ES-модулей (`--experimental-vm-modu
 | `src/common/websocket/`    | `MiloIoAdapter`: Socket.IO с CORS из `CORS_ORIGINS`, сообщения ≤ 64 КБ                                                            |
 | `src/modules/rate-limit/`  | лимиты (`architecture.md` §5): глобальный guard, `@RateLimit(name)`, скользящее окно в Redis (B-16)                               |
 | `src/modules/support/`     | поддержка (B-19): REST `/support/tickets`, Socket.IO `/support` (доставка событий), ответ оператора для бота (этап 9)             |
+| `src/modules/dev-tools/`   | служебные маршруты разработки (`DEV_TOOLS`, `DevToolsGuard`): ответ «как оператор»                                                |
 | `prisma/`                  | схема и миграции (CHECK-ограничения и `pg_trgm` — SQL в миграциях)                                                                |
 | `test/`                    | e2e: HTTP-уровень, интеграция с PostgreSQL и Redis, ключ устройства и лимиты                                                      |
 

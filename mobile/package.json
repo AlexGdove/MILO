@@ -1,0 +1,23 @@
+{
+  "name": "mobile",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MILO для Android (Capacitor): тот же фронтенд в нативной оболочке",
+  "scripts": {
+    "build:web": "npm run build -w frontend -- --mode mobile",
+    "sync": "cap sync android",
+    "open:android": "cap open android",
+    "icons": "node scripts/generate-android-icons.mjs",
+    "test": "node --test scripts/*.test.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.6.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.6.0"
+  }
+}

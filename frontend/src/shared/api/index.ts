@@ -1,7 +1,2 @@
-/**
- * Заготовка API-клиента для будущего бэкенда (см. backend/README.md).
- * Пока данные хранятся локально через @/shared/lib (persistStorage).
- */
-export const API_URL: string = import.meta.env.VITE_API_URL ?? '';
-
-export const isApiEnabled = (): boolean => API_URL.length > 0;
+export { ApiError, apiRequest, apiUrl, isApiEnabled, NETWORK_ERROR, socketOrigin } from './http';
+export type { ApiErrorDetail, ApiRequestOptions } from './http';

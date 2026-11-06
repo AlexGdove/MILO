@@ -1,3 +1,5 @@
 * text=auto eol=lf
 *.png binary
 *.ico binary
+# Скрипты Windows (gradlew.bat) работают только с CRLF
+*.bat text eol=crlf
