@@ -23,13 +23,14 @@ npm run build:web -w mobile && npm run sync:ios -w mobile   # веб-часть 
 
 ## Устройство
 
-| Что                                                                  | Где                                                                      |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Настройки Capacitor (`appId` `com.alexgdove.milo`, имя, `webDir`)    | `capacitor.config.ts`                                                    |
-| Нативный проект Android (ведёт Capacitor, в git; ассеты сайта — нет) | `android/`                                                               |
-| Кнопка «Назад» Android: закрыть диалог → шаг назад → выход           | `frontend/src/app/layouts/useNativeBackButton.ts`                        |
-| Отступы под статус-бар и «чёлку» (Android 15+ edge-to-edge)          | `--safe-top` / `--safe-bottom` в `frontend/src/app/styles/variables.css` |
-| Иконки (обычная, круглая, адаптивная) и экран запуска                | `scripts/generate-native-icons.mjs`                                      |
+| Что                                                                                     | Где                                                                      |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Настройки Capacitor (`appId` `com.alexgdove.milo`, имя, `webDir`)                       | `capacitor.config.ts`                                                    |
+| Нативный проект Android (ведёт Capacitor, в git; ассеты сайта — нет)                    | `android/`                                                               |
+| Кнопка «Назад» Android: закрыть диалог → шаг назад → выход                              | `frontend/src/app/layouts/useNativeBackButton.ts`                        |
+| Отступы под статус-бар и «чёлку» (Android 15+ edge-to-edge)                             | `--safe-top` / `--safe-bottom` в `frontend/src/app/styles/variables.css` |
+| Иконки (обычная, круглая, адаптивная) и экран запуска                                   | `scripts/generate-native-icons.mjs`                                      |
+| `fetch` через нативный HTTP (`CapacitorHttp`): Open Food Facts напрямую, без CORS (№53) | `capacitor.config.ts` → `plugins`                                        |
 
 ## Ключ подписи Android (решение №52)
 
@@ -77,7 +78,7 @@ npm run build:web -w mobile && npm run sync:ios -w mobile   # веб-часть 
 
 ## Сервер
 
-Приложение ходит на сервер по абсолютному адресу `VITE_API_URL` (в Actions — переменная репозитория `MILO_API_URL`). Пока сервер не развёрнут, поддержка в приложении показывает «недоступна», всё остальное работает на устройстве. При развёртывании в `CORS_ORIGINS` сервера нужно добавить `https://localhost` (Android) и `capacitor://localhost` (iOS) — адреса, с которых приложение Capacitor обращается к API (проверку `CORS_ORIGINS` сервера тогда расширить: сейчас она пропускает только http/https).
+Приложение ходит на сервер по абсолютному адресу `VITE_API_URL` (в Actions — переменная репозитория `MILO_API_URL`). Пока сервер не развёрнут, поддержка в приложении показывает «недоступна», всё остальное работает на устройстве. При развёртывании в `CORS_ORIGINS` сервера нужно добавить `https://localhost` (Android) и `capacitor://localhost` (iOS) — адреса, с которых приложение Capacitor обращается к API (проверку `CORS_ORIGINS` сервера тогда расширить: сейчас она пропускает только http/https). HTTP-запросы приложения идут через нативный `CapacitorHttp` и CORS не проверяют, но Socket.IO (WebSocket) проверяет `Origin` — для чата поддержки эти адреса нужны.
 
 ## Перед публикацией в Google Play
 

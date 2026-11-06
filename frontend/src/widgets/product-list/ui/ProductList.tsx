@@ -13,6 +13,7 @@ import { ProductSearch } from '@/features/search-products';
 import { AddToPantryButton, SetStockButton } from '@/features/stock-product';
 import { EmptyState } from '@/shared/ui';
 
+import { CatalogResults } from './CatalogResults';
 import styles from './ProductList.module.css';
 
 const byName = (a: Product, b: Product) => a.name.localeCompare(b.name, 'ru-RU');
@@ -25,6 +26,7 @@ const byStockThenName = (a: Product, b: Product) =>
  * Кладовая: без запроса — только продукты в наличии.
  * Поиск идёт по всем известным продуктам: найденное можно положить в кладовую или в покупки.
  * Положили в кладовую или создали продукт из поиска — поиск сбрасывается, видна кладовая.
+ * Под своими результатами — найденное в Open Food Facts (решение №53).
  */
 export const ProductList = () => {
   const products = useProductStore(selectProducts);
@@ -79,6 +81,7 @@ export const ProductList = () => {
           ))}
         </ul>
       )}
+      {searching && <CatalogResults query={query} onCreated={resetSearch} />}
     </section>
   );
 };

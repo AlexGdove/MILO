@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useProductStore } from '@/entities/product';
+import { useProductStore, type ProductDraft } from '@/entities/product';
 import { Button, Modal } from '@/shared/ui';
 
 import { ProductForm } from './ProductForm';
@@ -8,6 +8,8 @@ import { ProductForm } from './ProductForm';
 interface AddProductButtonProps {
   /** Название, подставляемое в форму (например, из строки поиска) */
   initialName?: string;
+  /** Заполненная форма (например, продукт из Open Food Facts) */
+  initialDraft?: ProductDraft;
   label?: string;
   /** Продукт создан (например, чтобы сбросить поиск) */
   onCreated?: () => void;
@@ -15,6 +17,7 @@ interface AddProductButtonProps {
 
 export const AddProductButton = ({
   initialName,
+  initialDraft,
   label = '+ Продукт',
   onCreated,
 }: AddProductButtonProps) => {
@@ -29,6 +32,7 @@ export const AddProductButton = ({
       <Modal open={open} title="Новый продукт" onClose={() => setOpen(false)}>
         <ProductForm
           submitLabel="Добавить"
+          initial={initialDraft}
           defaultName={initialName?.trim()}
           onSubmit={(draft) => {
             addProduct(draft);
