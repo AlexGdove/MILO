@@ -16,3 +16,5 @@ export {
   sumNutrients,
 } from './nutrition';
 export type { Nutrients } from './nutrition';
+export { adjacentSection, detectSwipe } from './swipe';
+export type { SwipeDirection, SwipeGesture } from './swipe';

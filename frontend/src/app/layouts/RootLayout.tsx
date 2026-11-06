@@ -4,11 +4,17 @@ import { AppHeader } from '@/widgets/app-header';
 import { BottomNav } from '@/widgets/bottom-nav';
 import { LowStockPrompt } from '@/widgets/low-stock-prompt';
 
-export const RootLayout = () => (
-  <>
-    <AppHeader />
-    <Outlet />
-    <LowStockPrompt />
-    <BottomNav />
-  </>
-);
+import { useSwipeNavigation } from './useSwipeNavigation';
+
+export const RootLayout = () => {
+  // Свайп влево-вправо переключает разделы нижней навигации
+  useSwipeNavigation();
+  return (
+    <>
+      <AppHeader />
+      <Outlet />
+      <LowStockPrompt />
+      <BottomNav />
+    </>
+  );
+};
