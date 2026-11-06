@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { selectCookedDishes, useCookedDishStore, type CookedDish } from '@/entities/cooked-dish';
 import type { MealType } from '@/entities/meal-entry';
@@ -23,12 +23,21 @@ type Selection =
   | { kind: 'recipe'; recipe: Recipe }
   | { kind: 'product'; product: Product };
 
+/** Ключ варианта в списке — чтобы после «← Другой …» вернуться к нему. */
+const optionKey = (selection: Selection) =>
+  selection.kind === 'dish'
+    ? `dish:${selection.dish.id}`
+    : selection.kind === 'recipe'
+      ? `recipe:${selection.recipe.id}`
+      : `product:${selection.product.id}`;
+
 const matches = (name: string, query: string) =>
   name.toLocaleLowerCase('ru-RU').includes(query.trim().toLocaleLowerCase('ru-RU'));
 
 /**
  * «Добавить еду» (решение №27): приготовленные блюда, рецепты и продукты в одном поиске.
- * После выбора — своя форма для каждого источника.
+ * После выбора — своя форма для каждого источника. «← Другой …» возвращает к тому же поиску:
+ * запрос сохраняется, список прокручен к выбранному варианту, фокус — на нём.
  */
 export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntryFormProps) => {
   const products = useProductStore(selectProducts);
@@ -36,8 +45,25 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
   const dishes = useCookedDishStore(selectCookedDishes);
   const [query, setQuery] = useState('');
   const [selection, setSelection] = useState<Selection | null>(null);
+  const [lastChosen, setLastChosen] = useState<string | null>(null);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   const available = useMemo(() => dishes.filter((dish) => dish.servingsLeft > 0), [dishes]);
+
+  // Вернулись к выбору — показать и сфокусировать то, что было выбрано
+  useEffect(() => {
+    if (selection || !lastChosen) return;
+    const option = Array.from(
+      pickerRef.current?.querySelectorAll<HTMLButtonElement>('[data-option]') ?? [],
+    ).find((button) => button.dataset.option === lastChosen);
+    option?.scrollIntoView?.({ block: 'nearest' });
+    option?.focus();
+  }, [selection, lastChosen]);
+
+  const choose = (next: Selection) => {
+    setLastChosen(optionKey(next));
+    setSelection(next);
+  };
 
   if (selection) {
     const common = {
@@ -63,7 +89,7 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
   const nothing = foundDishes.length + foundRecipes.length + foundProducts.length === 0;
 
   return (
-    <div className={styles.picker}>
+    <div className={styles.picker} ref={pickerRef}>
       <Input
         type="search"
         placeholder="Продукт, блюдо или рецепт"
@@ -81,7 +107,8 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
                   <button
                     type="button"
                     className={styles.option}
-                    onClick={() => setSelection({ kind: 'dish', dish })}
+                    data-option={`dish:${dish.id}`}
+                    onClick={() => choose({ kind: 'dish', dish })}
                   >
                     <span className={styles.optionName}>{dish.name}</span>
                     <span className={styles.optionMeta}>
@@ -103,7 +130,8 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
                   <button
                     type="button"
                     className={styles.option}
-                    onClick={() => setSelection({ kind: 'recipe', recipe })}
+                    data-option={`recipe:${recipe.id}`}
+                    onClick={() => choose({ kind: 'recipe', recipe })}
                   >
                     <span className={styles.optionName}>{recipe.name}</span>
                     <span className={styles.optionMeta}>
@@ -124,7 +152,8 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
                   <button
                     type="button"
                     className={styles.option}
-                    onClick={() => setSelection({ kind: 'product', product: item })}
+                    data-option={`product:${item.id}`}
+                    onClick={() => choose({ kind: 'product', product: item })}
                   >
                     <span className={styles.optionName}>{item.name}</span>
                     <span className={styles.optionMeta}>

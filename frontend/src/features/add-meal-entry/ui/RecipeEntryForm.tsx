@@ -125,6 +125,7 @@ export const RecipeEntryForm = ({
       <SelectedSource
         name={recipe.name}
         meta={`Рецепт на ${recipe.servings} порц. · ${formatKcal(nominal.perServing.kcal)} ккал/порц.`}
+        changeLabel="← Другой рецепт"
         onChange={onChangeSource}
       />
       <Stepper label="Порций" value={portions} max={MAX_PORTIONS} onChange={setPortions} />

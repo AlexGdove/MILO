@@ -96,6 +96,7 @@ export const DishEntryForm = ({
       <SelectedSource
         name={dish.name}
         meta={`Порция ${formatGrams(dish.portionGrams)} г · осталось ${formatPortions(dish.servingsLeft)} порц. (${formatGrams(leftGrams)} г)`}
+        changeLabel="← Другое блюдо"
         onChange={onChangeSource}
       />
 
