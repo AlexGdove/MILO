@@ -28,6 +28,7 @@ export default tseslint.config(
       'frontend/scripts/**/*.{js,mjs}',
       'backend/*.js',
       'backend/test/**/*.js',
+      'backend/scripts/**/*.{js,mjs}',
     ],
     languageOptions: { globals: globals.node },
   },

@@ -13,3 +13,4 @@ export { Skeleton } from './Skeleton/Skeleton';
 export { Tabs } from './Tabs/Tabs';
 export { Toast } from './Toast/Toast';
 export { Stepper } from './Stepper/Stepper';
+export { BackLink } from './BackLink/BackLink';

@@ -19,7 +19,7 @@ Meal Intelligence & Lifestyle Organizer — питание, кладовая, р
 
 ```bash
 npm install
-npm run db:up         # PostgreSQL в Docker (нужен для бэкенда и его тестов)
+npm run db:up         # PostgreSQL и Redis в Docker (нужны бэкенду и его тестам)
 npm run dev           # фронтенд и бэкенд вместе: [web] http://localhost:5173, [api] http://localhost:3000
 npm run dev:frontend  # только фронтенд (Vite)
 npm run dev:backend   # только бэкенд (Nest, перезапуск при изменениях)
@@ -30,6 +30,12 @@ npm run lint          # ESLint (включая проверку слоёв FSD)
 npm run typecheck     # TypeScript
 npm run format        # Prettier
 ```
+
+### Техподдержка локально
+
+1. В `backend/.env` — `DEV_TOOLS=true` (служебные маршруты разработки; в production запрещены), затем `npm run dev`.
+2. В приложении: «Профиль» → шестерёнка → «Техподдержка» → новое обращение. Фронтенд ходит на API через прокси Vite (`/api`, `/socket.io` → `localhost:3000`; другой адрес — `MILO_API_PROXY`).
+3. Ответить «как оператор» (пока нет Telegram-бота): `npm run support:reply -w backend -- <номер обращения> "Текст"` — ответ сразу появится в открытой переписке.
 
 ## Архитектура фронтенда (Feature-Sliced Design)
 

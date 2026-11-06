@@ -6,6 +6,12 @@ export const ROUTES = {
   profile: '/profile',
   /** Установка и скачивание приложения (решение №28) */
   app: '/app',
+  /** Настройки (из «Профиля», решение №43): оформление, язык, техподдержка */
+  settings: '/settings',
+  /** Техподдержка: свои обращения и новое (решение №43) */
+  support: '/settings/support',
+  /** Переписка по обращению */
+  supportTicket: '/settings/support/:id',
   /** Первый запуск: приветствие и анкета (решение №30) */
   welcome: '/welcome',
 } as const;
@@ -23,6 +29,9 @@ export const MAIN_SECTIONS = [
 
 /** «Покупки» — вкладка кладовой (решение №28). */
 export const SHOPPING_PATH = `/pantry?tab=shopping`;
+
+/** Адрес переписки по обращению в поддержку. */
+export const supportTicketPath = (id: string) => `/settings/support/${encodeURIComponent(id)}`;
 
 /** Адрес страницы конкретного рецепта. */
 export const recipePath = (id: string) => `/recipes/${encodeURIComponent(id)}`;
