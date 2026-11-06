@@ -170,6 +170,8 @@
   --app-max-width: 520px;
   --bottom-nav-height: 64px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* Статус-бар и «чёлка»: в мобильном приложении (Android 15+, edge-to-edge) и на iPhone */
+  --safe-top: env(safe-area-inset-top, 0px);
 }
 
 @media (prefers-color-scheme: dark) {

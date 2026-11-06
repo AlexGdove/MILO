@@ -14,7 +14,17 @@ const FSD_LAYERS = ['app', 'pages', 'widgets', 'features', 'entities', 'shared']
 const SLICED_LAYERS = ['pages', 'widgets', 'features', 'entities'];
 
 export default tseslint.config(
-  { ignores: ['**/node_modules', '**/dist', '**/dev-dist', 'mobile', 'backend/src/generated'] },
+  {
+    ignores: [
+      '**/node_modules',
+      '**/dist',
+      '**/dev-dist',
+      // Нативный Android-проект ведёт Capacitor; конфиг Capacitor проверяет tsc (mobile)
+      'mobile/android',
+      'mobile/capacitor.config.ts',
+      'backend/src/generated',
+    ],
+  },
 
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -29,6 +39,7 @@ export default tseslint.config(
       'backend/*.js',
       'backend/test/**/*.js',
       'backend/scripts/**/*.{js,mjs}',
+      'mobile/scripts/**/*.{js,mjs}',
     ],
     languageOptions: { globals: globals.node },
   },

@@ -9,11 +9,11 @@ Meal Intelligence & Lifestyle Organizer — питание, кладовая, р
 
 ## Структура
 
-| Папка       | Назначение                                     |
-| ----------- | ---------------------------------------------- |
-| `frontend/` | React + Vite + TypeScript PWA, архитектура FSD |
-| `backend/`  | API на NestJS (см. `backend/README.md`)        |
-| `mobile/`   | Заготовка мобильного приложения                |
+| Папка       | Назначение                                             |
+| ----------- | ------------------------------------------------------ |
+| `frontend/` | React + Vite + TypeScript PWA, архитектура FSD         |
+| `backend/`  | API на NestJS (см. `backend/README.md`)                |
+| `mobile/`   | Android-приложение (Capacitor, см. `mobile/README.md`) |
 
 ## Запуск
 
