@@ -11,17 +11,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>MILO</title>
-    <script>
-      // Тема из профиля — до первой отрисовки, без вспышки светлой темы.
-      // Ключ и формат — features/switch-theme (zustand persist: { state: { theme } }).
-      try {
-        var saved = JSON.parse(localStorage.getItem('milo:theme') || 'null');
-        var theme = saved && saved.state && saved.state.theme;
-        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
-      } catch (e) {
-        // хранилище недоступно — тема как в системе
-      }
-    </script>
+    <!-- Тема до первой отрисовки (без вспышки); файл, а не встроенный скрипт — из-за CSP -->
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>
