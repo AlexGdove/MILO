@@ -40,7 +40,14 @@ beforeEach(() => {
   useProductStore.setState({ products: [] });
   useShoppingStore.setState(useShoppingStore.getInitialState(), true);
   fetchMock.mockReset();
-  fetchMock.mockResolvedValue(json(200, { items: [BUCKWHEAT] }));
+  // Общая база MILO (/products) пуста, Open Food Facts находит гречку
+  fetchMock.mockImplementation((input) =>
+    Promise.resolve(
+      String(input).includes('/products')
+        ? json(200, { items: [], nextCursor: null })
+        : json(200, { items: [BUCKWHEAT] }),
+    ),
+  );
   vi.stubGlobal('fetch', fetchMock);
   vi.stubEnv('VITE_API_URL', '/api/v1');
 });
@@ -53,8 +60,11 @@ describe('Кладовая: найдено в Open Food Facts', () => {
     expect(screen.getByText('340 ккал на 100 г · Ярмарка')).toBeInTheDocument();
     expect(within(catalog()!).getByRole('link', { name: 'Open Food Facts' })).toBeInTheDocument();
     expect(item).toBeInTheDocument();
-    // Буквы набирались по одной, но запрос ушёл один — после паузы
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Буквы набирались по одной, но к каждому источнику ушёл один запрос — после паузы
+    const urls = fetchMock.mock.calls.map(([input]) => String(input));
+    expect(urls.filter((url) => url.includes('/food-catalog/'))).toHaveLength(1);
+    expect(urls.filter((url) => url.includes('/products'))).toHaveLength(1);
+    expect(urls).toHaveLength(2);
   });
 
   it('«Добавить» открывает заполненную форму; после сохранения — свой продукт, поиск сброшен', async () => {
