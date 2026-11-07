@@ -1,6 +1,6 @@
 # Инфраструктура MILO для локальной разработки и тестов (не для production).
 # Запуск: `npm run db:up` (или `docker compose up -d`). Данные — в томе milo-postgres.
-# Production-конфигурация — этап 11 (docs/backend/IMPLEMENTATION_PLAN.md).
+# Сервер — compose.prod.yaml (инструкция: docs/deployment/README.md).
 name: milo
 
 services:

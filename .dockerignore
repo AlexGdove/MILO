@@ -1,0 +1,18 @@
+# В образы не попадают секреты, зависимости и сборки с машины разработчика
+**/node_modules
+**/dist
+**/dev-dist
+**/coverage
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
+**/*.jks
+**/*.keystore
+backend/src/generated
+.git
+.github
+.claude
+docs
+mobile/android
+mobile/ios

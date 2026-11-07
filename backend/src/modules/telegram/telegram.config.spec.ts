@@ -48,6 +48,24 @@ describe('validateEnv: Telegram', () => {
     },
   );
 
+  it('пустые значения — как не заданные: сервер стартует без ботов', () => {
+    const env = validateEnv({
+      ...DB,
+      TELEGRAM_SUPPORT_BOT_TOKEN: '',
+      TELEGRAM_SUPPORT_CHAT_ID: '',
+      TELEGRAM_MODERATION_BOT_TOKEN: '',
+      TELEGRAM_MODERATION_CHAT_ID: '',
+    });
+    expect(getTelegramConfig({ get: (key: string) => env[key as keyof typeof env] })).toEqual({
+      support: null,
+      moderation: null,
+    });
+  });
+
+  it('пустой DATABASE_URL — ошибка, как и отсутствующий', () => {
+    expect(() => validateEnv({ ...DB, DATABASE_URL: '' })).toThrow(/DATABASE_URL/);
+  });
+
   it('текст ошибки не содержит сам токен', () => {
     const bad = TOKEN + '!';
     let message = '';

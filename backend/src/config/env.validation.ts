@@ -112,7 +112,9 @@ export function parseOrigins(value: string): string[] {
 
 /** Проверка для `ConfigModule.forRoot({ validate })`: возвращает типизированные значения. */
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {
-  const env = plainToInstance(EnvironmentVariables, config, {
+  // Пустое значение (`KEY=` в .env или `${KEY:-}` в compose) — то же, что не задано
+  const present = Object.fromEntries(Object.entries(config).filter(([, value]) => value !== ''));
+  const env = plainToInstance(EnvironmentVariables, present, {
     enableImplicitConversion: true,
   });
   const problems = validateSync(env, { skipMissingProperties: false }).map(
