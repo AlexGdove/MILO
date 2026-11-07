@@ -1,6 +1,7 @@
 # Сборка Android-приложения MILO (Capacitor, решения №44, №52): release APK, подписанный
 # постоянным ключом из секретов репозитория (без секретов — отладочным).
-# После каждой сборки из push файл milo.apk заменяется в релизе android-latest (решение №46) —
+# После каждой сборки из push — и после ручного запуска из main (Run workflow, например после
+# смены переменной MILO_API_URL) — файл milo.apk заменяется в релизе android-latest (решение №46) —
 # постоянная ссылка для страницы «Приложение», скачивается без входа:
 #   https://github.com/AlexGdove/MILO/releases/download/android-latest/milo.apk
 # Ещё он лежит как файл запуска: Actions → «Android APK» → Artifacts → milo-apk.
@@ -99,7 +100,8 @@ jobs:
           if-no-files-found: error
 
       - name: Publish to release android-latest
-        if: github.event_name == 'push'
+        # Ручной запуск публикует только из main: пробные сборки других веток ссылку не подменяют
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.sha }}
