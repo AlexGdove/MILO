@@ -96,7 +96,11 @@ export function devToolsEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.DEV_TOOLS === 'true' && env.NODE_ENV !== 'production';
 }
 
-const ORIGIN_PATTERN = /^https?:\/\/[^\s/]+$/;
+/**
+ * Адрес фронтенда: схема и хост без пути. Кроме http(s) — `capacitor://` (так WebView
+ * iOS-приложения называет себя: `capacitor://localhost`; Android — `https://localhost`).
+ */
+const ORIGIN_PATTERN = /^(https?|capacitor):\/\/[^\s/]+$/;
 
 /** Разбирает список адресов через запятую; пустые элементы отбрасываются. */
 export function parseOrigins(value: string): string[] {
