@@ -86,6 +86,8 @@ curl https://<домен>/api/v1/health/ready      # {"status":"ok","checks":{"d
 
 ## 6. Telegram-боты
 
+**Если боты молчат**, в логах backend — `Telegram polling failed` / `Network request for 'getUpdates' failed`: проверить доступ к Telegram с сервера — `curl -4 -m 6 -sI https://api.telegram.org` и `curl -6 -m 6 -sI https://api.telegram.org`. У части провайдеров Telegram доступен только по IPv6 — поэтому в `compose.prod.yaml` у сети контейнеров включён IPv6 (B-25). Если не отвечают оба — нужен другой сервер или регион.
+
 Две группы или одна группа с темами (B-23): во втором случае у обоих ботов одинаковый `TELEGRAM_*_CHAT_ID`, а `TELEGRAM_SUPPORT_THREAD_ID` и `TELEGRAM_MODERATION_THREAD_ID` — номера их тем.
 
 Оператор (Telegram ID — `/id` в любом из ботов):
