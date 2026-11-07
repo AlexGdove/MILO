@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 
 import { useProductStore, type Product } from '@/entities/product';
 import { Button, Modal } from '@/shared/ui';
@@ -7,9 +7,11 @@ import { ProductForm } from './ProductForm';
 
 interface EditProductButtonProps {
   product: Product;
+  /** Дополнительный блок под формой (например, «Предложить в общую базу» из виджета) */
+  extra?: ReactNode;
 }
 
-export const EditProductButton = ({ product }: EditProductButtonProps) => {
+export const EditProductButton = ({ product, extra }: EditProductButtonProps) => {
   const [open, setOpen] = useState(false);
   const updateProduct = useProductStore((state) => state.updateProduct);
   const removeProduct = useProductStore((state) => state.removeProduct);
@@ -41,6 +43,7 @@ export const EditProductButton = ({ product }: EditProductButtonProps) => {
           }}
           onDelete={handleDelete}
         />
+        {extra}
       </Modal>
     </>
   );

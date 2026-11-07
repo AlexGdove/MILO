@@ -12,10 +12,12 @@ import { HealthModule } from './health/health.module.js';
 import { DevToolsModule } from './modules/dev-tools/dev-tools.module.js';
 import { DeviceKeysModule } from './modules/device-keys/device-keys.module.js';
 import { FoodCatalogModule } from './modules/food-catalog/food-catalog.module.js';
+import { MaintenanceModule } from './modules/maintenance/maintenance.module.js';
 import { ModerationModule } from './modules/moderation/moderation.module.js';
 import { ProductsModule } from './modules/products/products.module.js';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module.js';
 import { SupportModule } from './modules/support/support.module.js';
+import { TelegramModule } from './modules/telegram/telegram.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { RedisModule } from './redis/redis.module.js';
 
@@ -41,6 +43,8 @@ import { RedisModule } from './redis/redis.module.js';
     FoodCatalogModule,
     ModerationModule,
     SupportModule,
+    TelegramModule,
+    MaintenanceModule,
     // Служебные маршруты разработки: доступны только при DEV_TOOLS=true вне production (DevToolsGuard)
     DevToolsModule,
   ],

@@ -4,7 +4,7 @@ API общей базы продуктов (предложения с автом
 
 ## Стек
 
-Node.js 22, TypeScript, NestJS 12 (ES-модули, решение B-12), Express, `@nestjs/config`, `nestjs-pino`, `@nestjs/swagger`, `class-validator`; PostgreSQL 17 + Prisma 7 (`@prisma/adapter-pg`); Redis 8 (`ioredis`) — счётчики лимитов. Тесты — Jest + supertest (B-3). Дальше по плану: Telegram (grammY).
+Node.js 22, TypeScript, NestJS 12 (ES-модули, решение B-12), Express, `@nestjs/config`, `nestjs-pino`, `@nestjs/swagger`, `class-validator`; PostgreSQL 17 + Prisma 7 (`@prisma/adapter-pg`); Redis 8 (`ioredis`) — счётчики лимитов; Telegram-боты — grammY (B-21). Тесты — Jest + supertest (B-3).
 
 ## Запуск
 
@@ -23,6 +23,7 @@ npm run dev:backend                      # nest start --watch, http://localhost:
 - Swagger UI: http://localhost:3000/api/docs (JSON — `/api/docs-json`); в production выключен.
 - WebSocket поддержки: Socket.IO, путь `/socket.io`, пространство `/support`, `auth: { deviceKey }`.
 - Ответ в обращение «как оператор» без Telegram-бота: `DEV_TOOLS=true` в `.env`, затем `npm run support:reply -w backend -- <номер> "Текст"` (служебный маршрут `POST /api/v1/dev/support/tickets/:number/reply`; выключен — 404; в production `DEV_TOOLS=true` не даёт серверу стартовать).
+- **Telegram-боты** (B-21): токены от @BotFather и номера групп операторов — в `.env` (`TELEGRAM_*`, см. `.env.example`). Номер группы — команда `/id` в группе (бот уже должен быть запущен с токеном). Оператор: `npm run operator -- add <Telegram ID> <Имя>` (из корня; `remove <ID>`, `list`). Ответ оператора — reply на сообщение бота «Обращение № N»; модерация — кнопками под карточкой. Обновления — long polling: один запущенный сервер на токен.
 - Остановить: `npm run db:down` (данные базы остаются в томе `milo-postgres`; счётчики Redis не сохраняются).
 - Ключ устройства: `POST /api/v1/device-keys` → `{ key }`; дальше заголовок `X-Device-Key`. Удалить всё своё: `DELETE /api/v1/device-keys/me`.
 
@@ -70,6 +71,10 @@ Jest работает в режиме ES-модулей (`--experimental-vm-modu
 | `src/modules/rate-limit/`  | лимиты (`architecture.md` §5): глобальный guard, `@RateLimit(name)`, скользящее окно в Redis (B-16)                               |
 | `src/modules/support/`     | поддержка (B-19): REST `/support/tickets`, Socket.IO `/support` (доставка событий), ответ оператора для бота (этап 9)             |
 | `src/modules/dev-tools/`   | служебные маршруты разработки (`DEV_TOOLS`, `DevToolsGuard`): ответ «как оператор»                                                |
+| `src/modules/telegram/`    | два бота (B-21): поддержка (обращения ↔ ответы операторов) и модерация (кнопки), long polling, `/id`, дедупликация обновлений     |
+| `src/modules/outbox/`      | фоновая отправка событий outbox с повторами и паузой (обработчики регистрируют боты)                                              |
+| `src/modules/maintenance/` | очистка раз в час: обновления Telegram, ключи идемпотентности, отправленные события                                               |
+| `src/cli/`                 | команда `operator`: добавить / выключить оператора, список                                                                        |
 | `prisma/`                  | схема и миграции (CHECK-ограничения и `pg_trgm` — SQL в миграциях)                                                                |
 | `test/`                    | e2e: HTTP-уровень, интеграция с PostgreSQL и Redis, ключ устройства и лимиты                                                      |
 

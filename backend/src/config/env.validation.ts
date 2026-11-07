@@ -16,6 +16,11 @@ export type NodeEnv = (typeof NODE_ENVS)[number];
 export const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const;
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
+/** Токен бота: `<id бота>:<секрет>` (значение в сообщения об ошибке не попадает). */
+const BOT_TOKEN_PATTERN = /^\d{5,15}:[A-Za-z0-9_-]{30,64}$/;
+/** Чат Telegram: целое число, у групп — отрицательное. */
+const CHAT_ID_PATTERN = /^-?\d{1,16}$/;
+
 /** Переменные окружения backend. Неверное значение — процесс не стартует. */
 export class EnvironmentVariables {
   @IsIn(NODE_ENVS)
@@ -64,6 +69,26 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsIn(['true', 'false'])
   DEV_TOOLS?: 'true' | 'false';
+
+  /**
+   * Telegram-боты (этап 9, B-18): токен от @BotFather и чат операторов (группа). Без токена бот
+   * не запускается; без чата бот отвечает только на `/id` — так узнают номер чата.
+   */
+  @IsOptional()
+  @Matches(BOT_TOKEN_PATTERN, { message: 'TELEGRAM_SUPPORT_BOT_TOKEN must be a bot token' })
+  TELEGRAM_SUPPORT_BOT_TOKEN?: string;
+
+  @IsOptional()
+  @Matches(CHAT_ID_PATTERN, { message: 'TELEGRAM_SUPPORT_CHAT_ID must be a chat id' })
+  TELEGRAM_SUPPORT_CHAT_ID?: string;
+
+  @IsOptional()
+  @Matches(BOT_TOKEN_PATTERN, { message: 'TELEGRAM_MODERATION_BOT_TOKEN must be a bot token' })
+  TELEGRAM_MODERATION_BOT_TOKEN?: string;
+
+  @IsOptional()
+  @Matches(CHAT_ID_PATTERN, { message: 'TELEGRAM_MODERATION_CHAT_ID must be a chat id' })
+  TELEGRAM_MODERATION_CHAT_ID?: string;
 }
 
 /** Служебные маршруты разработки включены (`DevToolsGuard` проверяет на каждом запросе). */
@@ -71,7 +96,11 @@ export function devToolsEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return env.DEV_TOOLS === 'true' && env.NODE_ENV !== 'production';
 }
 
-const ORIGIN_PATTERN = /^https?:\/\/[^\s/]+$/;
+/**
+ * Адрес фронтенда: схема и хост без пути. Кроме http(s) — `capacitor://` (так WebView
+ * iOS-приложения называет себя: `capacitor://localhost`; Android — `https://localhost`).
+ */
+const ORIGIN_PATTERN = /^(https?|capacitor):\/\/[^\s/]+$/;
 
 /** Разбирает список адресов через запятую; пустые элементы отбрасываются. */
 export function parseOrigins(value: string): string[] {
@@ -83,7 +112,9 @@ export function parseOrigins(value: string): string[] {
 
 /** Проверка для `ConfigModule.forRoot({ validate })`: возвращает типизированные значения. */
 export function validateEnv(config: Record<string, unknown>): EnvironmentVariables {
-  const env = plainToInstance(EnvironmentVariables, config, {
+  // Пустое значение (`KEY=` в .env или `${KEY:-}` в compose) — то же, что не задано
+  const present = Object.fromEntries(Object.entries(config).filter(([, value]) => value !== ''));
+  const env = plainToInstance(EnvironmentVariables, present, {
     enableImplicitConversion: true,
   });
   const problems = validateSync(env, { skipMissingProperties: false }).map(
