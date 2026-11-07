@@ -1,6 +1,6 @@
 {
   "name": "milo",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "private": true,
   "type": "module",
   "description": "Подсчёт калорий и учёт продуктов: PWA + будущее мобильное приложение",

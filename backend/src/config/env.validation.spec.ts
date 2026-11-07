@@ -37,6 +37,22 @@ describe('validateEnv', () => {
     );
   });
 
+  it('принимает адреса мобильного приложения (Android и iOS)', () => {
+    const origins = 'https://milo.example,https://localhost,capacitor://localhost';
+    expect(toAppConfig(validateEnv({ ...DB, CORS_ORIGINS: origins })).corsOrigins).toEqual([
+      'https://milo.example',
+      'https://localhost',
+      'capacitor://localhost',
+    ]);
+  });
+
+  it.each(['capacitor://localhost/app', 'capacitor:localhost', 'ionic://localhost'])(
+    'отклоняет адрес CORS %p',
+    (origin) => {
+      expect(() => validateEnv({ ...DB, CORS_ORIGINS: origin })).toThrow(/CORS_ORIGINS/);
+    },
+  );
+
   it('сообщение об ошибке начинается с общего префикса', () => {
     expect(() => validateEnv({ ...DB, PORT: '0' })).toThrow(/^Invalid environment variables/);
   });
