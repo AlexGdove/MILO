@@ -210,12 +210,23 @@ model TelegramMessageLink {
   @@map("telegram_message_links")
 }
 
-/// Дедупликация обновлений Telegram; строки старше 7 дней удаляются.
+/// Дедупликация обновлений Telegram; строки старше 7 дней удаляются. Номера обновлений у
+/// каждого бота свои, поэтому ключ — бот и номер.
 model TelegramUpdate {
-  updateId   BigInt   @id @map("update_id")
-  receivedAt DateTime @default(now()) @map("received_at") @db.Timestamptz(6)
+  bot        TelegramBot @default(support)
+  updateId   BigInt      @map("update_id")
+  receivedAt DateTime    @default(now()) @map("received_at") @db.Timestamptz(6)
 
+  @@id([bot, updateId])
   @@map("telegram_updates")
+}
+
+/// Боты (B-18): поддержка и модерация — свои токены и чаты операторов.
+enum TelegramBot {
+  support
+  moderation
+
+  @@map("telegram_bot")
 }
 
 /// Исходящие события (ADR-0003), пишутся в одной транзакции с изменением.
@@ -227,6 +238,8 @@ model OutboxEvent {
   processedAt DateTime? @map("processed_at") @db.Timestamptz(6)
   attempts    Int       @default(0)
   lastError   String?   @map("last_error") @db.VarChar(500)
+  /// Не раньше этого времени — следующая попытка (пауза растёт после каждой ошибки)
+  availableAt DateTime  @default(now()) @map("available_at") @db.Timestamptz(6)
 
   /// Выборка неотправленных событий по порядку
   @@index([processedAt, createdAt])

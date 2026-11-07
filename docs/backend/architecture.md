@@ -92,8 +92,8 @@ flowchart LR
 - Ключ устройства: 32 случайных байта (`crypto.randomBytes`), формат `mk_<base64url>`. В базе только SHA-256: медленный хэш не нужен, так как у ключа высокая энтропия (ADR-0001). Сравнение — поиск по уникальному хэшу.
 - Ключ не пишется в логи (`pino` redact для `x-device-key` и `auth.deviceKey`); тексты рецептов и обращений тоже не логируются. IP — только в логах доступа, хранение не дольше 14 дней.
 - `helmet`; CORS — только адреса из `CORS_ORIGINS`; размер тела ≤ 64 КБ; `ValidationPipe` с `whitelist` и `forbidNonWhitelisted`.
-- Webhook Telegram — проверка секретного заголовка. Действия в боте — только от `telegram_user_id` активного оператора и только в чате `TELEGRAM_OPERATORS_CHAT_ID`.
-- Секреты — только ENV: `DATABASE_URL`, `REDIS_URL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_OPERATORS_CHAT_ID`, `CORS_ORIGINS`, `PORT`, `LOG_LEVEL`. В репозитории — только `.env.example`.
+- Telegram — long polling, без входящего webhook (B-21). Действия в боте — только от `telegram_user_id` активного оператора и только в чате операторов этого бота (`TELEGRAM_SUPPORT_CHAT_ID` / `TELEGRAM_MODERATION_CHAT_ID`). Токены в логи и в `outbox_events.last_error` не попадают.
+- Секреты — только ENV: `DATABASE_URL`, `REDIS_URL`, `TELEGRAM_SUPPORT_BOT_TOKEN`, `TELEGRAM_MODERATION_BOT_TOKEN`; настройки — `TELEGRAM_*_CHAT_ID`, `CORS_ORIGINS`, `PORT`, `LOG_LEVEL`. В репозитории — только `.env.example`.
 - Удаление: `DELETE /device-keys/me` стирает всё, что связано с устройством. В PWA — кнопка «Удалить мои данные с сервера» в профиле.
 
 ## 7. Интеграция во frontend (этап 7, по FSD)
