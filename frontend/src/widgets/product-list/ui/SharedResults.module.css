@@ -1,0 +1,35 @@
+/* Как карточка своего продукта (entities/product), чтобы список выглядел единым */
+.card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.name {
+  overflow: hidden;
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.macros {
+  margin-top: var(--space-0-5);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.source {
+  margin-top: var(--space-0-5);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}

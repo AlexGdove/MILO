@@ -11,10 +11,13 @@ import { AddToShoppingButton } from '@/features/add-to-shopping-list';
 import { AddProductButton, EditProductButton } from '@/features/manage-product';
 import { ProductSearch } from '@/features/search-products';
 import { AddToPantryButton, SetStockButton } from '@/features/stock-product';
+import { SuggestProduct, useSubmissionSync } from '@/features/suggest-product';
 import { EmptyState } from '@/shared/ui';
 
 import { CatalogResults } from './CatalogResults';
 import styles from './ProductList.module.css';
+import { SharedResultItem } from './SharedResults';
+import { useSharedResults } from './useSharedResults';
 
 const byName = (a: Product, b: Product) => a.name.localeCompare(b.name, 'ru-RU');
 
@@ -26,17 +29,22 @@ const byStockThenName = (a: Product, b: Product) =>
  * Кладовая: без запроса — только продукты в наличии.
  * Поиск идёт по всем известным продуктам: найденное можно положить в кладовую или в покупки.
  * Положили в кладовую или создали продукт из поиска — поиск сбрасывается, видна кладовая.
- * Под своими результатами — найденное в Open Food Facts (решение №53).
+ * В том же списке после своих — продукты общей базы MILO, которых у пользователя нет (7c);
+ * ниже отдельно — найденное в Open Food Facts (решение №53).
  */
 export const ProductList = () => {
   const products = useProductStore(selectProducts);
   const [query, setQuery] = useState('');
   const searching = query.trim() !== '';
   const resetSearch = () => setQuery('');
+  // Решения модератора по своим предложениям — пока открыта кладовая
+  useSubmissionSync();
 
   const visible = searching
     ? [...filterProducts(products, query)].sort(byStockThenName)
     : products.filter((product) => product.stock > 0).sort(byName);
+  const shared = useSharedResults(searching ? query : '', products);
+  const found = visible.length + shared.length;
 
   const renderEmpty = () =>
     searching ? (
@@ -58,9 +66,9 @@ export const ProductList = () => {
     <section className={styles.section}>
       <ProductSearch value={query} onChange={setQuery} />
       <p className={styles.caption} aria-live="polite">
-        {searching ? `Найдено: ${visible.length}` : `В наличии: ${visible.length}`}
+        {searching ? `Найдено: ${found}` : `В наличии: ${visible.length}`}
       </p>
-      {visible.length === 0 ? (
+      {found === 0 ? (
         renderEmpty()
       ) : (
         <ul className={styles.list}>
@@ -73,10 +81,18 @@ export const ProductList = () => {
                   <>
                     <AddToPantryButton product={product} onAdded={resetSearch} />
                     <AddToShoppingButton product={product} compact />
-                    <EditProductButton product={product} />
+                    <EditProductButton
+                      product={product}
+                      extra={<SuggestProduct product={product} />}
+                    />
                   </>
                 }
               />
+            </li>
+          ))}
+          {shared.map((item) => (
+            <li key={`shared-${item.id}`}>
+              <SharedResultItem item={item} onCreated={resetSearch} />
             </li>
           ))}
         </ul>
