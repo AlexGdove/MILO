@@ -18,12 +18,38 @@ describe('getTelegramConfig', () => {
       getTelegramConfig(
         fromEnv({ TELEGRAM_SUPPORT_BOT_TOKEN: TOKEN, TELEGRAM_SUPPORT_CHAT_ID: '-1001234567890' }),
       ),
-    ).toEqual({ support: { token: TOKEN, chatId: -1001234567890 }, moderation: null });
+    ).toEqual({
+      support: { token: TOKEN, chatId: -1001234567890, threadId: null },
+      moderation: null,
+    });
   });
 
   it('токен без чата — бот только для /id', () => {
     expect(getTelegramConfig(fromEnv({ TELEGRAM_MODERATION_BOT_TOKEN: TOKEN })).moderation).toEqual(
-      { token: TOKEN, chatId: null },
+      { token: TOKEN, chatId: null, threadId: null },
+    );
+  });
+});
+
+describe('getTelegramConfig: группа с темами', () => {
+  it('оба бота в одной группе, у каждого своя тема', () => {
+    const config = getTelegramConfig(
+      fromEnv({
+        TELEGRAM_SUPPORT_BOT_TOKEN: TOKEN,
+        TELEGRAM_SUPPORT_CHAT_ID: '-100500',
+        TELEGRAM_SUPPORT_THREAD_ID: '77',
+        TELEGRAM_MODERATION_BOT_TOKEN: TOKEN,
+        TELEGRAM_MODERATION_CHAT_ID: '-100500',
+        TELEGRAM_MODERATION_THREAD_ID: '88',
+      }),
+    );
+    expect(config.support).toEqual({ token: TOKEN, chatId: -100500, threadId: 77 });
+    expect(config.moderation).toEqual({ token: TOKEN, chatId: -100500, threadId: 88 });
+  });
+
+  it.each(['0', '-5', 'abc', '1.5'])('validateEnv отклоняет тему %p', (thread) => {
+    expect(() => validateEnv({ ...DB, TELEGRAM_SUPPORT_THREAD_ID: thread })).toThrow(
+      /TELEGRAM_SUPPORT_THREAD_ID/,
     );
   });
 });

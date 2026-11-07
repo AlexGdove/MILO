@@ -23,7 +23,9 @@ import { SupportModule } from '../support/support.module.js';
         const settings = getTelegramConfig(config);
         const handle = (bot: keyof TelegramBots) => {
           const entry = settings[bot];
-          return entry ? { api: new GrammyBotApi(entry.token), chatId: entry.chatId } : null;
+          return entry
+            ? { api: new GrammyBotApi(entry.token), chatId: entry.chatId, threadId: entry.threadId }
+            : null;
         };
         return { support: handle('support'), moderation: handle('moderation') };
       },
