@@ -137,6 +137,14 @@ services:
       backend:
         condition: service_healthy
 
+# IPv6 во внутренней сети (B-25): у части провайдеров Telegram недоступен по IPv4, а по IPv6
+# доступен (так на VPS FirstVDS). Без IPv6 у контейнеров боты не получают обновления. Docker
+# выдаёт контейнерам адреса ULA и выпускает их наружу через NAT хоста; grammY (https Node)
+# сам выбирает рабочий адрес — IPv4 или IPv6.
+networks:
+  default:
+    enable_ipv6: true
+
 volumes:
   postgres-data:
   caddy-data:
