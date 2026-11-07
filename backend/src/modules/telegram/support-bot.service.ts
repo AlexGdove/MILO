@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 
 import type { Update } from './bot-api.js';
-import { TelegramCommonService } from './telegram-common.service.js';
+import { inOperatorsChat, TelegramCommonService, topicOptions } from './telegram-common.service.js';
 import { type BotHandle, TELEGRAM_BOTS, type TelegramBots } from './telegram.tokens.js';
 import {
   newTicketText,
@@ -111,7 +111,8 @@ export class SupportBotService implements OnModuleInit {
     id: string;
     number: number;
   }): Promise<{ root: number; created: boolean }> {
-    const { api, chatId } = this.bot;
+    const bot = this.bot;
+    const { api, chatId } = bot;
     const existing = await this.prisma.telegramMessageLink.findFirst({
       where: { chatId: BigInt(chatId), ticketId: ticket.id },
       orderBy: { createdAt: 'asc' },
@@ -121,14 +122,21 @@ export class SupportBotService implements OnModuleInit {
       where: { ticketId: ticket.id },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
     });
-    const sent = await api.sendMessage(chatId, newTicketText(ticket.number, first?.text ?? ''));
+    const sent = await api.sendMessage(
+      chatId,
+      newTicketText(ticket.number, first?.text ?? ''),
+      topicOptions(bot),
+    );
     await this.link(ticket.id, sent.messageId);
     return { root: sent.messageId, created: true };
   }
 
   private async sendInThread(ticketId: string, root: number, text: string): Promise<void> {
-    const { api, chatId } = this.bot;
-    const sent = await api.sendMessage(chatId, text, { replyTo: root });
+    const bot = this.bot;
+    const sent = await bot.api.sendMessage(bot.chatId, text, {
+      replyTo: root,
+      ...topicOptions(bot),
+    });
     // Ответ оператора на любое сообщение обращения тоже попадёт в нужное обращение
     await this.link(ticketId, sent.messageId);
   }
@@ -154,12 +162,15 @@ export class SupportBotService implements OnModuleInit {
     if (!bot || !(await this.common.firstTime('support', update.update_id))) return;
     const message = update.message;
     if (!message || (await this.common.answerCommand(bot.api, message))) return;
-    if (bot.chatId === null || message.chat.id !== bot.chatId) return;
+    if (!inOperatorsChat(bot, message)) return;
     const replied = message.reply_to_message;
     if (!replied || !message.from) return;
 
     const reply = (text: string) =>
-      bot.api.sendMessage(message.chat.id, text, { replyTo: message.message_id });
+      bot.api.sendMessage(message.chat.id, text, {
+        replyTo: message.message_id,
+        ...topicOptions(bot),
+      });
     const link = await this.prisma.telegramMessageLink.findUnique({
       where: {
         chatId_messageId: { chatId: BigInt(message.chat.id), messageId: replied.message_id },

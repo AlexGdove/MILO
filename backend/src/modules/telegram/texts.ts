@@ -28,10 +28,11 @@ export function ticketClosedText(number: number): string {
 }
 
 /** Ответ на `/id`: номера чата и пользователя для настроек сервера. */
-export function idText(chatId: number, userId?: number): string {
-  return userId === undefined
-    ? `ID чата: ${chatId}`
-    : `ID чата: ${chatId}\nВаш Telegram ID: ${userId}`;
+export function idText(chatId: number, userId?: number, threadId?: number): string {
+  const lines = [`ID чата: ${chatId}`];
+  if (threadId !== undefined) lines.push(`ID темы: ${threadId}`);
+  if (userId !== undefined) lines.push(`Ваш Telegram ID: ${userId}`);
+  return lines.join('\n');
 }
 
 export const START_TEXT =

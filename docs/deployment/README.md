@@ -59,6 +59,8 @@ curl https://<домен>/api/v1/health/ready      # {"status":"ok","checks":{"d
 
 ## 6. Telegram-боты
 
+Две группы или одна группа с темами (B-23): во втором случае у обоих ботов одинаковый `TELEGRAM_*_CHAT_ID`, а `TELEGRAM_SUPPORT_THREAD_ID` и `TELEGRAM_MODERATION_THREAD_ID` — номера их тем.
+
 Оператор (Telegram ID — `/id` в любом из ботов):
 
 ```bash

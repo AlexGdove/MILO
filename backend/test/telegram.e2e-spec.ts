@@ -14,7 +14,7 @@ import type { Update } from '../src/modules/telegram/bot-api.js';
 import { encodeCallback } from '../src/modules/telegram/callback-data.js';
 import { ModerationBotService } from '../src/modules/telegram/moderation-bot.service.js';
 import { SupportBotService } from '../src/modules/telegram/support-bot.service.js';
-import { TELEGRAM_BOTS } from '../src/modules/telegram/telegram.tokens.js';
+import { TELEGRAM_BOTS, type TelegramBots } from '../src/modules/telegram/telegram.tokens.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
 import { RedisService } from '../src/redis/redis.service.js';
 
@@ -35,14 +35,16 @@ describe('Telegram-боты (e2e)', () => {
   const supportApi = new FakeBotApi();
   const moderationApi = new FakeBotApi();
   let updateId = 1;
+  /** Тот же объект получают сервисы: тесты тем меняют в нём чат и тему */
+  const bots: TelegramBots = {
+    support: { api: supportApi, chatId: SUPPORT_CHAT, threadId: null },
+    moderation: { api: moderationApi, chatId: MODERATION_CHAT, threadId: null },
+  };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(TELEGRAM_BOTS)
-      .useValue({
-        support: { api: supportApi, chatId: SUPPORT_CHAT },
-        moderation: { api: moderationApi, chatId: MODERATION_CHAT },
-      })
+      .useValue(bots)
       .compile();
     app = moduleRef.createNestApplication<NestExpressApplication>(APP_OPTIONS);
     configureApp(app);
@@ -85,6 +87,7 @@ describe('Telegram-боты (e2e)', () => {
     text: string | undefined,
     from = OPERATOR_TG,
     chatId = SUPPORT_CHAT,
+    threadId?: number,
   ): Update =>
     ({
       update_id: updateId++,
@@ -92,6 +95,7 @@ describe('Telegram-боты (e2e)', () => {
         message_id: 50_000 + updateId,
         date: 0,
         chat: { id: chatId, type: 'supergroup', title: 'MILO — поддержка' },
+        ...(threadId !== undefined && { message_thread_id: threadId, is_topic_message: true }),
         from: { id: from, is_bot: false, first_name: 'Анна' },
         ...(text !== undefined && { text }),
         reply_to_message: {
@@ -108,6 +112,7 @@ describe('Telegram-боты (e2e)', () => {
     messageId: number,
     from = OPERATOR_TG,
     chatId = MODERATION_CHAT,
+    threadId?: number,
   ) =>
     ({
       update_id: updateId++,
@@ -120,6 +125,7 @@ describe('Telegram-боты (e2e)', () => {
           message_id: messageId,
           date: 0,
           chat: { id: chatId, type: 'supergroup', title: 'MILO — модерация' },
+          ...(threadId !== undefined && { message_thread_id: threadId, is_topic_message: true }),
         },
       },
     }) as unknown as Update;
@@ -498,6 +504,113 @@ describe('Telegram-боты (e2e)', () => {
 
       expect(await outbox.processBatch()).toBe(1);
       expect(moderationApi.sent).toHaveLength(0);
+    });
+  });
+
+  describe('одна группа с темами (B-23)', () => {
+    const GROUP = -100500;
+    const SUPPORT_TOPIC = 77;
+    const MODERATION_TOPIC = 88;
+
+    beforeEach(() => {
+      bots.support = { api: supportApi, chatId: GROUP, threadId: SUPPORT_TOPIC };
+      bots.moderation = { api: moderationApi, chatId: GROUP, threadId: MODERATION_TOPIC };
+    });
+
+    afterEach(() => {
+      bots.support = { api: supportApi, chatId: SUPPORT_CHAT, threadId: null };
+      bots.moderation = { api: moderationApi, chatId: MODERATION_CHAT, threadId: null };
+    });
+
+    it('обращение и ответы в ветке — в теме поддержки', async () => {
+      const key = await newKey();
+      const ticket = await createTicket(key);
+      await request(server())
+        .post(`/api/v1/support/tickets/${ticket.id as string}/messages`)
+        .set('X-Device-Key', key)
+        .send({ text: 'Ещё вопрос' })
+        .expect(201);
+      await outbox.processBatch();
+
+      expect(supportApi.sent.map((m) => [m.chatId, m.options.threadId])).toEqual([
+        [GROUP, SUPPORT_TOPIC],
+        [GROUP, SUPPORT_TOPIC],
+      ]);
+    });
+
+    it('ответ оператора в теме поддержки сохраняется, из другой темы — нет', async () => {
+      await createTicket(await newKey());
+      await addOperator();
+      await outbox.processBatch();
+      const root = supportApi.sent[0]!;
+
+      await supportBot.handleUpdate(
+        replyUpdate(root, 'Не отсюда', OPERATOR_TG, GROUP, MODERATION_TOPIC),
+      );
+      expect(await prisma.supportMessage.count({ where: { author: 'operator' } })).toBe(0);
+
+      await supportBot.handleUpdate(replyUpdate(root, 'Ответ', OPERATOR_TG, GROUP, SUPPORT_TOPIC));
+      expect(await prisma.supportMessage.count({ where: { author: 'operator' } })).toBe(1);
+    });
+
+    it('карточка модерации — в теме модерации; кнопка работает только оттуда', async () => {
+      const key = await prisma.deviceKey.create({ data: { keyHash: 'e'.repeat(64) } });
+      const submission = await prisma.productSubmission.create({
+        data: {
+          deviceKeyId: key.id,
+          name: 'Сырок',
+          unit: 'pcs',
+          pieceWeight: 40,
+          kcal: 400,
+          protein: 8,
+          fat: 25,
+          carbs: 30,
+          flags: ['energy_mismatch'],
+          createdAt: new Date(),
+        },
+      });
+      await prisma.outboxEvent.create({
+        data: { type: SUBMISSION_REVIEW_EVENT, payload: { submissionId: submission.id } },
+      });
+      await addOperator();
+      await outbox.processBatch();
+      const card = moderationApi.sent[0]!;
+      expect([card.chatId, card.options.threadId]).toEqual([GROUP, MODERATION_TOPIC]);
+
+      const approve = encodeCallback('approve', submission.id);
+      await moderationBot.handleUpdate(
+        pressUpdate(approve, card.messageId, OPERATOR_TG, GROUP, SUPPORT_TOPIC),
+      );
+      expect(moderationApi.answers.at(-1)?.text).toBe('Недоступно');
+
+      await moderationBot.handleUpdate(
+        pressUpdate(approve, card.messageId, OPERATOR_TG, GROUP, MODERATION_TOPIC),
+      );
+      const saved = await prisma.productSubmission.findUniqueOrThrow({
+        where: { id: submission.id },
+      });
+      expect(saved.status).toBe('approved');
+    });
+
+    it('/id в теме — номер чата, темы и Telegram ID, ответ в ту же тему', async () => {
+      await moderationBot.handleUpdate({
+        update_id: updateId++,
+        message: {
+          message_id: 9,
+          date: 0,
+          chat: { id: GROUP, type: 'supergroup', title: 'MILO', is_forum: true },
+          message_thread_id: MODERATION_TOPIC,
+          is_topic_message: true,
+          from: { id: OPERATOR_TG, is_bot: false, first_name: 'Анна' },
+          text: '/id',
+        },
+      } as unknown as Update);
+
+      expect(moderationApi.sent.at(-1)).toMatchObject({
+        chatId: GROUP,
+        text: `ID чата: ${GROUP}\nID темы: ${MODERATION_TOPIC}\nВаш Telegram ID: ${OPERATOR_TG}`,
+        options: { replyTo: 9, threadId: MODERATION_TOPIC },
+      });
     });
   });
 
