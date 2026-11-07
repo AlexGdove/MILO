@@ -101,7 +101,7 @@ docker compose -f compose.prod.yaml exec backend node dist/cli/operator.js list
 
 ## 7. Мобильное приложение
 
-GitHub → Settings → Secrets and variables → Actions → **Variables**: `MILO_API_URL` = `https://<домен>/api/v1`. Затем пересобрать APK (workflow «Android APK») и iOS build. Адреса приложения (`https://localhost`, `capacitor://localhost`) в CORS уже разрешены в `compose.prod.yaml`.
+GitHub → Settings → Secrets and variables → Actions → **Variables**: `MILO_API_URL` = `https://<домен>/api/v1`. Затем пересобрать APK: Actions → «Android APK» → **Run workflow** → ветка `main` — ссылка на скачивание (`android-latest`) обновится сама; так же — iOS build. Адрес вшивается в приложение при сборке: APK, собранный до появления переменной, сервера не знает. Адреса приложения (`https://localhost`, `capacitor://localhost`) в CORS уже разрешены в `compose.prod.yaml`.
 
 ## 8. Обновление, логи, резервные копии
 
