@@ -1,4 +1,11 @@
-import { ApiError, apiRequest, isApiEnabled } from '@/shared/api';
+import {
+  ApiError,
+  apiRequest,
+  isAbort,
+  isApiEnabled,
+  REQUEST_TIMEOUT_MS,
+  withTimeout,
+} from '@/shared/api';
 import { isNativeApp } from '@/shared/lib';
 
 import { OFF_FIELDS, type OffProduct, parseOffProduct } from '../lib/parseOffProduct';
@@ -35,12 +42,16 @@ const parseAll = (items: OffProduct[]) =>
 async function offGet(url: URL, signal?: AbortSignal): Promise<Response> {
   // В браузере — без своих заголовков: иначе предварительный CORS-запрос, а его OFF не ждёт
   const headers: Record<string, string> = isNativeApp() ? { 'User-Agent': OFF_USER_AGENT } : {};
+  // Тайм-аут — как у своего API: медленный Open Food Facts не держит поиск бесконечно
+  const timeout = withTimeout(signal, REQUEST_TIMEOUT_MS);
   let response: Response;
   try {
-    response = await fetch(url, { headers, signal });
+    response = await fetch(url, { headers, signal: timeout.signal });
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') throw error;
+    if (!timeout.timedOut() && isAbort(error)) throw error;
     throw new ApiError(0, 'catalog_unavailable', 'Open Food Facts is unreachable');
+  } finally {
+    timeout.done();
   }
   if (response.status === 429) {
     throw new ApiError(503, 'catalog_busy', 'Open Food Facts limit reached');
