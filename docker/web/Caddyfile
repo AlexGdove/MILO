@@ -2,13 +2,36 @@
 # для домена Caddy сам получает и продлевает сертификат Let's Encrypt (нужны порты 80 и 443).
 # DOMAIN=localhost — локальная проверка с самоподписанным сертификатом Caddy.
 
+{
+	servers {
+		# «Медленные» клиенты (slowloris) не держат соединения: заголовки — за 10 с, тело — за 30 с,
+		# простой keep-alive — 2 мин. Тайм-аута записи нет: он оборвал бы WebSocket чата
+		timeouts {
+			read_header 10s
+			read_body 30s
+			idle 2m
+		}
+	}
+}
+
 {$DOMAIN} {
 	encode zstd gzip
+
+	# Тело запроса: API принимает не больше 64 КБ — больше сюда не пропускаем вовсе
+	request_body {
+		max_size 1MB
+	}
 
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
+		# Только свои скрипты и запросы к своему API и Open Food Facts (штрихкод — напрямую);
+		# стили inline — атрибуты style у React-компонентов (B-24)
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' wss://{$DOMAIN} https://world.openfoodfacts.org https://search.openfoodfacts.org; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		# Камера — только своему сайту (будущий сканер штрихкода); остальное выключено
+		Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=(), usb=()"
+		Cross-Origin-Opener-Policy "same-origin"
 		-Server
 	}
 
@@ -22,8 +45,8 @@
 
 	handle {
 		root * /srv
-		# Service worker и манифест — всегда свежие, иначе обновление PWA не придёт
-		@fresh path /sw.js /registerSW.js /manifest.webmanifest /index.html
+		# Service worker, манифест и скрипт темы — всегда свежие, иначе обновление PWA не придёт
+		@fresh path /sw.js /registerSW.js /manifest.webmanifest /index.html /theme-init.js
 		header @fresh Cache-Control "no-cache"
 		# Файлы сборки с хэшем в имени не меняются
 		@assets path /assets/*
