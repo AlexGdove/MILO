@@ -50,7 +50,17 @@ export default defineConfig(({ mode }) => ({
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2}'],
+          // Заранее — только кириллица и латиница: остальные начертания (вьетнамский, символы…)
+          // браузер скачивает лишь для таких символов на экране (unicode-range) — ниже кэш
+          globIgnores: ['**/*-{cyrillic-ext,latin-ext,vietnamese,math,symbols}-*.woff2'],
           navigateFallback: '/index.html',
+          runtimeCaching: [
+            {
+              urlPattern: ({ request }) => request.destination === 'font',
+              handler: 'CacheFirst',
+              options: { cacheName: 'milo-fonts', expiration: { maxEntries: 40 } },
+            },
+          ],
         },
         devOptions: { enabled: false },
       }),
