@@ -1,0 +1,94 @@
+# MILO на сервере (этап 11, решение B-22): Caddy (HTTPS, PWA) → backend → PostgreSQL и Redis.
+# Наружу открыты только 80 и 443 (Caddy); база и Redis — во внутренней сети.
+# Настройки — в файле .env рядом с этим (не в git, пример — .env.example).
+#   docker compose -f compose.prod.yaml up -d --build
+name: milo-prod
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: milo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_DB: milo
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U milo -d milo']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Счётчики лимитов: на диск не сохраняются (после перезапуска начинаются заново)
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Миграции базы перед запуском backend; завершается после применения
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://milo:${POSTGRES_PASSWORD}@postgres:5432/milo
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+      target: runtime
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://milo:${POSTGRES_PASSWORD}@postgres:5432/milo
+      REDIS_URL: redis://redis:6379/0
+      # Перед backend — один прокси (Caddy): IP клиента для лимитов берётся из X-Forwarded-For
+      TRUST_PROXY: 1
+      CORS_ORIGINS: https://${DOMAIN},https://localhost,capacitor://localhost
+      TELEGRAM_SUPPORT_BOT_TOKEN: ${TELEGRAM_SUPPORT_BOT_TOKEN:-}
+      TELEGRAM_SUPPORT_CHAT_ID: ${TELEGRAM_SUPPORT_CHAT_ID:-}
+      TELEGRAM_MODERATION_BOT_TOKEN: ${TELEGRAM_MODERATION_BOT_TOKEN:-}
+      TELEGRAM_MODERATION_CHAT_ID: ${TELEGRAM_MODERATION_CHAT_ID:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN is required}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      # Сертификаты Let's Encrypt: без тома Caddy запрашивал бы их при каждом запуске
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:
