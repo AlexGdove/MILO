@@ -19,6 +19,33 @@
    ```bash
    sudo ufw allow OpenSSH && sudo ufw allow 80/tcp && sudo ufw allow 443 && sudo ufw enable
    ```
+   Docker открывает опубликованные порты в обход ufw — поэтому в `compose.prod.yaml` наружу опубликованы только 80 и 443, база и Redis портов не публикуют.
+4. **Вход только по SSH-ключу** (B-24). Сначала убедиться, что вход по ключу под `deploy` работает, **в отдельном окне** — иначе можно запереть себя снаружи:
+   ```bash
+   sudo tee /etc/ssh/sshd_config.d/90-milo.conf >/dev/null <<'EOF'
+   PasswordAuthentication no
+   KbdInteractiveAuthentication no
+   PermitRootLogin no
+   MaxAuthTries 3
+   EOF
+   sudo sshd -t && sudo systemctl reload ssh
+   ```
+   Не закрывая текущее окно, проверить вход в новом: `ssh milo-vps`.
+5. **Автоматические обновления безопасности** системы:
+   ```bash
+   sudo apt-get install -y unattended-upgrades && sudo dpkg-reconfigure -plow unattended-upgrades
+   ```
+6. **fail2ban** — блокирует IP после неудачных попыток входа по SSH (с ключами необязателен, но убирает шум из логов):
+   ```bash
+   sudo apt-get install -y fail2ban && sudo systemctl enable --now fail2ban
+   ```
+7. **Файл подкачки** на сервере с 2 ГБ памяти — запас на сборку образов:
+   ```bash
+   sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile && sudo swapon /swapfile
+   echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+   ```
+
+Защита в самих контейнерах (`compose.prod.yaml`, B-24): логи с ротацией (3 × 10 МБ на сервис), лимиты памяти, `no-new-privileges`, backend и Caddy — файловая система только для чтения и без лишних прав. Caddy: тайм-ауты для медленных клиентов, тело запроса до 1 МБ, CSP и Permissions-Policy для веб-версии. Лимиты запросов — в backend (Redis).
 
 ## 3. Код и настройки
 

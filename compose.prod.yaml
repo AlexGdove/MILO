@@ -2,29 +2,56 @@
 # Наружу открыты только 80 и 443 (Caddy); база и Redis — во внутренней сети.
 # Настройки — в файле .env рядом с этим (не в git, пример — .env.example).
 #   docker compose -f compose.prod.yaml up -d --build
+# Защита (B-24): логи с ротацией, лимиты памяти (рассчитаны на VPS от 2 ГБ), без повышения прав.
 name: milo-prod
+
+# Общее для всех сервисов: логи не больше 3 × 10 МБ на сервис — иначе со временем (или под
+# потоком мусорных запросов) заполнят диск; процессы не получают новых прав (setuid и т. п.)
+x-defaults: &defaults
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: '3'
+  security_opt:
+    - no-new-privileges:true
 
 services:
   postgres:
+    <<: *defaults
     image: postgres:17-alpine
-    restart: unless-stopped
     environment:
       POSTGRES_USER: milo
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
       POSTGRES_DB: milo
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    mem_limit: 512m
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U milo -d milo']
       interval: 5s
       timeout: 3s
       retries: 10
 
-  # Счётчики лимитов: на диск не сохраняются (после перезапуска начинаются заново)
+  # Счётчики лимитов и кэш Open Food Facts: на диск не сохраняются. У всех ключей есть срок
+  # жизни — при нехватке памяти вытесняются ближайшие к истечению, а не падает запись
   redis:
+    <<: *defaults
     image: redis:8-alpine
-    restart: unless-stopped
-    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    command:
+      [
+        'redis-server',
+        '--save',
+        '',
+        '--appendonly',
+        'no',
+        '--maxmemory',
+        '128mb',
+        '--maxmemory-policy',
+        'volatile-ttl',
+      ]
+    mem_limit: 192m
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
@@ -33,6 +60,7 @@ services:
 
   # Миграции базы перед запуском backend; завершается после применения
   migrate:
+    <<: *defaults
     build:
       context: .
       dockerfile: docker/backend/Dockerfile
@@ -42,16 +70,26 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    mem_limit: 512m
     restart: 'no'
 
   backend:
+    <<: *defaults
     build:
       context: .
       dockerfile: docker/backend/Dockerfile
       target: runtime
-    restart: unless-stopped
+    # Файловая система только для чтения: даже при уязвимости в коде нечего подменить на диске
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    mem_limit: 512m
     environment:
       NODE_ENV: production
+      # Куча Node меньше лимита контейнера — сборка мусора раньше, чем контейнер убьют за память
+      NODE_OPTIONS: --max-old-space-size=384
       PORT: 3000
       LOG_LEVEL: ${LOG_LEVEL:-info}
       DATABASE_URL: postgresql://milo:${POSTGRES_PASSWORD}@postgres:5432/milo
@@ -72,10 +110,17 @@ services:
         condition: service_healthy
 
   web:
+    <<: *defaults
     build:
       context: .
       dockerfile: docker/web/Dockerfile
-    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    # Только привязка к портам 80 и 443
+    cap_add:
+      - NET_BIND_SERVICE
+    mem_limit: 128m
     environment:
       DOMAIN: ${DOMAIN:?DOMAIN is required}
     ports:
@@ -86,6 +131,8 @@ services:
       # Сертификаты Let's Encrypt: без тома Caddy запрашивал бы их при каждом запуске
       - caddy-data:/data
       - caddy-config:/config
+    tmpfs:
+      - /tmp
     depends_on:
       backend:
         condition: service_healthy

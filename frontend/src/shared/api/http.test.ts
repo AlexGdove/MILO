@@ -96,3 +96,51 @@ describe('socketOrigin', () => {
     expect(socketOrigin()).toBe(window.location.origin);
   });
 });
+
+describe('apiRequest: медленная сеть и старые браузеры', () => {
+  /** fetch, который не отвечает, пока его не отменят */
+  const hangingFetch = (_input: RequestInfo | URL, init?: RequestInit) =>
+    new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () =>
+        reject(new DOMException('aborted', 'AbortError')),
+      );
+    });
+
+  it('сервер не ответил за тайм-аут — network_error, а не вечное ожидание', async () => {
+    vi.useFakeTimers();
+    try {
+      fetchMock.mockImplementation(hangingFetch);
+      const request = apiRequest('/products', { timeoutMs: 1000 });
+      const assertion = expect(request).rejects.toMatchObject({
+        code: 'network_error',
+        message: 'Request timed out',
+      });
+      await vi.advanceTimersByTimeAsync(1000);
+      await assertion;
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('отмена снаружи (TanStack Query) — AbortError, не ошибка сети', async () => {
+    fetchMock.mockImplementation(hangingFetch);
+    const controller = new AbortController();
+    const request = apiRequest('/products', { signal: controller.signal });
+    controller.abort();
+    await expect(request).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
+  it('параметры запроса не теряются без URLSearchParams.size (Safari < 17)', async () => {
+    const descriptor = Object.getOwnPropertyDescriptor(URLSearchParams.prototype, 'size');
+    Object.defineProperty(URLSearchParams.prototype, 'size', {
+      configurable: true,
+      get: () => undefined,
+    });
+    try {
+      await apiRequest('/products', { query: { q: 'кефир', limit: 20 } });
+      expect(lastCall().url).toBe('/api/v1/products?q=%D0%BA%D0%B5%D1%84%D0%B8%D1%80&limit=20');
+    } finally {
+      if (descriptor) Object.defineProperty(URLSearchParams.prototype, 'size', descriptor);
+    }
+  });
+});
