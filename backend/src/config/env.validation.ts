@@ -20,6 +20,8 @@ export type LogLevel = (typeof LOG_LEVELS)[number];
 const BOT_TOKEN_PATTERN = /^\d{5,15}:[A-Za-z0-9_-]{30,64}$/;
 /** Чат Telegram: целое число, у групп — отрицательное. */
 const CHAT_ID_PATTERN = /^-?\d{1,16}$/;
+/** Тема в группе с темами: положительное целое. */
+const THREAD_ID_PATTERN = /^[1-9]\d{0,9}$/;
 
 /** Переменные окружения backend. Неверное значение — процесс не стартует. */
 export class EnvironmentVariables {
@@ -82,6 +84,11 @@ export class EnvironmentVariables {
   @Matches(CHAT_ID_PATTERN, { message: 'TELEGRAM_SUPPORT_CHAT_ID must be a chat id' })
   TELEGRAM_SUPPORT_CHAT_ID?: string;
 
+  /** Тема группы для бота (одна группа с темами для обоих ботов, B-23); без неё — весь чат */
+  @IsOptional()
+  @Matches(THREAD_ID_PATTERN, { message: 'TELEGRAM_SUPPORT_THREAD_ID must be a topic id' })
+  TELEGRAM_SUPPORT_THREAD_ID?: string;
+
   @IsOptional()
   @Matches(BOT_TOKEN_PATTERN, { message: 'TELEGRAM_MODERATION_BOT_TOKEN must be a bot token' })
   TELEGRAM_MODERATION_BOT_TOKEN?: string;
@@ -89,6 +96,10 @@ export class EnvironmentVariables {
   @IsOptional()
   @Matches(CHAT_ID_PATTERN, { message: 'TELEGRAM_MODERATION_CHAT_ID must be a chat id' })
   TELEGRAM_MODERATION_CHAT_ID?: string;
+
+  @IsOptional()
+  @Matches(THREAD_ID_PATTERN, { message: 'TELEGRAM_MODERATION_THREAD_ID must be a topic id' })
+  TELEGRAM_MODERATION_THREAD_ID?: string;
 }
 
 /** Служебные маршруты разработки включены (`DevToolsGuard` проверяет на каждом запросе). */

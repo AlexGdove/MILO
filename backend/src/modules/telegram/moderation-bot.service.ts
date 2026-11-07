@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common';
 
 import type { InlineButton, Update } from './bot-api.js';
 import { encodeCallback, parseCallback } from './callback-data.js';
-import { TelegramCommonService } from './telegram-common.service.js';
+import { inOperatorsChat, TelegramCommonService, topicOptions } from './telegram-common.service.js';
 import { TELEGRAM_BOTS, type TelegramBots } from './telegram.tokens.js';
 import {
   decidedCardText,
@@ -87,6 +87,7 @@ export class ModerationBotService implements OnModuleInit {
     });
     if (submission?.status !== 'pending') return;
     const sent = await bot.api.sendMessage(bot.chatId, toCard(submission), {
+      ...topicOptions(bot),
       buttons: reviewButtons(submission.id),
     });
     await this.prisma.telegramMessageLink.create({
@@ -109,7 +110,7 @@ export class ModerationBotService implements OnModuleInit {
 
     const card = query.message;
     const parsed = parseCallback(query.data);
-    if (bot.chatId === null || card?.chat.id !== bot.chatId || !parsed) {
+    if (!card || !inOperatorsChat(bot, card) || !parsed) {
       await answer('Недоступно');
       return;
     }

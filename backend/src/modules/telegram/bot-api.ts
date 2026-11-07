@@ -12,6 +12,8 @@ export interface InlineButton {
 export interface SendOptions {
   /** Ответ (reply) на сообщение этого чата */
   replyTo?: number;
+  /** Тема в группе с темами (forum topic) */
+  threadId?: number;
   buttons?: InlineButton[][];
 }
 
@@ -55,6 +57,7 @@ export class GrammyBotApi implements BotApi {
 
   async sendMessage(chatId: number, text: string, options: SendOptions = {}) {
     const message = await this.api.sendMessage(chatId, text, {
+      ...(options.threadId !== undefined && { message_thread_id: options.threadId }),
       ...(options.replyTo !== undefined && {
         reply_parameters: { message_id: options.replyTo, allow_sending_without_reply: true },
       }),

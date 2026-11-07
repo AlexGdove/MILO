@@ -8,6 +8,8 @@ export interface BotHandle {
   api: BotApi;
   /** Чат операторов; `null` — бот отвечает только на `/id` */
   chatId: number | null;
+  /** Тема в группе с темами (B-23); `null` или нет — весь чат */
+  threadId?: number | null;
 }
 
 export type TelegramBots = Record<TelegramBot, BotHandle | null>;
