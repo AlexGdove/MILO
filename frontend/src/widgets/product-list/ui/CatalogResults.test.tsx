@@ -67,28 +67,61 @@ describe('Кладовая: найдено в Open Food Facts', () => {
     expect(urls).toHaveLength(2);
   });
 
-  it('«Добавить» открывает заполненную форму; после сохранения — свой продукт, поиск сброшен', async () => {
+  it('«в кладовую»: продукт создаётся сразу со своим КБЖУ, остаток — указанное количество, поиск сброшен', async () => {
     renderList();
     const user = await search('гречка');
     await screen.findByText('Гречка ядрица');
-    await user.click(within(catalog()!).getByRole('button', { name: 'Добавить' }));
+    await user.click(within(catalog()!).getByRole('button', { name: 'Гречка ядрица: в кладовую' }));
 
-    const dialog = screen.getByRole('dialog', { name: 'Новый продукт' });
-    expect(within(dialog).getByLabelText('Название')).toHaveValue('Гречка ядрица');
-    expect(within(dialog).getByLabelText('Ккал / 100 г')).toHaveValue('340');
-    expect(within(dialog).getByLabelText('Жиры, г')).toHaveValue('3.1');
-    await user.click(within(dialog).getByRole('button', { name: 'Добавить' }));
+    const dialog = screen.getByRole('dialog', { name: 'Гречка ядрица' });
+    await user.click(within(dialog).getByRole('button', { name: 'В кладовую' }));
 
     expect(useProductStore.getState().products).toEqual([
       expect.objectContaining({
         name: 'Гречка ядрица',
         unit: 'g',
         per100g: BUCKWHEAT.per100g,
-        stock: 0,
+        stock: 500,
+      }),
+    ]);
+    expect(useShoppingStore.getState().items).toEqual([]);
+    expect(screen.getByRole('searchbox', { name: 'Поиск продукта' })).toHaveValue('');
+    expect(catalog()).not.toBeInTheDocument();
+  });
+
+  it('«в покупки»: продукт создаётся с нулевым остатком и попадает в список покупок', async () => {
+    renderList();
+    const user = await search('гречка');
+    await screen.findByText('Гречка ядрица');
+    await user.click(within(catalog()!).getByRole('button', { name: 'Гречка ядрица: в покупки' }));
+
+    const dialog = screen.getByRole('dialog', { name: 'Гречка ядрица' });
+    await user.click(within(dialog).getByRole('button', { name: 'В список покупок' }));
+
+    const [product] = useProductStore.getState().products;
+    expect(product).toEqual(
+      expect.objectContaining({ name: 'Гречка ядрица', per100g: BUCKWHEAT.per100g, stock: 0 }),
+    );
+    expect(useShoppingStore.getState().items).toEqual([
+      expect.objectContaining({
+        productId: product!.id,
+        name: 'Гречка ядрица',
+        amount: 500,
+        unit: 'g',
       }),
     ]);
     expect(screen.getByRole('searchbox', { name: 'Поиск продукта' })).toHaveValue('');
-    expect(catalog()).not.toBeInTheDocument();
+  });
+
+  it('закрыли окно количества — ничего не создаётся', async () => {
+    renderList();
+    const user = await search('гречка');
+    await screen.findByText('Гречка ядрица');
+    await user.click(within(catalog()!).getByRole('button', { name: 'Гречка ядрица: в кладовую' }));
+    await user.keyboard('{Escape}');
+
+    expect(useProductStore.getState().products).toEqual([]);
+    expect(useShoppingStore.getState().items).toEqual([]);
   });
 
   it('лимит Open Food Facts — короткое пояснение', async () => {
