@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 
+import { reportError } from '@/features/report-errors';
 import { Button, EmptyState } from '@/shared/ui';
 
 interface ErrorBoundaryProps {
@@ -20,6 +21,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, info: ErrorInfo): void {
     console.error('MILO: необработанная ошибка интерфейса', error, info.componentStack);
+    void reportError('render', error);
   }
 
   private handleReload = (): void => {
