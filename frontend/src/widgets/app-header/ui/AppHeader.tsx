@@ -7,10 +7,12 @@ import { MiloMark } from '@/shared/ui';
 import styles from './AppHeader.module.css';
 import { AppLink } from './AppLink';
 import { KcalCounter } from './KcalCounter';
+import { SettingsLink } from './SettingsLink';
 
 /**
- * Шапка на каждой странице (решение №29): логотип, счётчик ккал за сегодня, переход к приложению.
- * В мобильном приложении кнопки «Приложение» нет — оно уже установлено (решение №49).
+ * Шапка на каждой странице (решение №29): логотип, счётчик ккал за сегодня, переход к приложению и
+ * настройки (№63). В мобильном приложении кнопки «Приложение» нет — оно уже установлено (№49),
+ * остаются только настройки.
  */
 export const AppHeader = () => (
   <header className={styles.header}>
@@ -22,5 +24,6 @@ export const AppHeader = () => (
     </Link>
     <KcalCounter />
     {!isNativeApp() && <AppLink />}
+    <SettingsLink />
   </header>
 );

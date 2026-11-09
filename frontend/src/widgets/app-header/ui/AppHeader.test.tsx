@@ -53,6 +53,20 @@ describe('AppHeader', () => {
     expect(screen.getByRole('link', { name: 'MILO — на главную' })).toBeInTheDocument();
   });
 
+  it('рядом с «Приложением» — кнопка настроек, ведёт на /settings (№63)', () => {
+    renderHeader();
+    const links = screen.getAllByRole('link').map((link) => link.getAttribute('aria-label'));
+    expect(links.indexOf('Настройки')).toBe(links.indexOf('Приложение') + 1);
+    expect(screen.getByRole('link', { name: 'Настройки' })).toHaveAttribute('href', '/settings');
+  });
+
+  it('в мобильном приложении остаются настройки, скачивания нет', () => {
+    platform.native = true;
+    renderHeader();
+    expect(screen.getByRole('link', { name: 'Настройки' })).toHaveAttribute('href', '/settings');
+    expect(screen.queryByRole('link', { name: 'Приложение' })).not.toBeInTheDocument();
+  });
+
   it('счётчик показывает съеденное сегодня из нормы (вчерашнее не считается)', () => {
     addEaten(1240);
     addEaten(500, '2000-01-01');
