@@ -81,6 +81,7 @@ describe('Кладовая: найдено в Open Food Facts', () => {
         name: 'Гречка ядрица',
         unit: 'g',
         per100g: BUCKWHEAT.per100g,
+        barcode: BUCKWHEAT.code,
         stock: 500,
       }),
     ]);
@@ -111,6 +112,24 @@ describe('Кладовая: найдено в Open Food Facts', () => {
       }),
     ]);
     expect(screen.getByRole('searchbox', { name: 'Поиск продукта' })).toHaveValue('');
+  });
+
+  it('продукт с этим штрихкодом уже есть у пользователя — в Open Food Facts его второй раз нет', async () => {
+    useProductStore.getState().addProduct({
+      name: 'Моя гречка',
+      barcode: BUCKWHEAT.code,
+      unit: 'g',
+      per100g: BUCKWHEAT.per100g,
+      stock: 0,
+      minStock: 0,
+    });
+    renderList();
+    await search('гречка');
+
+    await vi.waitFor(() =>
+      expect(within(catalog()!).getByText('Ничего не нашлось')).toBeInTheDocument(),
+    );
+    expect(within(catalog()!).queryByText('Гречка ядрица')).toBeNull();
   });
 
   it('закрыли окно количества — ничего не создаётся', async () => {

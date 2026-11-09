@@ -57,6 +57,41 @@ describe('ProductForm', () => {
     });
   });
 
+  it('штрихкод необязателен, но если введён — только 8–14 цифр', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<ProductForm submitLabel="Добавить" onSubmit={onSubmit} />);
+    await user.type(screen.getByLabelText('Название'), 'Кефир');
+    await user.type(screen.getByLabelText('Ккал / 100 г'), '50');
+    await user.type(screen.getByLabelText('Белки, г'), '3');
+    await user.type(screen.getByLabelText('Жиры, г'), '2');
+    await user.type(screen.getByLabelText('Углеводы, г'), '4');
+
+    const field = screen.getByLabelText('Штрихкод (необязательно)');
+    await user.type(field, '12ab');
+    await user.click(screen.getByRole('button', { name: 'Добавить' }));
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText('8–14 цифр, как на упаковке')).toBeInTheDocument();
+
+    await user.clear(field);
+    await user.type(field, '4600 0000 00017');
+    await user.click(screen.getByRole('button', { name: 'Добавить' }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ barcode: '4600000000017' }));
+  });
+
+  it('без штрихкода в продукте поля barcode нет', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn();
+    render(<ProductForm submitLabel="Добавить" onSubmit={onSubmit} />);
+    await user.type(screen.getByLabelText('Название'), 'Рис');
+    await user.type(screen.getByLabelText('Ккал / 100 г'), '340');
+    await user.type(screen.getByLabelText('Белки, г'), '7');
+    await user.type(screen.getByLabelText('Жиры, г'), '1');
+    await user.type(screen.getByLabelText('Углеводы, г'), '75');
+    await user.click(screen.getByRole('button', { name: 'Добавить' }));
+    expect(onSubmit.mock.calls[0]?.[0]).not.toHaveProperty('barcode');
+  });
+
   it('при редактировании заполняет поля и показывает кнопку удаления', async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
