@@ -1,5 +1,10 @@
 import { type CatalogFood, useCatalogSearch } from '@/entities/food-catalog';
-import type { ProductDraft } from '@/entities/product';
+import {
+  normalizeBarcode,
+  selectProducts,
+  useProductStore,
+  type ProductDraft,
+} from '@/entities/product';
 import { FoundProductActions } from '@/features/add-found-product';
 import { ApiError } from '@/shared/api';
 
@@ -7,6 +12,7 @@ import styles from './CatalogResults.module.css';
 
 const toDraft = (food: CatalogFood): ProductDraft => ({
   name: food.name,
+  ...(normalizeBarcode(food.code) && { barcode: normalizeBarcode(food.code)! }),
   unit: food.unit,
   per100g: food.per100g,
   stock: 0,
@@ -26,23 +32,27 @@ interface CatalogResultsProps {
  */
 export const CatalogResults = ({ query, onCreated }: CatalogResultsProps) => {
   const { data, error, isFetching, enabled } = useCatalogSearch(query);
+  const ownedCodes = new Set(useProductStore(selectProducts).map((product) => product.barcode));
   if (!enabled) return null;
 
   const busy = error instanceof ApiError && error.code === 'catalog_busy';
   if (error && !busy) return null;
+
+  // Продукт с этим штрихкодом у пользователя уже есть — второй раз не предлагается
+  const foods = data?.filter((food) => !ownedCodes.has(normalizeBarcode(food.code) ?? undefined));
 
   return (
     <section className={styles.section} aria-label="Найдено в Open Food Facts">
       <h2 className={styles.title}>Найдено в Open Food Facts</h2>
       {busy ? (
         <p className={styles.note}>Слишком много запросов — попробуйте через минуту</p>
-      ) : !data ? (
+      ) : !foods ? (
         isFetching && <p className={styles.note}>Ищем…</p>
-      ) : data.length === 0 ? (
+      ) : foods.length === 0 ? (
         <p className={styles.note}>Ничего не нашлось</p>
       ) : (
         <ul className={styles.list}>
-          {data.map((food) => (
+          {foods.map((food) => (
             <li key={food.code} className={styles.item}>
               <div className={styles.info}>
                 <p className={styles.name}>{food.name}</p>

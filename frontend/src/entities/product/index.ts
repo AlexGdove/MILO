@@ -1,5 +1,6 @@
 export type { Product, ProductDraft } from './model/types';
 export { selectProductById, selectProducts, useProductStore } from './model/store';
+export { normalizeBarcode } from './lib/barcode';
 export { filterProducts } from './lib/filterProducts';
 export {
   becameLow,

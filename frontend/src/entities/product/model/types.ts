@@ -9,6 +9,8 @@ export interface Product {
   unit: Unit;
   /** Вес одной штуки, г — только для unit === 'pcs', нужен для расчёта КБЖУ */
   pieceWeight?: number;
+  /** Штрихкод (8–14 цифр) — необязателен; по нему продукт попадает в общую базу с проверкой */
+  barcode?: string;
   /** Остаток в наличии в единицах продукта (0 — нет в наличии) */
   stock: number;
   /** Минимальный остаток: ниже него продукт «заканчивается» (0 — не отслеживать) */
@@ -18,5 +20,5 @@ export interface Product {
 
 export type ProductDraft = Pick<
   Product,
-  'name' | 'per100g' | 'unit' | 'pieceWeight' | 'stock' | 'minStock'
+  'name' | 'per100g' | 'unit' | 'pieceWeight' | 'barcode' | 'stock' | 'minStock'
 >;

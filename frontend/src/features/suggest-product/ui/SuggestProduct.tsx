@@ -37,7 +37,7 @@ const StatusLine = ({ record }: { record: SubmissionRecord }) => {
 
 /**
  * «Предложить в общую базу» (B-18) в окне продукта: на сервер уходят название, бренд,
- * штрихкод, единица и КБЖУ — без остатков. Автомодерация решает сразу, сомнительное — оператору
+ * штрихкод (из карточки продукта), единица и КБЖУ — без остатков. Автомодерация решает сразу, сомнительное — оператору
  * в Telegram; статус виден здесь же. Без сервера блока нет.
  */
 export const SuggestProduct = ({ product }: SuggestProductProps) => {
@@ -46,7 +46,6 @@ export const SuggestProduct = ({ product }: SuggestProductProps) => {
   const suggest = useSuggestProduct(product);
   const [open, setOpen] = useState(false);
   const [brand, setBrand] = useState('');
-  const [barcode, setBarcode] = useState('');
   const [attemptKey, setAttemptKey] = useState(newAttemptKey);
 
   if (!isApiEnabled()) return null;
@@ -56,7 +55,7 @@ export const SuggestProduct = ({ product }: SuggestProductProps) => {
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
     suggest.mutate(
-      { extras: { brand, barcode }, idempotencyKey: attemptKey },
+      { extras: { brand, barcode: product.barcode ?? '' }, idempotencyKey: attemptKey },
       {
         onSuccess: () => {
           setOpen(false);
@@ -95,13 +94,11 @@ export const SuggestProduct = ({ product }: SuggestProductProps) => {
             maxLength={80}
             onChange={(event) => change(setBrand)(event.target.value)}
           />
-          <Input
-            label="Штрихкод (необязательно)"
-            value={barcode}
-            inputMode="numeric"
-            maxLength={16}
-            onChange={(event) => change(setBarcode)(event.target.value)}
-          />
+          <p className={styles.hint}>
+            {product.barcode
+              ? `Штрихкод: ${product.barcode}`
+              : 'Штрихкода нет — укажите его в поле выше и сохраните: так продукт проверят быстрее.'}
+          </p>
           <p className={styles.hint}>
             Отправятся название, единица и КБЖУ. Остатки и другие ваши данные — нет.
           </p>

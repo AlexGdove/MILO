@@ -88,6 +88,18 @@ describe('useProductStore', () => {
     expect(flour).not.toHaveProperty('pieceWeight');
   });
 
+  it('штрихкод сохраняется, меняется и очищается правкой', () => {
+    const created = state().addProduct({ ...draft, barcode: '4600000000017' });
+    expect(created.barcode).toBe('4600000000017');
+
+    state().updateProduct(created.id, { ...draft, barcode: '4600000000024' });
+    expect(selectProductById(created.id)(state())?.barcode).toBe('4600000000024');
+
+    state().updateProduct(created.id, { ...draft });
+    expect(selectProductById(created.id)(state())).not.toHaveProperty('barcode');
+    expect(state().addProduct(draft)).not.toHaveProperty('barcode');
+  });
+
   it('removeProduct удаляет продукт', () => {
     const created = state().addProduct(draft);
     state().removeProduct(created.id);

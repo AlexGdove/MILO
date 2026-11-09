@@ -7,6 +7,7 @@ import styles from './SharedResults.module.css';
 
 const toDraft = (item: SharedProduct): ProductDraft => ({
   name: item.name,
+  ...(item.barcode !== null && { barcode: item.barcode }),
   unit: item.unit,
   ...(item.pieceWeight !== null && { pieceWeight: item.pieceWeight }),
   per100g: item.per100g,

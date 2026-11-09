@@ -18,8 +18,12 @@ interface ProductState {
 
 /** Вес штуки хранится только для штучных продуктов. */
 const normalizeDraft = (draft: ProductDraft): ProductDraft => {
-  const { pieceWeight, ...rest } = draft;
-  return draft.unit === 'pcs' && pieceWeight ? { ...rest, pieceWeight } : rest;
+  const { pieceWeight, barcode, ...rest } = draft;
+  return {
+    ...rest,
+    ...(draft.unit === 'pcs' && pieceWeight ? { pieceWeight } : {}),
+    ...(barcode ? { barcode } : {}),
+  };
 };
 
 const toProduct = (draft: ProductDraft): Product => ({
@@ -46,6 +50,8 @@ export const useProductStore = create<ProductState>()(
             // Вес штуки берётся только из нового черновика (при смене единицы старый не остаётся)
             const base: Product = { ...product };
             delete base.pieceWeight;
+            // Штрихкод тоже берётся из черновика: очистили поле — штрихкод пропал
+            delete base.barcode;
             return { ...base, ...normalizeDraft(draft) };
           }),
         })),

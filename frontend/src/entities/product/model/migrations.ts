@@ -1,6 +1,7 @@
 import { isUnit } from '@/shared/lib';
 
 import type { Product } from './types';
+import { normalizeBarcode } from '../lib/barcode';
 
 /** Текущая версия сохранённого состояния стора продуктов. */
 export const PRODUCTS_STORAGE_VERSION = 2;
@@ -28,6 +29,7 @@ const normalizeProduct = (raw: unknown): Product | null => {
   const per100g = isRecord(raw.per100g) ? raw.per100g : {};
   const unit = isUnit(raw.unit) ? raw.unit : 'g';
   const pieceWeight = toNumber(raw.pieceWeight);
+  const barcode = normalizeBarcode(typeof raw.barcode === 'string' ? raw.barcode : null);
   return {
     id: raw.id,
     name: raw.name,
@@ -39,6 +41,7 @@ const normalizeProduct = (raw: unknown): Product | null => {
     },
     unit,
     ...(unit === 'pcs' && pieceWeight > 0 ? { pieceWeight } : {}),
+    ...(barcode ? { barcode } : {}),
     stock: Math.max(0, toNumber(raw.stock)),
     minStock: Math.max(0, toNumber(raw.minStock)),
     createdAt: toNumber(raw.createdAt, Date.now()),
