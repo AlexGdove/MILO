@@ -39,6 +39,14 @@ describe('Настройки (решение №43)', () => {
     expect(router.state.location.pathname).toBe(ROUTES.profile);
   });
 
+  it('кнопка настроек — в общей шапке на любой странице; на «Профиле» второй нет (№63)', () => {
+    renderAt(ROUTES.profile);
+    expect(screen.getAllByRole('link', { name: 'Настройки' })).toHaveLength(1);
+    // Шапка приложения — та, где логотип (второй <header> — заголовок страницы)
+    const appHeader = screen.getByRole('link', { name: 'MILO — на главную' }).closest('header');
+    expect(appHeader).toContainElement(screen.getByRole('link', { name: 'Настройки' }));
+  });
+
   it('в настройках есть переключатель отчётов об ошибках (решение №62)', async () => {
     const { user } = renderAt(ROUTES.settings);
 
