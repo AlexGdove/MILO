@@ -28,6 +28,9 @@ import { RedisModule } from './redis/redis.module.js';
       cache: true,
       validate: validateEnv,
       // В тестах локальный .env разработчика не влияет на результат
+      // .env.dev (тестовые боты, только у разработчика) читается раньше .env и перекрывает его;
+      // на сервере его нет, настройки приходят из ~/milo/.env через compose
+      envFilePath: ['.env.dev', '.env'],
       ignoreEnvFile: process.env.NODE_ENV === 'test',
     }),
     LoggerModule.forRootAsync({
