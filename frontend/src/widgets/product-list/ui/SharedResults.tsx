@@ -1,6 +1,6 @@
 import type { SharedProduct } from '@/entities/food-catalog';
 import type { ProductDraft } from '@/entities/product';
-import { AddProductButton } from '@/features/manage-product';
+import { FoundProductActions } from '@/features/add-found-product';
 import { formatGrams, formatKcal } from '@/shared/lib';
 
 import styles from './SharedResults.module.css';
@@ -20,8 +20,8 @@ interface SharedResultItemProps {
 }
 
 /**
- * Продукт общей базы MILO в общем списке поиска кладовой (без отдельного раздела): по
- * «Добавить» — форма продукта с заполненным КБЖУ, после сохранения это свой продукт.
+ * Продукт общей базы MILO в общем списке поиска кладовой (без отдельного раздела): две
+ * кнопки — в кладовую и в покупки (№64); продукт создаётся сразу с заполненным КБЖУ.
  */
 export const SharedResultItem = ({ item, onCreated }: SharedResultItemProps) => {
   const { kcal, protein, fat, carbs } = item.per100g;
@@ -37,7 +37,7 @@ export const SharedResultItem = ({ item, onCreated }: SharedResultItemProps) => 
           {[item.brand, 'общая база MILO'].filter(Boolean).join(' · ')}
         </p>
       </div>
-      <AddProductButton label="Добавить" initialDraft={toDraft(item)} onCreated={onCreated} />
+      <FoundProductActions draft={toDraft(item)} onAdded={onCreated} />
     </article>
   );
 };
