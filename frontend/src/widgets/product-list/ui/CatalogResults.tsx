@@ -1,6 +1,6 @@
 import { type CatalogFood, useCatalogSearch } from '@/entities/food-catalog';
 import type { ProductDraft } from '@/entities/product';
-import { AddProductButton } from '@/features/manage-product';
+import { FoundProductActions } from '@/features/add-found-product';
 import { ApiError } from '@/shared/api';
 
 import styles from './CatalogResults.module.css';
@@ -15,13 +15,13 @@ const toDraft = (food: CatalogFood): ProductDraft => ({
 
 interface CatalogResultsProps {
   query: string;
-  /** Продукт из каталога создан (сбросить поиск) */
+  /** Продукт из каталога добавлен в кладовую или покупки (сбросить поиск) */
   onCreated: () => void;
 }
 
 /**
- * «Найдено в Open Food Facts» под своими результатами поиска (решение №53): по «Добавить» —
- * форма продукта с заполненным КБЖУ, после сохранения это обычный свой продукт.
+ * «Найдено в Open Food Facts» под своими результатами поиска (решение №53): две кнопки —
+ * в кладовую и в покупки (№64): продукт создаётся сразу с заполненным КБЖУ, дальше это обычный свой.
  * Нет сети или сервера — блок молча скрыт; упёрлись в лимит — короткое пояснение.
  */
 export const CatalogResults = ({ query, onCreated }: CatalogResultsProps) => {
@@ -55,11 +55,7 @@ export const CatalogResults = ({ query, onCreated }: CatalogResultsProps) => {
                     .join(' · ')}
                 </p>
               </div>
-              <AddProductButton
-                label="Добавить"
-                initialDraft={toDraft(food)}
-                onCreated={onCreated}
-              />
+              <FoundProductActions draft={toDraft(food)} onAdded={onCreated} />
             </li>
           ))}
         </ul>

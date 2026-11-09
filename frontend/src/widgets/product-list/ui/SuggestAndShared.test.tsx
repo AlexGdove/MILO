@@ -225,7 +225,7 @@ describe('поиск в кладовой: свои и общая база в о�
     expect(screen.getByText('Найдено: 3')).toBeInTheDocument();
   });
 
-  it('«Добавить» из общей базы — заполненная форма; после сохранения свой продукт', async () => {
+  it('из общей базы — сразу в покупки или в кладовую, без формы; продукт свой', async () => {
     routes = {
       'GET /api/v1/products?': () =>
         json(200, { items: [shared('x2', 'Ряженка')], nextCursor: null }),
@@ -233,12 +233,16 @@ describe('поиск в кладовой: свои и общая база в о�
     renderList();
     const user = await search('ряженка');
     const item = (await screen.findByText('Ряженка')).closest('li')!;
-    await user.click(within(item).getByRole('button', { name: 'Добавить' }));
-    const dialog = screen.getByRole('dialog', { name: 'Новый продукт' });
-    expect(within(dialog).getByLabelText('Название')).toHaveValue('Ряженка');
-    await user.click(within(dialog).getByRole('button', { name: 'Добавить' }));
+    expect(within(item).queryByRole('button', { name: 'Добавить' })).toBeNull();
+    await user.click(within(item).getByRole('button', { name: 'Ряженка: в покупки' }));
+    const dialog = screen.getByRole('dialog', { name: 'Ряженка' });
+    await user.click(within(dialog).getByRole('button', { name: 'В список покупок' }));
 
-    expect(useProductStore.getState().products.map((product) => product.name)).toContain('Ряженка');
+    const added = useProductStore.getState().products.find((product) => product.name === 'Ряженка');
+    expect(added).toEqual(expect.objectContaining({ unit: 'ml', stock: 0 }));
+    expect(useShoppingStore.getState().items).toEqual([
+      expect.objectContaining({ productId: added!.id, name: 'Ряженка' }),
+    ]);
     expect(screen.getByRole('searchbox', { name: 'Поиск продукта' })).toHaveValue('');
   });
 
