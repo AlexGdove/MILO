@@ -39,6 +39,16 @@ describe('Настройки (решение №43)', () => {
     expect(router.state.location.pathname).toBe(ROUTES.profile);
   });
 
+  it('в настройках есть переключатель отчётов об ошибках (решение №62)', async () => {
+    const { user } = renderAt(ROUTES.settings);
+
+    expect(screen.getByRole('heading', { name: 'Отчёты об ошибках' })).toBeInTheDocument();
+    const reports = screen.getByRole('group', { name: 'Отчёты об ошибках' });
+    expect(within(reports).getByRole('radio', { name: 'Отправлять' })).toBeChecked();
+    await user.click(within(reports).getByRole('radio', { name: 'Не отправлять' }));
+    expect(within(reports).getByRole('radio', { name: 'Не отправлять' })).toBeChecked();
+  });
+
   it('в настройках: оформление (тема переключается), язык, техподдержка', async () => {
     const { user } = renderAt(ROUTES.settings);
 

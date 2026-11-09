@@ -4,6 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ErrorBoundary } from './ErrorBoundary';
 
+const { reportError } = vi.hoisted(() => ({ reportError: vi.fn() }));
+vi.mock('@/features/report-errors', () => ({ reportError }));
+
 const Broken = (): never => {
   throw new Error('boom');
 };
@@ -30,6 +33,20 @@ describe('ErrorBoundary', () => {
       'MILO: необработанная ошибка интерфейса',
       expect.any(Error),
       expect.any(String),
+    );
+  });
+
+  it('отправляет отчёт об ошибке отрисовки', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    reportError.mockClear();
+    render(
+      <ErrorBoundary>
+        <Broken />
+      </ErrorBoundary>,
+    );
+    expect(reportError).toHaveBeenCalledWith(
+      'render',
+      expect.objectContaining({ message: 'boom' }),
     );
   });
 

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { GrammyBotApi } from './bot-api.js';
+import { ClientErrorBotService } from './client-error-bot.service.js';
 import { ModerationBotService } from './moderation-bot.service.js';
 import { SupportBotService } from './support-bot.service.js';
 import { TelegramCommonService } from './telegram-common.service.js';
@@ -33,6 +34,7 @@ import { SupportModule } from '../support/support.module.js';
     TelegramCommonService,
     SupportBotService,
     ModerationBotService,
+    ClientErrorBotService,
     TelegramPollingService,
   ],
   exports: [SupportBotService, ModerationBotService],
