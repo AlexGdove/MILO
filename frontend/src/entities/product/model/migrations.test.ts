@@ -35,6 +35,14 @@ describe('migrateProducts', () => {
     expect(migrateProducts({ products: [product] }, 2).products[0]).toEqual(product);
   });
 
+  it('сохраняет подходящий штрихкод и отбрасывает неподходящий', () => {
+    const ok = { ...v1Product, unit: 'g', minStock: 0, barcode: '4600000000017' };
+    const bad = { ...v1Product, id: 'p9', unit: 'g', minStock: 0, barcode: '12ab' };
+    const [a, b] = migrateProducts({ products: [ok, bad] }, 2).products;
+    expect(a?.barcode).toBe('4600000000017');
+    expect(b).not.toHaveProperty('barcode');
+  });
+
   it('убирает вес штуки у нештучных продуктов', () => {
     const product = { ...v1Product, unit: 'ml', pieceWeight: 30, minStock: 0 };
     expect(migrateProducts({ products: [product] }, 2).products[0]).not.toHaveProperty(

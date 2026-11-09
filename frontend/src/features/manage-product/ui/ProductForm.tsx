@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 
-import type { ProductDraft } from '@/entities/product';
+import { normalizeBarcode, type ProductDraft } from '@/entities/product';
 import { parseNumber, unitLabel, UNITS, type Unit } from '@/shared/lib';
 import { Button, Input, SegmentedControl } from '@/shared/ui';
 
@@ -16,11 +16,12 @@ interface ProductFormProps {
 }
 
 type NumericField = 'kcal' | 'protein' | 'fat' | 'carbs' | 'pieceWeight' | 'stock' | 'minStock';
-type FieldName = 'name' | NumericField;
+type FieldName = 'name' | 'barcode' | NumericField;
 type FormValues = Record<FieldName, string>;
 
 const toValues = (draft?: ProductDraft): FormValues => ({
   name: draft?.name ?? '',
+  barcode: draft?.barcode ?? '',
   kcal: draft ? String(draft.per100g.kcal) : '',
   protein: draft ? String(draft.per100g.protein) : '',
   fat: draft ? String(draft.per100g.fat) : '',
@@ -42,6 +43,9 @@ const MACRO_FIELDS: Array<{ name: 'protein' | 'fat' | 'carbs'; label: string }> 
 const validate = (values: FormValues, unit: Unit) => {
   const errors: Partial<Record<FieldName, string>> = {};
   if (!values.name.trim()) errors.name = 'Введите название';
+  if (values.barcode.trim() && !normalizeBarcode(values.barcode)) {
+    errors.barcode = '8–14 цифр, как на упаковке';
+  }
   const nonNegative: NumericField[] = ['kcal', 'protein', 'fat', 'carbs', 'stock', 'minStock'];
   for (const field of nonNegative) {
     const value = parseNumber(values[field]);
@@ -89,6 +93,7 @@ export const ProductForm = ({
       },
       unit,
       ...(unit === 'pcs' ? { pieceWeight: num('pieceWeight') } : {}),
+      ...(normalizeBarcode(values.barcode) ? { barcode: normalizeBarcode(values.barcode)! } : {}),
       stock: num('stock'),
       minStock: num('minStock'),
     });
@@ -101,6 +106,14 @@ export const ProductForm = ({
         value={values.name}
         onChange={(e) => setField('name')(e.target.value)}
         error={errors.name}
+        autoComplete="off"
+      />
+      <Input
+        label="Штрихкод (необязательно)"
+        inputMode="numeric"
+        value={values.barcode}
+        onChange={(e) => setField('barcode')(e.target.value)}
+        error={errors.barcode}
         autoComplete="off"
       />
       <SegmentedControl legend="Единица учёта" options={UNITS} value={unit} onChange={setUnit} />

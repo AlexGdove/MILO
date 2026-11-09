@@ -103,11 +103,13 @@ describe('«Предложить в общую базу» (7c)', () => {
       'POST /api/v1/device-keys': () => json(201, { key: KEY }),
       'POST /api/v1/product-submissions': () => json(201, submission('pending')),
     };
+    useProductStore.setState({ products: [{ ...KEFIR, barcode: '4600000000017' }] });
     renderList();
     const { user, dialog } = await openEdit();
     await user.click(within(dialog).getByRole('button', { name: 'Предложить в общую базу' }));
     await user.type(within(dialog).getByLabelText('Бренд (необязательно)'), ' Простоквашино ');
-    await user.type(within(dialog).getByLabelText('Штрихкод (необязательно)'), '4600 0000 00017');
+    // Штрихкод берётся из карточки продукта — второго поля для него нет
+    expect(within(dialog).getByText('Штрихкод: 4600000000017')).toBeInTheDocument();
     await user.click(within(dialog).getByRole('button', { name: 'Отправить' }));
 
     expect(await within(dialog).findByText('🕓 На проверке у модератора')).toBeInTheDocument();
@@ -125,6 +127,22 @@ describe('«Предложить в общую базу» (7c)', () => {
     expect(useSubmissionStore.getState().byProduct.p1?.status).toBe('pending');
   });
 
+  it('у продукта нет штрихкода — подсказка, на сервер штрихкод не уходит', async () => {
+    routes = {
+      'POST /api/v1/device-keys': () => json(201, { key: KEY }),
+      'POST /api/v1/product-submissions': () => json(201, submission('pending')),
+    };
+    renderList();
+    const { user, dialog } = await openEdit();
+    await user.click(within(dialog).getByRole('button', { name: 'Предложить в общую базу' }));
+    expect(within(dialog).getByText(/Штрихкода нет — укажите его в поле выше/)).toBeInTheDocument();
+    await user.click(within(dialog).getByRole('button', { name: 'Отправить' }));
+
+    await within(dialog).findByText('🕓 На проверке у модератора');
+    const post = calls.find((call) => call.url.endsWith('/product-submissions'));
+    expect(post?.body).not.toHaveProperty('barcode');
+  });
+
   it('неверный штрихкод — понятная ошибка, статус не сохраняется', async () => {
     useDeviceKeyStore.setState({ key: KEY });
     routes = {
@@ -137,10 +155,10 @@ describe('«Предложить в общую базу» (7c)', () => {
           },
         }),
     };
+    useProductStore.setState({ products: [{ ...KEFIR, barcode: '4600000000018' }] });
     renderList();
     const { user, dialog } = await openEdit();
     await user.click(within(dialog).getByRole('button', { name: 'Предложить в общую базу' }));
-    await user.type(within(dialog).getByLabelText('Штрихкод (необязательно)'), '123');
     await user.click(within(dialog).getByRole('button', { name: 'Отправить' }));
 
     expect(await within(dialog).findByRole('alert')).toHaveTextContent(
