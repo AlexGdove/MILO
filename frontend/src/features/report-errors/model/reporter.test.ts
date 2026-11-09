@@ -82,6 +82,9 @@ describe('reportError', () => {
 
 describe('installErrorReporting', () => {
   it('ловит необработанную ошибку страницы и промис, отмена снимает подписку', async () => {
+    // Тестовые события не должны попасть в Vitest как настоящие необработанные ошибки
+    const swallow = (event: Event) => event.preventDefault();
+    window.addEventListener('error', swallow);
     const uninstall = installErrorReporting();
 
     window.dispatchEvent(new ErrorEvent('error', { error: new Error('Из окна') }));
@@ -99,5 +102,6 @@ describe('installErrorReporting', () => {
     window.dispatchEvent(new ErrorEvent('error', { error: new Error('После отмены') }));
     await Promise.resolve();
     expect(apiRequest).toHaveBeenCalledTimes(2);
+    window.removeEventListener('error', swallow);
   });
 });
