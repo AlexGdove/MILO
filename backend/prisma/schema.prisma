@@ -260,3 +260,27 @@ model IdempotencyKey {
   @@id([deviceKeyId, key])
   @@map("idempotency_keys")
 }
+
+/// Ошибки приложения у пользователей (решение №62): одинаковые ошибки объединены по отпечатку
+/// (вид + текст без чисел + верх стека + версия приложения). Личных данных нет; строки без новых
+/// повторов 30 дней удаляются.
+model ClientError {
+  id          String   @id @default(uuid()) @db.Uuid
+  fingerprint String   @unique @db.Char(64)
+  /// error | unhandledrejection | render
+  kind        String   @db.VarChar(20)
+  message     String   @db.VarChar(500)
+  stack       String?  @db.VarChar(4000)
+  /// web | android | ios
+  platform    String   @db.VarChar(10)
+  appVersion  String   @map("app_version") @db.VarChar(16)
+  /// Путь страницы без параметров (`/pantry`)
+  route       String?  @db.VarChar(200)
+  userAgent   String?  @map("user_agent") @db.VarChar(300)
+  count       Int      @default(1)
+  firstSeenAt DateTime @default(now()) @map("first_seen_at") @db.Timestamptz(6)
+  lastSeenAt  DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+
+  @@index([lastSeenAt])
+  @@map("client_errors")
+}

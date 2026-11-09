@@ -110,3 +110,35 @@ const OUTCOME_LABEL: Record<ModerationOutcome, string> = {
 export function decidedCardText(card: string, outcome: ModerationOutcome, operator: string) {
   return fitTelegram(`${card}\n\n${OUTCOME_LABEL[outcome]} — ${operator}`);
 }
+
+export interface ClientErrorCardData {
+  kind: string;
+  message: string;
+  stack: string | null;
+  platform: string;
+  appVersion: string;
+  route: string | null;
+  userAgent: string | null;
+  count: number;
+}
+
+const KIND_LABEL: Record<string, string> = {
+  error: 'ошибка кода',
+  unhandledrejection: 'необработанный промис',
+  render: 'ошибка отрисовки экрана',
+};
+
+/** Сообщение об ошибке приложения: новая или набравшая десяток, сотню, тысячу повторов. */
+export function clientErrorText(card: ClientErrorCardData): string {
+  const lines = [
+    card.count === 1 ? '🐞 Новая ошибка в приложении' : `🐞 Ошибка повторяется: ${card.count} раз`,
+    '',
+    card.message,
+    '',
+    `Вид: ${KIND_LABEL[card.kind] ?? card.kind}`,
+    `Версия: ${card.appVersion} · ${card.platform}${card.route ? ` · страница ${card.route}` : ''}`,
+  ];
+  if (card.userAgent) lines.push(`Браузер: ${card.userAgent}`);
+  if (card.stack) lines.push('', 'Стек:', Array.from(card.stack).slice(0, 1200).join(''));
+  return fitTelegram(lines.join('\n'));
+}

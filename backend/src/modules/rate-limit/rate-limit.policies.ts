@@ -30,6 +30,8 @@ export const RATE_LIMIT_POLICIES = {
   ticketCreate: { limit: 5, ttl: DAY, tracker: 'device' },
   ticketMessage: { limit: 30, ttl: 10 * MINUTE, tracker: 'device' },
   supportRead: { limit: 120, ttl: MINUTE, tracker: 'device' },
+  /** Отчёты об ошибках приложения: с одного устройства не больше 30 в час */
+  clientError: { limit: 30, ttl: HOUR, tracker: 'device' },
   /** Подключения к WebSocket `/support` — считает `SupportGateway`, не HTTP-guard */
   supportConnect: { limit: 30, ttl: MINUTE, tracker: 'ip' },
 } as const satisfies Record<string, RateLimitPolicy>;

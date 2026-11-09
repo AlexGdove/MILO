@@ -100,6 +100,11 @@ export class EnvironmentVariables {
   @IsOptional()
   @Matches(THREAD_ID_PATTERN, { message: 'TELEGRAM_MODERATION_THREAD_ID must be a topic id' })
   TELEGRAM_MODERATION_THREAD_ID?: string;
+
+  /** Тема группы для сообщений об ошибках приложения (отправляет бот поддержки); без неё — тема поддержки */
+  @IsOptional()
+  @Matches(THREAD_ID_PATTERN, { message: 'TELEGRAM_ERRORS_THREAD_ID must be a topic id' })
+  TELEGRAM_ERRORS_THREAD_ID?: string;
 }
 
 /** Служебные маршруты разработки включены (`DevToolsGuard` проверяет на каждом запросе). */

@@ -17,13 +17,16 @@ describe('PrivacyNotice (решение №50)', () => {
     expect(screen.queryAllByRole('listitem')).toHaveLength(0);
   });
 
-  it('подробно: четыре пункта — устройство, без регистрации, что уходит на сервер, перенос', () => {
+  it('подробно: пять пунктов — устройство, без регистрации, что уходит на сервер, отчёты об ошибках, перенос', () => {
     render(<PrivacyNotice variant="full" />);
-    expect(screen.getAllByRole('listitem')).toHaveLength(4);
+    expect(screen.getAllByRole('listitem')).toHaveLength(5);
     expect(screen.getByText(/только на этом устройстве/)).toBeInTheDocument();
     expect(screen.getByText(/нет регистрации, имени и контактов/)).toBeInTheDocument();
     expect(
       screen.getByText(/обращения в поддержку и предложенные продукты, анонимно/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/технический отчёт об ошибке — без ваших данных.*отключить в настройках/),
     ).toBeInTheDocument();
     expect(screen.getByText(/Скоро рецептом можно будет поделиться/)).toBeInTheDocument();
   });

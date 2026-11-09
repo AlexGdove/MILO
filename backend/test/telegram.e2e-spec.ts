@@ -654,7 +654,12 @@ describe('Telegram-боты (e2e)', () => {
 
       const result = await app.get(CleanupService).run(now);
 
-      expect(result).toEqual({ telegramUpdates: 1, idempotencyKeys: 1, outboxEvents: 1 });
+      expect(result).toEqual({
+        telegramUpdates: 1,
+        idempotencyKeys: 1,
+        outboxEvents: 1,
+        clientErrors: 0,
+      });
       expect((await prisma.outboxEvent.findMany()).map((e) => e.type).sort()).toEqual([
         'pending',
         'recent',

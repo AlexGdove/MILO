@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 
+import { ErrorReportsToggle } from '@/features/report-errors';
 import { LanguageSwitcher } from '@/features/switch-language';
 import { ThemeSwitcher } from '@/features/switch-theme';
 import { APP_VERSION, ROUTES } from '@/shared/config';
@@ -17,6 +18,10 @@ export const SettingsPage = () => (
     <Card className={styles.section}>
       <h2 className={styles.title}>Язык</h2>
       <LanguageSwitcher />
+    </Card>
+    <Card className={styles.section}>
+      <h2 className={styles.title}>Отчёты об ошибках</h2>
+      <ErrorReportsToggle />
     </Card>
     <Card className={styles.section}>
       <h2 className={styles.title}>Данные и конфиденциальность</h2>

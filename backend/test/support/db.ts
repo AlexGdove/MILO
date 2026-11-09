@@ -12,6 +12,7 @@ const TABLES = [
   'telegram_updates',
   'outbox_events',
   'idempotency_keys',
+  'client_errors',
 ];
 
 /** Пустые таблицы и счётчики с 1 — каждый тест независим от предыдущих. */
