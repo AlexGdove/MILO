@@ -14,7 +14,7 @@ import {
 } from '@/entities/product';
 import { ApiError } from '@/shared/api';
 import { cn, formatAmount } from '@/shared/lib';
-import { Input, Modal } from '@/shared/ui';
+import { Input, Modal, ScanBarcodeButton } from '@/shared/ui';
 
 import styles from './IngredientPicker.module.css';
 
@@ -145,6 +145,7 @@ const PickerSearch = ({ products, onPick }: PickerSearchProps) => {
         placeholder="Название или штрихкод"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
+        action={<ScanBarcodeButton onScan={setQuery} />}
       />
 
       <Section title="Ваши продукты">

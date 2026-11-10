@@ -1,12 +1,19 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 
+import basicSsl from '@vitejs/plugin-basic-ssl';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 /** Куда прокси разработки отправляет API (другой порт backend — MILO_API_PROXY). */
 const API_PROXY = process.env.MILO_API_PROXY ?? 'http://localhost:3000';
+
+/**
+ * HTTPS для разработки (`MILO_HTTPS=1 npm run dev`, решение №67): камера (сканер штрихкода) работает
+ * только на защищённой странице, а телефон открывает локалку по IP без HTTPS.
+ */
+const DEV_HTTPS = process.env.MILO_HTTPS === '1';
 
 /** Версия приложения (решение №48) — из package.json, разносит `npm run version:sync`. */
 const APP_VERSION = (
@@ -19,6 +26,7 @@ export default defineConfig(({ mode }) => ({
   define: { 'import.meta.env.VITE_APP_VERSION': JSON.stringify(APP_VERSION) },
   plugins: [
     react(),
+    DEV_HTTPS && basicSsl(),
     // В мобильном приложении (Capacitor, режим `mobile`) файлы и так лежат внутри APK —
     // service worker PWA не нужен и только мешал бы обновлениям
     mode !== 'mobile' &&
@@ -59,6 +67,13 @@ export default defineConfig(({ mode }) => ({
               urlPattern: ({ request }) => request.destination === 'font',
               handler: 'CacheFirst',
               options: { cacheName: 'milo-fonts', expiration: { maxEntries: 40 } },
+            },
+            {
+              // WASM сканера штрихкода (~1 МБ) не предзагружаем всем (№57): кэш — после первого
+              // открытия сканера, дальше он работает и без сети
+              urlPattern: ({ url }) => url.pathname.endsWith('.wasm'),
+              handler: 'CacheFirst',
+              options: { cacheName: 'milo-scanner', expiration: { maxEntries: 2 } },
             },
           ],
         },

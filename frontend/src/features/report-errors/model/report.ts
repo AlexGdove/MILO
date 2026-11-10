@@ -67,9 +67,11 @@ export function buildReport(kind: ErrorKind, reason: unknown, context: ReportCon
 }
 
 /**
- * Шум, о котором сообщать бесполезно: безобидная ошибка ResizeObserver и ошибки чужих скриптов
- * (расширения браузера, их текст — просто «Script error.»).
+ * Шум, о котором сообщать бесполезно: безобидная ошибка ResizeObserver, ошибки чужих скриптов (расширения браузера, их текст — просто «Script error.») и отменённая браузером регистрация Service Worker при закрытии/перезагрузке страницы.
  */
 export function isNoise(message: string): boolean {
-  return /ResizeObserver loop|^Script error\.?$/i.test(message);
+  return (
+    /ResizeObserver loop|^Script error\.?$/i.test(message) ||
+    /failed to register a serviceworker.*aborted/i.test(message)
+  );
 }

@@ -1,0 +1,52 @@
+.button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-height);
+  min-height: var(--control-height);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.button svg {
+  width: var(--icon-size);
+  height: var(--icon-size);
+}
+
+.button:hover {
+  border-color: var(--color-text-muted);
+  color: var(--color-text);
+}
+
+.button:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.scan {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+}
+
+.message {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
