@@ -20,7 +20,7 @@
 ## С чего начать следующую сессию
 
 1. Прочитать `CLAUDE.md`, этот файл, `BLOCKERS.md`, `DECISIONS.md`, `architecture.md`, `api.md`, `database.md`.
-2. Проверить Ollama (`ollama_status`); если не запущена — сообщить владельцу и ждать.
+2. Проверить помощника: `strata_status` (MCP `strata`, №66); если движок не отвечает — сообщить владельцу (запуск: `start-strata.bat`).
 3. Проверить Docker Desktop и `npm run db:up` (тесты backend требуют PostgreSQL и Redis).
 4. CI на `dev` с PostgreSQL service — зелёный (run `42018818886`, 2026-11-05).
 5. Этапы 5, 6, 8 в `dev`; **этап 9 «Telegram»** — ветка `feat/backend-telegram` (B-21, отчёт `progress/phase-09-telegram.md`); сквозная проверка — после токенов ботов в `backend/.env`.
