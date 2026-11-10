@@ -15,6 +15,7 @@ describe('ScanBarcodeButton', () => {
 
   afterEach(() => {
     Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: undefined });
+    Object.defineProperty(window, 'isSecureContext', { configurable: true, value: true });
     vi.restoreAllMocks();
   });
 
@@ -102,6 +103,27 @@ describe('ScanBarcodeButton', () => {
     await userEvent.click(screen.getByLabelText('Закрыть'));
 
     expect(track.stop).toHaveBeenCalled();
+    expect(onScan).not.toHaveBeenCalled();
+  });
+
+  it('на обычной HTTP-странице показывает подсказку про HTTPS', async () => {
+    Object.defineProperty(window, 'isSecureContext', { configurable: true, value: false });
+
+    const getUserMedia = vi.fn();
+    Object.defineProperty(navigator, 'mediaDevices', {
+      configurable: true,
+      value: { getUserMedia },
+    });
+
+    const onScan = vi.fn<(code: string) => void>();
+
+    render(<ScanBarcodeButton onScan={onScan} />);
+
+    await userEvent.click(screen.getByLabelText('Сканировать штрихкод'));
+
+    const statusElement = await screen.findByRole('status');
+    expect(statusElement).toHaveTextContent(/HTTPS/);
+    expect(getUserMedia).not.toHaveBeenCalled();
     expect(onScan).not.toHaveBeenCalled();
   });
 });

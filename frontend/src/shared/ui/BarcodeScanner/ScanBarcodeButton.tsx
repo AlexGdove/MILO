@@ -5,13 +5,14 @@ import { createBarcodeReader } from '@/shared/lib';
 import styles from './ScanBarcodeButton.module.css';
 import { Modal } from '../Modal/Modal';
 
-type ScanStatus = 'starting' | 'scanning' | 'denied' | 'unavailable';
+type ScanStatus = 'starting' | 'scanning' | 'denied' | 'unavailable' | 'insecure';
 
 const MESSAGES: Record<ScanStatus, string> = {
   starting: 'Запускаем камеру…',
   scanning: 'Наведите камеру на штрихкод',
   denied: 'Нет доступа к камере. Разрешите её в настройках или введите штрихкод вручную.',
   unavailable: 'Камера или сканер недоступны. Введите штрихкод вручную.',
+  insecure: 'Камера работает только по защищённому соединению (HTTPS). Введите штрихкод вручную.',
 };
 
 /** Интервал между попытками прочитать кадр, мс: хватает для руки, не грузит слабый телефон. */
@@ -38,6 +39,10 @@ const ScanView = ({ onDetect }: { onDetect: (code: string) => void }) => {
     const stopCamera = () => stream?.getTracks().forEach((track) => track.stop());
 
     const run = async () => {
+      if (!window.isSecureContext) {
+        setStatus('insecure');
+        return;
+      }
       if (!navigator.mediaDevices?.getUserMedia) {
         setStatus('unavailable');
         return;
