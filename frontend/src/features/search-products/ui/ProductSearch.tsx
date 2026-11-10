@@ -1,4 +1,4 @@
-import { Input } from '@/shared/ui';
+import { Input, ScanBarcodeButton } from '@/shared/ui';
 
 interface ProductSearchProps {
   value: string;
@@ -12,5 +12,6 @@ export const ProductSearch = ({ value, onChange }: ProductSearchProps) => (
     aria-label="Поиск продукта"
     value={value}
     onChange={(event) => onChange(event.target.value)}
+    action={<ScanBarcodeButton onScan={onChange} />}
   />
 );

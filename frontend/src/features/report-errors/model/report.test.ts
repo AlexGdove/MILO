@@ -92,7 +92,28 @@ describe('isNoise', () => {
     expect(isNoise('Script error.')).toBe(true);
   });
 
+  it('отменённая регистрация Service Worker — шум', () => {
+    expect(
+      isNoise(
+        "Failed to register a ServiceWorker for scope ('https://milo-app.ru/') with script ('https://milo-app.ru/sw.js'): Operation has been aborted",
+      ),
+    ).toBe(true);
+  });
+
   it('настоящая ошибка — не шум', () => {
     expect(isNoise("Cannot read properties of undefined (reading 'name')")).toBe(false);
+  });
+
+  it('ошибки регистрации Service Worker без отмены — не шум', () => {
+    expect(
+      isNoise(
+        "Failed to register a ServiceWorker for scope ('https://milo-app.ru/') with script ('https://milo-app.ru/sw.js'): The script has an unsupported MIME type ('text/html').",
+      ),
+    ).toBe(false);
+    expect(
+      isNoise(
+        'Failed to register a ServiceWorker: A bad HTTP response code (404) was received when fetching the script.',
+      ),
+    ).toBe(false);
   });
 });

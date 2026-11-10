@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 
 import { normalizeBarcode, type ProductDraft } from '@/entities/product';
 import { parseNumber, unitLabel, UNITS, type Unit } from '@/shared/lib';
-import { Button, Input, SegmentedControl } from '@/shared/ui';
+import { Button, Input, ScanBarcodeButton, SegmentedControl } from '@/shared/ui';
 
 import styles from './ProductForm.module.css';
 
@@ -115,6 +115,7 @@ export const ProductForm = ({
         onChange={(e) => setField('barcode')(e.target.value)}
         error={errors.barcode}
         autoComplete="off"
+        action={<ScanBarcodeButton onScan={setField('barcode')} />}
       />
       <SegmentedControl legend="Единица учёта" options={UNITS} value={unit} onChange={setUnit} />
       {unit === 'ml' && (

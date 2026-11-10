@@ -27,9 +27,10 @@
 		X-Content-Type-Options "nosniff"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		# Только свои скрипты и запросы к своему API и Open Food Facts (штрихкод — напрямую);
+		# wasm-unsafe-eval — только для запуска WASM сканера штрихкода (JS eval по-прежнему закрыт);
 		# стили inline — атрибуты style у React-компонентов (B-24)
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' wss://{$DOMAIN} https://world.openfoodfacts.org https://search.openfoodfacts.org; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
-		# Камера — только своему сайту (будущий сканер штрихкода); остальное выключено
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' wss://{$DOMAIN} https://world.openfoodfacts.org https://search.openfoodfacts.org; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		# Камера — только своему сайту (сканер штрихкода); остальное выключено
 		Permissions-Policy "camera=(self), microphone=(), geolocation=(), payment=(), usb=()"
 		Cross-Origin-Opener-Policy "same-origin"
 		-Server
