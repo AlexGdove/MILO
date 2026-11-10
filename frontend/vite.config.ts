@@ -60,6 +60,13 @@ export default defineConfig(({ mode }) => ({
               handler: 'CacheFirst',
               options: { cacheName: 'milo-fonts', expiration: { maxEntries: 40 } },
             },
+            {
+              // WASM сканера штрихкода (~1 МБ) не предзагружаем всем (№57): кэш — после первого
+              // открытия сканера, дальше он работает и без сети
+              urlPattern: ({ url }) => url.pathname.endsWith('.wasm'),
+              handler: 'CacheFirst',
+              options: { cacheName: 'milo-scanner', expiration: { maxEntries: 2 } },
+            },
           ],
         },
         devOptions: { enabled: false },
