@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 
-import { Button, Input } from '@/shared/ui';
+import { Button, Input, PasswordInput } from '@/shared/ui';
 
 import styles from './AuthForm.module.css';
 import { FormError } from './FormError';
@@ -43,9 +43,8 @@ export const LoginForm = ({ defaultEmail = '', onSubmit }: LoginFormProps) => {
         onChange={(event) => setEmail(event.target.value)}
         error={submitted ? errors.email : undefined}
       />
-      <Input
+      <PasswordInput
         label="Пароль"
-        type="password"
         name="password"
         autoComplete="current-password"
         value={password}

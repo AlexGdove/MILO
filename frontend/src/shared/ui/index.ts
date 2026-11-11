@@ -16,4 +16,5 @@ export { Tabs } from './Tabs/Tabs';
 export { Toast } from './Toast/Toast';
 export { Stepper } from './Stepper/Stepper';
 export { BackLink } from './BackLink/BackLink';
+export { PasswordInput } from './PasswordInput/PasswordInput';
 export { PrivacyNotice } from './PrivacyNotice/PrivacyNotice';
