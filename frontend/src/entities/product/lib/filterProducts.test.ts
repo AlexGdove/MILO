@@ -30,6 +30,11 @@ describe('filterProducts', () => {
     expect(filterProducts(items, '46000000000').map((p) => p.id)).toEqual(['a', 'c']);
   });
 
+  it('находит тот же товар в другой записи: сохранён UPC-A, отсканирован EAN-13 с нулём', () => {
+    const withUpc = [...items, product('d', 'Сок', '036000291452')];
+    expect(filterProducts(withUpc, '0036000291452').map((p) => p.id)).toEqual(['d']);
+  });
+
   it('пустой запрос — все продукты', () => {
     expect(filterProducts(items, '  ')).toHaveLength(3);
   });
