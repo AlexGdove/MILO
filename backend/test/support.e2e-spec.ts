@@ -368,5 +368,22 @@ describe('Поддержка (e2e)', () => {
       }
       expect(await refused(connect())).toBe('rate_limited');
     });
+
+    it('без доверенных прокси подделанный X-Forwarded-For не обходит лимит подключений', async () => {
+      const spoofed = (n: number) => {
+        const socket = io(`${baseUrl}/support`, {
+          transports: ['websocket'],
+          auth: {},
+          reconnection: false,
+          extraHeaders: { 'X-Forwarded-For': `203.0.113.${n}` },
+        });
+        sockets.push(socket);
+        return socket;
+      };
+      for (let i = 0; i < RATE_LIMIT_POLICIES.supportConnect.limit; i++) {
+        await refused(spoofed(i));
+      }
+      expect(await refused(spoofed(200))).toBe('rate_limited');
+    });
   });
 });
