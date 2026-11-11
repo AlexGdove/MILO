@@ -104,6 +104,9 @@ services:
       TELEGRAM_MODERATION_CHAT_ID: ${TELEGRAM_MODERATION_CHAT_ID:-}
       TELEGRAM_MODERATION_THREAD_ID: ${TELEGRAM_MODERATION_THREAD_ID:-}
       TELEGRAM_ERRORS_THREAD_ID: ${TELEGRAM_ERRORS_THREAD_ID:-}
+      # Аккаунты (№60, №68): без обоих значений вход по почте отвечает 503 auth_unavailable
+      AUTH_CODE_SECRET: ${AUTH_CODE_SECRET:-}
+      EMAIL_TRANSPORT: ${EMAIL_TRANSPORT:-}
     depends_on:
       migrate:
         condition: service_completed_successfully

@@ -13,6 +13,9 @@ const TABLES = [
   'outbox_events',
   'idempotency_keys',
   'client_errors',
+  'accounts',
+  'login_codes',
+  'sessions',
 ];
 
 /** Пустые таблицы и счётчики с 1 — каждый тест независим от предыдущих. */
