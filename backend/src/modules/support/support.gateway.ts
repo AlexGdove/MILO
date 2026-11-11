@@ -1,10 +1,13 @@
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { type OnGatewayConnection, type OnGatewayInit, WebSocketGateway } from '@nestjs/websockets';
 import type { Namespace, Socket } from 'socket.io';
 
 import { deviceRoom, SupportEvents } from './support.events.js';
+import { getAppConfig } from '../../config/app-config.js';
 import { isDeviceKeyFormat } from '../device-keys/device-key.js';
 import { DeviceKeysService } from '../device-keys/device-keys.service.js';
+import { clientIp } from '../rate-limit/client-ip.js';
 import { normalizeIp } from '../rate-limit/normalize-ip.js';
 import { RATE_LIMIT_POLICIES } from '../rate-limit/rate-limit.policies.js';
 import { RedisRateLimitStorage } from '../rate-limit/rate-limit.storage.js';
@@ -27,12 +30,17 @@ export const WS_ERRORS = {
 @WebSocketGateway({ namespace: SUPPORT_NAMESPACE })
 export class SupportGateway implements OnGatewayInit<Namespace>, OnGatewayConnection<Socket> {
   private readonly logger = new Logger(SupportGateway.name);
+  /** Сколько прокси перед сервером (`TRUST_PROXY`) — как у HTTP-лимитов */
+  private readonly trustProxy: number;
 
   constructor(
     private readonly deviceKeys: DeviceKeysService,
     private readonly events: SupportEvents,
     private readonly rateLimits: RedisRateLimitStorage,
-  ) {}
+    config: ConfigService,
+  ) {
+    this.trustProxy = getAppConfig(config).trustProxy;
+  }
 
   afterInit(namespace: Namespace): void {
     this.events.attach(namespace);
@@ -58,7 +66,14 @@ export class SupportGateway implements OnGatewayInit<Namespace>, OnGatewayConnec
   /** `null` — можно подключаться (id устройства в `socket.data`), иначе код ошибки. */
   private async authenticate(socket: Socket): Promise<string | null> {
     const policy = RATE_LIMIT_POLICIES.supportConnect;
-    const ip = normalizeIp(socket.handshake.address);
+    // За Caddy адрес соединения — адрес прокси (общий для всех), IP клиента — из X-Forwarded-For
+    const ip = normalizeIp(
+      clientIp(
+        socket.handshake.address,
+        socket.handshake.headers['x-forwarded-for'],
+        this.trustProxy,
+      ),
+    );
     const hit = await this.rateLimits.hit(`supportConnect:${ip}`, policy.ttl, policy.limit);
     if (hit.blocked) return WS_ERRORS.limited;
 
