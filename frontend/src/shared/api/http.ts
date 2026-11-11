@@ -52,6 +52,8 @@ export interface ApiRequestOptions {
   body?: unknown;
   query?: Record<string, string | number | undefined>;
   deviceKey?: string;
+  /** Токен сессии аккаунта → `Authorization: Bearer` (решение №69) */
+  authToken?: string;
   idempotencyKey?: string;
   signal?: AbortSignal;
   /** Сколько ждать ответа целиком (по умолчанию `REQUEST_TIMEOUT_MS`) */
@@ -76,6 +78,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (options.body !== undefined) headers['Content-Type'] = 'application/json';
   if (options.deviceKey) headers['X-Device-Key'] = options.deviceKey;
+  if (options.authToken) headers.Authorization = `Bearer ${options.authToken}`;
   if (options.idempotencyKey) headers['Idempotency-Key'] = options.idempotencyKey;
 
   const timeout = withTimeout(options.signal, options.timeoutMs ?? REQUEST_TIMEOUT_MS);

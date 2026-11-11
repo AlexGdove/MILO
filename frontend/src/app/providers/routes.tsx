@@ -20,6 +20,7 @@ const lazyPage = {
   settings: async () => ({ Component: (await import('@/pages/settings')).SettingsPage }),
   support: async () => ({ Component: (await import('@/pages/support')).SupportPage }),
   supportTicket: async () => ({ Component: (await import('@/pages/support')).SupportTicketPage }),
+  account: async () => ({ Component: (await import('@/pages/account')).AccountPage }),
   app: async () => ({ Component: (await import('@/pages/app')).AppPage }),
 };
 
@@ -46,6 +47,7 @@ export const appRoutes: RouteObject[] = [
       { path: ROUTES.settings, lazy: lazyPage.settings },
       { path: ROUTES.support, lazy: lazyPage.support },
       { path: ROUTES.supportTicket, lazy: lazyPage.supportTicket },
+      { path: ROUTES.account, lazy: lazyPage.account },
       { path: ROUTES.app, lazy: lazyPage.app },
       { path: LEGACY_ROUTES.products, element: <Navigate to={ROUTES.pantry} replace /> },
       { path: LEGACY_ROUTES.diary, element: <Navigate to={ROUTES.dashboard} replace /> },

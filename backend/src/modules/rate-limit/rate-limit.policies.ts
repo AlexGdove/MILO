@@ -32,10 +32,14 @@ export const RATE_LIMIT_POLICIES = {
   supportRead: { limit: 120, ttl: MINUTE, tracker: 'device' },
   /** Отчёты об ошибках приложения: с одного устройства не больше 30 в час */
   clientError: { limit: 30, ttl: HOUR, tracker: 'device' },
-  /** Запрос кода входа: с одного IP не больше 10 в час (ещё лимит на почту — в `AuthService`) */
-  authStart: { limit: 10, ttl: HOUR, tracker: 'ip' },
-  /** Ввод кода: с одного IP не больше 30 попыток за 10 минут (и 5 на сам код) */
-  authVerify: { limit: 30, ttl: 10 * MINUTE, tracker: 'ip' },
+  /** Регистрация: с одного IP не больше 10 в час (ещё лимит писем на почту — в `AuthService`) */
+  authRegister: { limit: 10, ttl: HOUR, tracker: 'ip' },
+  /** Повторный код и «забыли пароль»: с одного IP не больше 10 в час */
+  authEmail: { limit: 10, ttl: HOUR, tracker: 'ip' },
+  /** Ввод кода (подтверждение, сброс): с одного IP не больше 30 за 10 минут (и 5 на сам код) */
+  authCode: { limit: 30, ttl: 10 * MINUTE, tracker: 'ip' },
+  /** Вход паролем: с одного IP не больше 20 за 10 минут (и 20 в час на одну почту) */
+  authLogin: { limit: 20, ttl: 10 * MINUTE, tracker: 'ip' },
   /** Аккаунт: чтение, выход, удаление */
   account: { limit: 120, ttl: MINUTE, tracker: 'ip' },
   /** Подключения к WebSocket `/support` — считает `SupportGateway`, не HTTP-guard */

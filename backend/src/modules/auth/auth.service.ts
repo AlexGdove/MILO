@@ -22,8 +22,9 @@ import {
   SESSION_TTL_MS,
 } from './auth.config.js';
 import { EmailSender } from './email-sender.js';
+import { hashPassword, verifyPassword } from './password.js';
 import { AppException } from '../../common/errors/app.exception.js';
-import type { Plan } from '../../generated/prisma/client.js';
+import type { CodePurpose, Plan, Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { RedisRateLimitStorage } from '../rate-limit/rate-limit.storage.js';
 
@@ -32,6 +33,9 @@ export const EMAIL_CODE_LIMITS = [
   { name: 'authEmail15m', limit: 3, ttl: 15 * 60_000 },
   { name: 'authEmailDay', limit: 10, ttl: 24 * 60 * 60_000 },
 ] as const;
+
+/** Попыток входа в одну почту (с любых IP): не больше 20 в час — подбор пароля */
+export const LOGIN_EMAIL_LIMIT = { name: 'authLoginEmail', limit: 20, ttl: 60 * 60_000 } as const;
 
 export interface AccountView {
   id: string;
@@ -50,17 +54,32 @@ export interface IssuedSession {
   account: AccountView;
 }
 
-const INVALID_CODE = () =>
-  new AppException(HttpStatus.UNAUTHORIZED, 'login_code_invalid', 'Login code is invalid');
+export interface CodeSent {
+  expiresInSeconds: number;
+}
+
+type Tx = Prisma.TransactionClient;
+type AccountRow = { id: string; email: string; plan: Plan; planUntil: Date | null };
+
+const fail = (status: HttpStatus, code: string, message: string) =>
+  new AppException(status, code, message);
+const INVALID_CODE = () => fail(HttpStatus.UNAUTHORIZED, 'code_invalid', 'Code is invalid');
+const INVALID_CREDENTIALS = () =>
+  fail(HttpStatus.UNAUTHORIZED, 'invalid_credentials', 'Email or password is incorrect');
+const BLOCKED = () => fail(HttpStatus.FORBIDDEN, 'account_blocked', 'Account is blocked');
 
 /**
- * Вход по одноразовому коду на почту и сессии (решения №60, №68). Хранятся только HMAC кода и
- * SHA-256 токена. Ответ на запрос кода не зависит от того, есть ли аккаунт с этой почтой.
+ * Аккаунты (решения №60, №68, №69): регистрация почтой и паролем с подтверждением почты кодом,
+ * вход паролем, сброс пароля кодом, сессии. Хранятся только хэш пароля (scrypt), HMAC кодов и
+ * SHA-256 токенов. Ответы на запрос кода не зависят от того, есть ли аккаунт с этой почтой;
+ * ответ на неверный пароль одинаков для существующей и несуществующей почты (и по времени).
  */
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly config: AuthConfig;
+  /** Хэш-пустышка: проверка пароля несуществующей почты занимает столько же времени */
+  private readonly dummyHash: Promise<string>;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -69,92 +88,117 @@ export class AuthService {
     config: ConfigService,
   ) {
     this.config = getAuthConfig(config);
-  }
-
-  /** Новый код на почту; прежние неиспользованные коды этой почты гаснут. */
-  async startEmailLogin(rawEmail: string, now = new Date()): Promise<{ expiresInSeconds: number }> {
-    this.assertEnabled();
-    const email = normalizeEmail(rawEmail);
-    await this.limitEmail(email);
-
-    const code = generateLoginCode();
-    await this.prisma.$transaction([
-      this.prisma.loginCode.updateMany({
-        where: { email, consumedAt: null },
-        data: { consumedAt: now },
-      }),
-      this.prisma.loginCode.create({
-        data: {
-          email,
-          codeHash: hashLoginCode(email, code, this.config.codeSecret),
-          expiresAt: new Date(now.getTime() + LOGIN_CODE_TTL_MS),
-        },
-      }),
-    ]);
-    await this.email.sendLoginCode(email, code);
-    return { expiresInSeconds: LOGIN_CODE_TTL_MS / 1000 };
+    this.dummyHash = hashPassword('milo-timing-dummy-password');
   }
 
   /**
-   * Проверка кода → сессия. Аккаунт создаётся при первом входе. Попытка учитывается до
-   * сравнения (атомарно), поэтому параллельные запросы не дают больше 5 попыток на код.
+   * Регистрация: аккаунт без подтверждения и код на почту. Повтор для неподтверждённой почты
+   * меняет пароль и шлёт новый код (код придёт владельцу ящика); подтверждённая — `409`.
    */
-  async verifyEmailLogin(rawEmail: string, code: string, now = new Date()): Promise<IssuedSession> {
+  async register(rawEmail: string, password: string, now = new Date()): Promise<CodeSent> {
     this.assertEnabled();
     const email = normalizeEmail(rawEmail);
-    if (!LOGIN_CODE_PATTERN.test(code)) throw INVALID_CODE();
-
-    const current = await this.prisma.loginCode.findFirst({
-      where: { email, consumedAt: null, expiresAt: { gt: now } },
-      orderBy: { createdAt: 'desc' },
-    });
-    if (!current) throw INVALID_CODE();
-
-    const attempt = await this.prisma.loginCode.updateMany({
-      where: { id: current.id, consumedAt: null, attempts: { lt: LOGIN_CODE_MAX_ATTEMPTS } },
-      data: { attempts: { increment: 1 } },
-    });
-    if (attempt.count === 0) throw INVALID_CODE();
-
-    const expected = hashLoginCode(email, code, this.config.codeSecret);
-    if (!safeEqualHex(expected, current.codeHash)) {
-      if (current.attempts + 1 >= LOGIN_CODE_MAX_ATTEMPTS) {
-        await this.prisma.loginCode.updateMany({
-          where: { id: current.id, consumedAt: null },
-          data: { consumedAt: now },
-        });
-      }
-      throw INVALID_CODE();
+    const existing = await this.prisma.account.findUnique({ where: { email } });
+    if (existing?.emailVerifiedAt) {
+      throw fail(HttpStatus.CONFLICT, 'email_taken', 'Email is already registered');
     }
-
-    const token = generateSessionToken();
-    const account = await this.prisma.$transaction(async (tx) => {
-      // Код одноразовый: из двух одновременных верных запросов сессию получит один
-      const consumed = await tx.loginCode.updateMany({
-        where: { id: current.id, consumedAt: null },
-        data: { consumedAt: now },
-      });
-      if (consumed.count === 0) throw INVALID_CODE();
-
-      const found = await tx.account.upsert({
-        where: { email },
-        create: { email, lastLoginAt: now },
-        update: { lastLoginAt: now },
-      });
-      if (found.blockedAt) {
-        throw new AppException(HttpStatus.FORBIDDEN, 'account_blocked', 'Account is blocked');
-      }
-      await tx.session.create({
-        data: {
-          accountId: found.id,
-          tokenHash: hashSessionToken(token),
-          lastSeenAt: now,
-          expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
-        },
-      });
-      return found;
+    await this.limitEmail(email);
+    const passwordHash = await hashPassword(password);
+    await this.prisma.account.upsert({
+      where: { email },
+      create: { email, passwordHash },
+      update: { passwordHash },
     });
-    return { token, account: toView(account) };
+    return this.issueCode(email, 'verify_email', now);
+  }
+
+  /** Повторный код подтверждения; ответ одинаковый, есть такая почта или нет. */
+  async resendVerification(rawEmail: string, now = new Date()): Promise<CodeSent> {
+    this.assertEnabled();
+    const email = normalizeEmail(rawEmail);
+    const account = await this.prisma.account.findUnique({ where: { email } });
+    if (!account || account.emailVerifiedAt) return codeSent();
+    await this.limitEmail(email);
+    return this.issueCode(email, 'verify_email', now);
+  }
+
+  /** Код подтверждения → почта подтверждена и сразу вход. */
+  async verifyEmail(rawEmail: string, code: string, now = new Date()): Promise<IssuedSession> {
+    this.assertEnabled();
+    const email = normalizeEmail(rawEmail);
+    const codeId = await this.checkCode(email, 'verify_email', code, now);
+    return this.prisma.$transaction(async (tx) => {
+      await this.consumeCode(tx, codeId, now);
+      const account = await tx.account.findUnique({ where: { email } });
+      if (!account) throw INVALID_CODE();
+      if (account.blockedAt) throw BLOCKED();
+      const verified = await tx.account.update({
+        where: { id: account.id },
+        data: { emailVerifiedAt: account.emailVerifiedAt ?? now, lastLoginAt: now },
+      });
+      return this.openSession(tx, verified, now);
+    });
+  }
+
+  /** Вход паролем. Заблокирован / не подтверждён — сообщается только при верном пароле. */
+  async login(rawEmail: string, password: string, now = new Date()): Promise<IssuedSession> {
+    const email = normalizeEmail(rawEmail);
+    await this.limit(`${LOGIN_EMAIL_LIMIT.name}:${hashEmail(email)}`, LOGIN_EMAIL_LIMIT);
+    const account = await this.prisma.account.findUnique({ where: { email } });
+    if (!account) {
+      await verifyPassword(password, await this.dummyHash);
+      throw INVALID_CREDENTIALS();
+    }
+    if (!(await verifyPassword(password, account.passwordHash))) throw INVALID_CREDENTIALS();
+    if (account.blockedAt) throw BLOCKED();
+    if (!account.emailVerifiedAt) {
+      throw fail(HttpStatus.FORBIDDEN, 'email_not_verified', 'Email is not verified');
+    }
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.account.update({
+        where: { id: account.id },
+        data: { lastLoginAt: now },
+      });
+      return this.openSession(tx, updated, now);
+    });
+  }
+
+  /** «Забыли пароль»: код сброса на подтверждённую почту; ответ одинаковый для любой почты. */
+  async forgotPassword(rawEmail: string, now = new Date()): Promise<CodeSent> {
+    this.assertEnabled();
+    const email = normalizeEmail(rawEmail);
+    const account = await this.prisma.account.findUnique({ where: { email } });
+    if (!account?.emailVerifiedAt || account.blockedAt) return codeSent();
+    await this.limitEmail(email);
+    return this.issueCode(email, 'reset_password', now);
+  }
+
+  /** Код сброса → новый пароль; все прежние сессии закрываются, открывается новая. */
+  async resetPassword(
+    rawEmail: string,
+    code: string,
+    password: string,
+    now = new Date(),
+  ): Promise<IssuedSession> {
+    this.assertEnabled();
+    const email = normalizeEmail(rawEmail);
+    const codeId = await this.checkCode(email, 'reset_password', code, now);
+    const passwordHash = await hashPassword(password);
+    return this.prisma.$transaction(async (tx) => {
+      await this.consumeCode(tx, codeId, now);
+      const account = await tx.account.findUnique({ where: { email } });
+      if (!account) throw INVALID_CODE();
+      if (account.blockedAt) throw BLOCKED();
+      await tx.session.updateMany({
+        where: { accountId: account.id, revokedAt: null },
+        data: { revokedAt: now },
+      });
+      const updated = await tx.account.update({
+        where: { id: account.id },
+        data: { passwordHash, lastLoginAt: now },
+      });
+      return this.openSession(tx, updated, now);
+    });
   }
 
   /** Токен из `Authorization` → сессия; срок продлевается не чаще раза в час. */
@@ -179,7 +223,7 @@ export class AuthService {
   async getAccount(accountId: string): Promise<AccountView> {
     const account = await this.prisma.account.findUnique({ where: { id: accountId } });
     if (!account) {
-      throw new AppException(HttpStatus.UNAUTHORIZED, 'session_invalid', 'Session is invalid');
+      throw fail(HttpStatus.UNAUTHORIZED, 'session_invalid', 'Session is invalid');
     }
     return toView(account);
   }
@@ -191,7 +235,7 @@ export class AuthService {
     });
   }
 
-  /** Удаляет аккаунт, все его сессии (каскад) и коды входа его почты. */
+  /** Удаляет аккаунт, все его сессии (каскад) и коды его почты. */
   async deleteAccount(accountId: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
       const account = await tx.account.findUnique({ where: { id: accountId } });
@@ -201,51 +245,125 @@ export class AuthService {
     });
   }
 
+  /** Новый код назначения `purpose`; прежние неиспользованные коды того же назначения гаснут. */
+  private async issueCode(email: string, purpose: CodePurpose, now: Date): Promise<CodeSent> {
+    const code = generateLoginCode();
+    await this.prisma.$transaction([
+      this.prisma.loginCode.updateMany({
+        where: { email, purpose, consumedAt: null },
+        data: { consumedAt: now },
+      }),
+      this.prisma.loginCode.create({
+        data: {
+          email,
+          purpose,
+          codeHash: hashLoginCode(email, code, this.config.codeSecret),
+          expiresAt: new Date(now.getTime() + LOGIN_CODE_TTL_MS),
+        },
+      }),
+    ]);
+    await this.email.sendCode(email, code, purpose);
+    return codeSent();
+  }
+
+  /**
+   * Проверка кода → его id (ещё не погашен). Попытка учитывается до сравнения атомарно —
+   * параллельные запросы не дают больше 5 попыток; после 5-й неверной код сгорает.
+   */
+  private async checkCode(
+    email: string,
+    purpose: CodePurpose,
+    code: string,
+    now: Date,
+  ): Promise<string> {
+    if (!LOGIN_CODE_PATTERN.test(code)) throw INVALID_CODE();
+    const current = await this.prisma.loginCode.findFirst({
+      where: { email, purpose, consumedAt: null, expiresAt: { gt: now } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!current) throw INVALID_CODE();
+
+    const attempt = await this.prisma.loginCode.updateMany({
+      where: { id: current.id, consumedAt: null, attempts: { lt: LOGIN_CODE_MAX_ATTEMPTS } },
+      data: { attempts: { increment: 1 } },
+    });
+    if (attempt.count === 0) throw INVALID_CODE();
+
+    const expected = hashLoginCode(email, code, this.config.codeSecret);
+    if (!safeEqualHex(expected, current.codeHash)) {
+      if (current.attempts + 1 >= LOGIN_CODE_MAX_ATTEMPTS) {
+        await this.prisma.loginCode.updateMany({
+          where: { id: current.id, consumedAt: null },
+          data: { consumedAt: now },
+        });
+      }
+      throw INVALID_CODE();
+    }
+    return current.id;
+  }
+
+  /** Код одноразовый: из двух одновременных верных запросов пройдёт один. */
+  private async consumeCode(tx: Tx, codeId: string, now: Date): Promise<void> {
+    const consumed = await tx.loginCode.updateMany({
+      where: { id: codeId, consumedAt: null },
+      data: { consumedAt: now },
+    });
+    if (consumed.count === 0) throw INVALID_CODE();
+  }
+
+  private async openSession(tx: Tx, account: AccountRow, now: Date): Promise<IssuedSession> {
+    const token = generateSessionToken();
+    await tx.session.create({
+      data: {
+        accountId: account.id,
+        tokenHash: hashSessionToken(token),
+        lastSeenAt: now,
+        expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
+      },
+    });
+    return { token, account: toView(account) };
+  }
+
   private assertEnabled(): void {
     if (!this.config.enabled) {
-      throw new AppException(
+      throw fail(
         HttpStatus.SERVICE_UNAVAILABLE,
         'auth_unavailable',
-        'Sign-in is temporarily unavailable',
+        'Sign-up and email codes are temporarily unavailable',
       );
     }
   }
 
   /** Лимит писем на почту; в ключе Redis — хэш почты, а не сама почта. */
   private async limitEmail(email: string): Promise<void> {
-    const emailHash = createHash('sha256').update(email).digest('hex');
     for (const policy of EMAIL_CODE_LIMITS) {
-      let blocked: boolean;
-      try {
-        ({ blocked } = await this.rateLimits.hit(
-          `${policy.name}:${emailHash}`,
-          policy.ttl,
-          policy.limit,
-        ));
-      } catch (error) {
-        this.logger.error(
-          { err: error instanceof Error ? { message: error.message } : error },
-          'Rate limit storage is unavailable',
-        );
-        throw new AppException(
-          HttpStatus.SERVICE_UNAVAILABLE,
-          'service_unavailable',
-          'Service is temporarily unavailable',
-        );
-      }
-      if (blocked) {
-        throw new AppException(HttpStatus.TOO_MANY_REQUESTS, 'rate_limited', 'Too many requests');
-      }
+      await this.limit(`${policy.name}:${hashEmail(email)}`, policy);
     }
+  }
+
+  private async limit(key: string, policy: { limit: number; ttl: number }): Promise<void> {
+    let blocked: boolean;
+    try {
+      ({ blocked } = await this.rateLimits.hit(key, policy.ttl, policy.limit));
+    } catch (error) {
+      this.logger.error(
+        { err: error instanceof Error ? { message: error.message } : error },
+        'Rate limit storage is unavailable',
+      );
+      throw fail(
+        HttpStatus.SERVICE_UNAVAILABLE,
+        'service_unavailable',
+        'Service is temporarily unavailable',
+      );
+    }
+    if (blocked) throw fail(HttpStatus.TOO_MANY_REQUESTS, 'rate_limited', 'Too many requests');
   }
 }
 
-function toView(account: {
-  id: string;
-  email: string;
-  plan: Plan;
-  planUntil: Date | null;
-}): AccountView {
+const hashEmail = (email: string) => createHash('sha256').update(email).digest('hex');
+const codeSent = (): CodeSent => ({ expiresInSeconds: LOGIN_CODE_TTL_MS / 1000 });
+
+function toView(account: AccountRow): AccountView {
   return {
     id: account.id,
     email: account.email,
