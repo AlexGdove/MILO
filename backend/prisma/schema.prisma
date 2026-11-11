@@ -294,33 +294,45 @@ enum Plan {
   @@map("plan")
 }
 
-/// Аккаунт (решения №60, №68): только почта и тариф — личные данные остаются на устройстве.
+/// Аккаунт (решения №60, №68, №69): почта, хэш пароля и тариф — личные данные остаются на устройстве.
 model Account {
-  id          String    @id @default(uuid()) @db.Uuid
-  email       String    @unique @db.VarChar(254)
-  plan        Plan      @default(free)
-  planUntil   DateTime? @map("plan_until") @db.Timestamptz(6)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(6)
-  blockedAt   DateTime? @map("blocked_at") @db.Timestamptz(6)
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique @db.VarChar(254)
+  /// scrypt$N$r$p$соль$хэш (решение №69)
+  passwordHash    String    @map("password_hash") @db.VarChar(200)
+  /// Почта подтверждена кодом из письма; без этого войти нельзя
+  emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6)
+  plan            Plan      @default(free)
+  planUntil       DateTime? @map("plan_until") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastLoginAt     DateTime? @map("last_login_at") @db.Timestamptz(6)
+  blockedAt       DateTime? @map("blocked_at") @db.Timestamptz(6)
 
   sessions Session[]
 
   @@map("accounts")
 }
 
-/// Одноразовый код входа по почте. Хранится только HMAC кода; связи с аккаунтом нет — код
-/// приходит и на новую почту (аккаунт создаётся при первом входе).
-model LoginCode {
-  id         String    @id @default(uuid()) @db.Uuid
-  email      String    @db.VarChar(254)
-  codeHash   String    @map("code_hash") @db.Char(64)
-  attempts   Int       @default(0)
-  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
-  consumedAt DateTime? @map("consumed_at") @db.Timestamptz(6)
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+/// Назначение кода из письма (решение №69): код одного назначения не подходит для другого.
+enum CodePurpose {
+  verify_email
+  reset_password
 
-  @@index([email, createdAt(sort: Desc)])
+  @@map("code_purpose")
+}
+
+/// Одноразовый код из письма: подтверждение почты или сброс пароля. Хранится только HMAC кода.
+model LoginCode {
+  id         String      @id @default(uuid()) @db.Uuid
+  email      String      @db.VarChar(254)
+  purpose    CodePurpose
+  codeHash   String      @map("code_hash") @db.Char(64)
+  attempts   Int         @default(0)
+  expiresAt  DateTime    @map("expires_at") @db.Timestamptz(6)
+  consumedAt DateTime?   @map("consumed_at") @db.Timestamptz(6)
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([email, purpose, createdAt(sort: Desc)])
   @@index([expiresAt])
   @@map("login_codes")
 }

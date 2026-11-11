@@ -12,6 +12,8 @@ export const ROUTES = {
   support: '/settings/support',
   /** Переписка по обращению */
   supportTicket: '/settings/support/:id',
+  /** Аккаунт: вход, регистрация, тариф (решение №69) */
+  account: '/settings/account',
   /** Первый запуск: приветствие и анкета (решение №30) */
   welcome: '/welcome',
 } as const;

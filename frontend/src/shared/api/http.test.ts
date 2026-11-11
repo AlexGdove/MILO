@@ -48,6 +48,15 @@ describe('apiRequest', () => {
     });
   });
 
+  it('токен сессии → Authorization: Bearer; без токена заголовка нет', async () => {
+    await apiRequest('/account/me', { authToken: 'ms_token' });
+    expect(lastCall().headers).toMatchObject({ Authorization: 'Bearer ms_token' });
+    // lastCall() читает первый вызов — очищаем историю перед вторым запросом
+    fetchMock.mockClear();
+    await apiRequest('/account/me');
+    expect(lastCall().headers).not.toHaveProperty('Authorization');
+  });
+
   it('2xx → разобранный JSON', async () => {
     fetchMock.mockResolvedValue(respond(200, { ok: true }));
     await expect(apiRequest('/x')).resolves.toEqual({ ok: true });
