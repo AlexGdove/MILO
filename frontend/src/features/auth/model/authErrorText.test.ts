@@ -22,6 +22,9 @@ describe('authErrorText', () => {
     expect(authErrorText(new ApiError(403, 'account_blocked', ''))).toBe(
       'Аккаунт заблокирован. Напишите в техподдержку.',
     );
+    expect(authErrorText(new ApiError(422, 'email_rejected', ''))).toBe(
+      'На этот адрес нельзя отправить письмо — проверьте почту.',
+    );
     expect(authErrorText(new ApiError(503, 'auth_unavailable', ''))).toBe(
       'Регистрация временно недоступна. Попробуйте позже.',
     );

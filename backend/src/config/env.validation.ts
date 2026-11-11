@@ -16,7 +16,7 @@ export type NodeEnv = (typeof NODE_ENVS)[number];
 export const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const;
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
-export const EMAIL_TRANSPORTS = ['log'] as const;
+export const EMAIL_TRANSPORTS = ['log', 'smtp'] as const;
 export type EmailTransport = (typeof EMAIL_TRANSPORTS)[number];
 
 /** Токен бота: `<id бота>:<секрет>` (значение в сообщения об ошибке не попадает). */
@@ -115,12 +115,32 @@ export class EnvironmentVariables {
   AUTH_CODE_SECRET?: string;
 
   /**
-   * Как отправлять коды входа: `log` — в лог сервера (только разработка). Настоящий почтовый
-   * сервис ещё не выбран (№68); без значения в production вход по почте выключен.
+   * Как отправлять письма с кодами: `log` — в лог сервера (только разработка); `smtp` — через
+   * SMTP-сервер (свой почтовый сервер `mail` в compose, решение №70). Без значения в production
+   * регистрация и сброс пароля выключены.
    */
   @IsOptional()
   @IsIn(EMAIL_TRANSPORTS)
   EMAIL_TRANSPORT?: EmailTransport;
+
+  /** SMTP для `EMAIL_TRANSPORT=smtp`: адрес почтового сервера (внутри compose — `mail`) */
+  @IsOptional()
+  @Matches(/^[A-Za-z0-9.-]{1,253}$/, { message: 'SMTP_HOST must be a host name' })
+  SMTP_HOST?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(65535)
+  SMTP_PORT?: number;
+
+  /** Отправитель: `MILO <noreply@milo-app.ru>` или просто адрес */
+  @IsOptional()
+  @Matches(/^([^<>\r\n]{1,64} <[^\s<>@]+@[^\s<>@]+>|[^\s<>@]+@[^\s<>@]+)$/, {
+    message: 'EMAIL_FROM must be an email address or "Name <address>"',
+  })
+  EMAIL_FROM?: string;
 
   /** Тема группы для сообщений об ошибках приложения (отправляет бот поддержки); без неё — тема поддержки */
   @IsOptional()
@@ -167,6 +187,10 @@ export function validateEnv(config: Record<string, unknown>): EnvironmentVariabl
 
   if (env.NODE_ENV === 'production' && env.DEV_TOOLS === 'true') {
     problems.push('DEV_TOOLS: development tools must not be enabled in production');
+  }
+
+  if (env.EMAIL_TRANSPORT === 'smtp' && (!env.SMTP_HOST || !env.EMAIL_FROM)) {
+    problems.push('EMAIL_TRANSPORT: smtp requires SMTP_HOST and EMAIL_FROM');
   }
 
   if (env.NODE_ENV === 'production' && env.EMAIL_TRANSPORT === 'log') {

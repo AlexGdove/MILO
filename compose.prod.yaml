@@ -107,11 +107,39 @@ services:
       # Аккаунты (№60, №68): без обоих значений вход по почте отвечает 503 auth_unavailable
       AUTH_CODE_SECRET: ${AUTH_CODE_SECRET:-}
       EMAIL_TRANSPORT: ${EMAIL_TRANSPORT:-}
+      # Свой почтовый сервер (решение №70) — используется при EMAIL_TRANSPORT=smtp
+      SMTP_HOST: mail
+      SMTP_PORT: 587
+      EMAIL_FROM: MILO <noreply@${DOMAIN}>
     depends_on:
       migrate:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
+      mail:
+        condition: service_started
+
+  # Свой почтовый сервер (решение №70): только отправка писем с кодами (подтверждение почты, сброс
+  # пароля). Принимает письма от backend по внутренней сети (587), подписывает DKIM и доставляет
+  # получателю по порту 25. Наружу порты не открыты. Ключи DKIM — в томе: при перезапуске не
+  # меняются (иначе устареет DNS-запись mail._domainkey). Наружу — предпочтительно IPv4: обратная
+  # запись (PTR) настроена только для IPv4-адреса сервера.
+  mail:
+    <<: *defaults
+    image: boky/postfix:5.2.1-alpine
+    environment:
+      ALLOWED_SENDER_DOMAINS: ${DOMAIN:?DOMAIN is required}
+      POSTFIX_myhostname: mail.${DOMAIN}
+      # Внутренние сети Docker (IPv4 и IPv6 ULA, B-25) — только они могут отправлять письма
+      POSTFIX_mynetworks: 127.0.0.0/8 [::1]/128 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 [fc00::]/7
+      POSTFIX_smtp_address_preference: ipv4
+      POSTFIX_message_size_limit: '1048576'
+      DKIM_BACKEND: opendkim
+      DKIM_AUTOGENERATE: 'true'
+      DKIM_SELECTOR: mail
+    volumes:
+      - mail-dkim:/etc/opendkim/keys
+    mem_limit: 128m
 
   web:
     <<: *defaults
@@ -151,5 +179,6 @@ networks:
 
 volumes:
   postgres-data:
+  mail-dkim:
   caddy-data:
   caddy-config:

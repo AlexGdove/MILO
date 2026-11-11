@@ -18,7 +18,7 @@ import {
   EMAIL_CODE_LIMITS,
   LOGIN_EMAIL_LIMIT,
 } from '../src/modules/auth/auth.service.js';
-import { EmailSender } from '../src/modules/auth/email-sender.js';
+import { EmailRejectedError, EmailSender } from '../src/modules/auth/email-sender.js';
 import { CleanupService } from '../src/modules/maintenance/cleanup.service.js';
 import { RATE_LIMIT_POLICIES } from '../src/modules/rate-limit/rate-limit.policies.js';
 import { PrismaService } from '../src/prisma/prisma.service.js';
@@ -29,7 +29,11 @@ type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-ex
 /** Письма вместо почтового сервиса: последний код на каждую почту и назначение. */
 class FakeEmailSender extends EmailSender {
   readonly sent: Array<{ email: string; code: string; purpose: CodePurpose }> = [];
+  /** Почтовый сервер недоступен / адрес не принимает почту */
+  failing: false | 'down' | 'rejected' = false;
   sendCode(email: string, code: string, purpose: CodePurpose): Promise<void> {
+    if (this.failing === 'down') return Promise.reject(new Error('SMTP down'));
+    if (this.failing === 'rejected') return Promise.reject(new EmailRejectedError());
     this.sent.push({ email, code, purpose });
     return Promise.resolve();
   }
@@ -66,6 +70,7 @@ describe('Аккаунты (e2e)', () => {
 
   beforeEach(async () => {
     mail.sent.length = 0;
+    mail.failing = false;
     await resetData(prisma);
     await resetRedis(app.get(RedisService));
   });
@@ -309,6 +314,18 @@ describe('Аккаунты (e2e)', () => {
       );
       await post('password/reset', { email: EMAIL, code, password: 'third password!' }).expect(401);
     });
+  });
+
+  it('почтовый сервер недоступен → 503 email_unavailable', async () => {
+    mail.failing = 'down';
+    const res = await post('register', { email: EMAIL, password: PASSWORD }).expect(503);
+    expect(res.body.error.code).toBe('email_unavailable');
+  });
+
+  it('адрес не принимает почту → 422 email_rejected', async () => {
+    mail.failing = 'rejected';
+    const res = await post('register', { email: EMAIL, password: PASSWORD }).expect(422);
+    expect(res.body.error.code).toBe('email_rejected');
   });
 
   describe('лимиты писем', () => {

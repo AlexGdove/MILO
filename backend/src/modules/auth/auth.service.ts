@@ -21,7 +21,7 @@ import {
   SESSION_TOUCH_INTERVAL_MS,
   SESSION_TTL_MS,
 } from './auth.config.js';
-import { EmailSender } from './email-sender.js';
+import { EmailRejectedError, EmailSender } from './email-sender.js';
 import { hashPassword, verifyPassword } from './password.js';
 import { AppException } from '../../common/errors/app.exception.js';
 import type { CodePurpose, Plan, Prisma } from '../../generated/prisma/client.js';
@@ -262,7 +262,23 @@ export class AuthService {
         },
       }),
     ]);
-    await this.email.sendCode(email, code, purpose);
+    try {
+      await this.email.sendCode(email, code, purpose);
+    } catch (error) {
+      if (error instanceof EmailRejectedError) {
+        throw fail(
+          HttpStatus.UNPROCESSABLE_ENTITY,
+          'email_rejected',
+          'This email address does not accept mail',
+        );
+      }
+      // Причина — в логе отправителя; клиенту — понятный ответ «попробуйте позже»
+      throw fail(
+        HttpStatus.SERVICE_UNAVAILABLE,
+        'email_unavailable',
+        'Email could not be sent, try again later',
+      );
+    }
     return codeSent();
   }
 
