@@ -88,6 +88,6 @@ describe('Настройки (решение №43)', () => {
     expect(
       screen.getByRole('heading', { name: 'Данные и конфиденциальность' }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/нет регистрации, имени и контактов/)).toBeInTheDocument();
+    expect(screen.getByText(/почта, пароль в зашифрованном виде и тариф/)).toBeInTheDocument();
   });
 });

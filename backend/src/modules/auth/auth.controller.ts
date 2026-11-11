@@ -12,6 +12,7 @@ import {
   ApiAcceptedResponse,
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiOkResponse,
@@ -26,10 +27,13 @@ import { AuthService } from './auth.service.js';
 import type { SessionIdentity } from './auth.service.js';
 import {
   AccountDto,
+  CodeSentDto,
+  EmailDto,
+  LoginDto,
+  RegisterDto,
+  ResetPasswordDto,
   SessionDto,
-  StartedLoginDto,
-  StartEmailLoginDto,
-  VerifyEmailLoginDto,
+  VerifyEmailDto,
 } from './dto/auth.dto.js';
 import { CurrentSession, SessionGuard } from './session.guard.js';
 import { ErrorResponseDto } from '../../common/errors/error-response.dto.js';
@@ -42,38 +46,103 @@ const NO_SESSION = {
   description: 'code: session_required | session_invalid',
 } as const;
 
-/** Вход по коду на почту (решения №60, №68). Аккаунт нужен только для тарифа. */
+const INVALID_CODE = { type: ErrorResponseDto, description: 'code: code_invalid' } as const;
+const BLOCKED = { type: ErrorResponseDto, description: 'code: account_blocked' } as const;
+const VALIDATION = { type: ErrorResponseDto, description: 'code: validation_failed' } as const;
+
+/**
+ * Аккаунты (решения №60, №68, №69): регистрация почтой и паролем, подтверждение почты кодом,
+ * вход паролем, сброс пароля кодом. Аккаунт нужен только для тарифа.
+ */
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
-  @Post('email/start')
+  @Post('register')
   @HttpCode(HttpStatus.ACCEPTED)
-  @RateLimit('authStart')
+  @RateLimit('authRegister')
   @ApiOperation({
-    summary: 'Отправить код входа на почту',
-    description: 'Ответ одинаковый для новой и существующей почты; прежний код гаснет',
+    summary: 'Регистрация: аккаунт без подтверждения и код на почту',
+    description: 'Повтор для неподтверждённой почты меняет пароль и шлёт новый код',
   })
-  @ApiAcceptedResponse({ type: StartedLoginDto })
-  @ApiBadRequestResponse({ type: ErrorResponseDto, description: 'code: validation_failed' })
+  @ApiAcceptedResponse({ type: CodeSentDto })
+  @ApiBadRequestResponse(VALIDATION)
+  @ApiConflictResponse({ type: ErrorResponseDto, description: 'code: email_taken' })
   @ApiTooManyRequestsResponse(LIMITED)
   @ApiServiceUnavailableResponse(UNAVAILABLE)
-  start(@Body() dto: StartEmailLoginDto): Promise<StartedLoginDto> {
-    return this.auth.startEmailLogin(dto.email);
+  register(@Body() dto: RegisterDto): Promise<CodeSentDto> {
+    return this.auth.register(dto.email, dto.password);
   }
 
-  @Post('email/verify')
-  @HttpCode(HttpStatus.OK)
-  @RateLimit('authVerify')
-  @ApiOperation({ summary: 'Проверить код → токен сессии (при первом входе создаётся аккаунт)' })
-  @ApiOkResponse({ type: SessionDto })
-  @ApiUnauthorizedResponse({ type: ErrorResponseDto, description: 'code: login_code_invalid' })
-  @ApiForbiddenResponse({ type: ErrorResponseDto, description: 'code: account_blocked' })
+  @Post('register/resend')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @RateLimit('authEmail')
+  @ApiOperation({ summary: 'Повторить код подтверждения (ответ одинаковый для любой почты)' })
+  @ApiAcceptedResponse({ type: CodeSentDto })
+  @ApiBadRequestResponse(VALIDATION)
   @ApiTooManyRequestsResponse(LIMITED)
   @ApiServiceUnavailableResponse(UNAVAILABLE)
-  verify(@Body() dto: VerifyEmailLoginDto): Promise<SessionDto> {
-    return this.auth.verifyEmailLogin(dto.email, dto.code);
+  resend(@Body() dto: EmailDto): Promise<CodeSentDto> {
+    return this.auth.resendVerification(dto.email);
+  }
+
+  @Post('register/verify')
+  @HttpCode(HttpStatus.OK)
+  @RateLimit('authCode')
+  @ApiOperation({ summary: 'Подтвердить почту кодом → токен сессии' })
+  @ApiOkResponse({ type: SessionDto })
+  @ApiBadRequestResponse(VALIDATION)
+  @ApiUnauthorizedResponse(INVALID_CODE)
+  @ApiForbiddenResponse(BLOCKED)
+  @ApiTooManyRequestsResponse(LIMITED)
+  @ApiServiceUnavailableResponse(UNAVAILABLE)
+  verify(@Body() dto: VerifyEmailDto): Promise<SessionDto> {
+    return this.auth.verifyEmail(dto.email, dto.code);
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @RateLimit('authLogin')
+  @ApiOperation({ summary: 'Вход почтой и паролем → токен сессии' })
+  @ApiOkResponse({ type: SessionDto })
+  @ApiBadRequestResponse(VALIDATION)
+  @ApiUnauthorizedResponse({ type: ErrorResponseDto, description: 'code: invalid_credentials' })
+  @ApiForbiddenResponse({
+    type: ErrorResponseDto,
+    description: 'code: email_not_verified | account_blocked',
+  })
+  @ApiTooManyRequestsResponse(LIMITED)
+  login(@Body() dto: LoginDto): Promise<SessionDto> {
+    return this.auth.login(dto.email, dto.password);
+  }
+
+  @Post('password/forgot')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @RateLimit('authEmail')
+  @ApiOperation({
+    summary: 'Забыли пароль: код сброса на почту (ответ одинаковый для любой почты)',
+  })
+  @ApiAcceptedResponse({ type: CodeSentDto })
+  @ApiBadRequestResponse(VALIDATION)
+  @ApiTooManyRequestsResponse(LIMITED)
+  @ApiServiceUnavailableResponse(UNAVAILABLE)
+  forgot(@Body() dto: EmailDto): Promise<CodeSentDto> {
+    return this.auth.forgotPassword(dto.email);
+  }
+
+  @Post('password/reset')
+  @HttpCode(HttpStatus.OK)
+  @RateLimit('authCode')
+  @ApiOperation({ summary: 'Новый пароль по коду: прежние сессии закрываются → новый токен' })
+  @ApiOkResponse({ type: SessionDto })
+  @ApiBadRequestResponse(VALIDATION)
+  @ApiUnauthorizedResponse(INVALID_CODE)
+  @ApiForbiddenResponse(BLOCKED)
+  @ApiTooManyRequestsResponse(LIMITED)
+  @ApiServiceUnavailableResponse(UNAVAILABLE)
+  reset(@Body() dto: ResetPasswordDto): Promise<SessionDto> {
+    return this.auth.resetPassword(dto.email, dto.code, dto.password);
   }
 
   @Post('logout')
