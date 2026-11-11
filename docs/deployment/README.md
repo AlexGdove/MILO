@@ -84,6 +84,10 @@ curl https://<домен>/api/v1/health/ready      # {"status":"ok","checks":{"d
 
 Открыть `https://<домен>` в браузере — приложение; «Профиль → ⚙ → Техподдержка» — чат.
 
+## 5a. Почта для кодов (регистрация, сброс пароля)
+
+Свой почтовый сервер — сервис `mail` (решение №70). Однократная настройка DNS, PTR и `.env` — [mail.md](mail.md).
+
 ## 6. Telegram-боты
 
 **Если боты молчат**, в логах backend — `Telegram polling failed` / `Network request for 'getUpdates' failed`: проверить доступ к Telegram с сервера — `curl -4 -m 6 -sI https://api.telegram.org` и `curl -6 -m 6 -sI https://api.telegram.org`. У части провайдеров Telegram доступен только по IPv6 — поэтому в `compose.prod.yaml` у сети контейнеров включён IPv6 (B-25). Если не отвечают оба — нужен другой сервер или регион.

@@ -57,8 +57,9 @@ describe('CodeForm', () => {
     expect(await screen.findByText('Новый код отправлен')).toBeInTheDocument();
   });
 
-  it('показывает, куда отправлен код', () => {
+  it('показывает, куда отправлен код, и подсказывает про «Спам»', () => {
     setup();
     expect(screen.getByText(/anna@example\.com/)).toBeInTheDocument();
+    expect(screen.getByText(/проверьте папку «Спам»/)).toBeInTheDocument();
   });
 });

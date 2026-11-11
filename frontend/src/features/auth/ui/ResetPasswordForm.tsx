@@ -43,7 +43,10 @@ export const ResetPasswordForm = ({ email, onSubmit, onResend }: ResetPasswordFo
 
   return (
     <form className={styles.form} noValidate onSubmit={handleSubmit}>
-      <p className={styles.hint}>Мы отправили код на {email}. Он действует 10 минут.</p>
+      <p className={styles.hint}>
+        Мы отправили код на {email}. Он действует 10 минут. Если письма нет — проверьте папку
+        «Спам».
+      </p>
       <Input
         label="Код из письма"
         inputMode="numeric"
