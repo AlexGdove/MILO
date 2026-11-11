@@ -138,4 +138,29 @@ describe('ProductList (кладовая)', () => {
     await user.click(screen.getByRole('button', { name: 'В список покупок' }));
     expect(screen.getByRole('searchbox', { name: 'Поиск продукта' })).toHaveValue('греч');
   });
+  it('штрихкод из поиска попадает в поле штрихкода, название пустое', async () => {
+    const user = userEvent.setup();
+    render(<ProductList />);
+
+    await user.type(screen.getByLabelText('Поиск продукта'), '4607001234567');
+    expect(
+      screen.getByText('Продукта со штрихкодом 4607001234567 ещё нет — создайте его'),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Создать продукт' }));
+    expect(screen.getByLabelText('Название')).toHaveValue('');
+    expect(screen.getByLabelText('Штрихкод (необязательно)')).toHaveValue('4607001234567');
+  });
+
+  it('обычный текст из поиска по-прежнему попадает в название', async () => {
+    const user = userEvent.setup();
+    render(<ProductList />);
+
+    await user.type(screen.getByLabelText('Поиск продукта'), 'Кефир');
+    expect(screen.getByText('Продукта «Кефир» ещё нет — создайте его')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Создать продукт' }));
+    expect(screen.getByLabelText('Название')).toHaveValue('Кефир');
+    expect(screen.getByLabelText('Штрихкод (необязательно)')).toHaveValue('');
+  });
 });

@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 import {
   filterProducts,
+  normalizeBarcode,
   ProductCard,
   selectProducts,
   useProductStore,
@@ -36,6 +37,8 @@ export const ProductList = () => {
   const products = useProductStore(selectProducts);
   const [query, setQuery] = useState('');
   const searching = query.trim() !== '';
+  // Отсканировали (или ввели) штрихкод — «Создать продукт» кладёт его в поле штрихкода
+  const scannedBarcode = normalizeBarcode(query);
   const resetSearch = () => setQuery('');
   // Решения модератора по своим предложениям — пока открыта кладовая
   useSubmissionSync();
@@ -50,9 +53,17 @@ export const ProductList = () => {
     searching ? (
       <EmptyState
         title="Ничего не найдено"
-        description={`Продукта «${query.trim()}» ещё нет — создайте его`}
+        description={
+          scannedBarcode
+            ? `Продукта со штрихкодом ${scannedBarcode} ещё нет — создайте его`
+            : `Продукта «${query.trim()}» ещё нет — создайте его`
+        }
         action={
-          <AddProductButton initialName={query} label="Создать продукт" onCreated={resetSearch} />
+          <AddProductButton
+            {...(scannedBarcode ? { initialBarcode: scannedBarcode } : { initialName: query })}
+            label="Создать продукт"
+            onCreated={resetSearch}
+          />
         }
       />
     ) : (
