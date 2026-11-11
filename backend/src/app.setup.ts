@@ -31,7 +31,13 @@ export function configureApp(app: NestExpressApplication): AppConfig {
   app.enableCors({
     origin: config.corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'X-Device-Key', 'Idempotency-Key', REQUEST_ID_HEADER],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Device-Key',
+      'Idempotency-Key',
+      REQUEST_ID_HEADER,
+    ],
     exposedHeaders: ['X-Request-Id', 'Retry-After'],
     maxAge: 600,
   });
@@ -43,9 +49,10 @@ export function configureApp(app: NestExpressApplication): AppConfig {
   if (config.swaggerEnabled) {
     const document = new DocumentBuilder()
       .setTitle('MILO API')
-      .setDescription('Публичные рецепты и поддержка. Контракты — docs/backend/api.md')
+      .setDescription('Общая база продуктов, поддержка и аккаунты. Контракты — docs/backend/api.md')
       .setVersion('1')
       .addApiKey({ type: 'apiKey', in: 'header', name: 'X-Device-Key' }, 'device-key')
+      .addBearerAuth({ type: 'http', scheme: 'bearer' }, 'session')
       .build();
     SwaggerModule.setup(
       'api/docs',

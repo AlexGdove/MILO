@@ -20,11 +20,13 @@ export interface CleanupResult {
   idempotencyKeys: number;
   outboxEvents: number;
   clientErrors: number;
+  loginCodes: number;
+  sessions: number;
 }
 
 /**
  * Периодическая очистка служебных таблиц: дедупликация Telegram (7 дней), ключи
- * идемпотентности (24 ч), отправленные события outbox (30 дней), старые ошибки приложения (30 дней). Неотправленные события не
+ * идемпотентности (24 ч), отправленные события outbox (30 дней), старые ошибки приложения (30 дней), истёкшие коды входа и сессии. Неотправленные события не
  * удаляются. В тестах таймер не запускается — `run` вызывают явно.
  */
 @Injectable()
@@ -59,7 +61,7 @@ export class CleanupService implements OnApplicationBootstrap, OnModuleDestroy {
 
   async run(now = new Date()): Promise<CleanupResult> {
     const before = (ttl: number) => new Date(now.getTime() - ttl);
-    const [updates, keys, events, errors] = await Promise.all([
+    const [updates, keys, events, errors, codes, sessions] = await Promise.all([
       this.prisma.telegramUpdate.deleteMany({
         where: { receivedAt: { lt: before(TELEGRAM_UPDATES_TTL_MS) } },
       }),
@@ -72,17 +74,22 @@ export class CleanupService implements OnApplicationBootstrap, OnModuleDestroy {
       this.prisma.clientError.deleteMany({
         where: { lastSeenAt: { lt: before(CLIENT_ERRORS_TTL_MS) } },
       }),
+      // Коды входа: истёкшие (использованные гаснут сразу и тоже истекают за 10 минут)
+      this.prisma.loginCode.deleteMany({ where: { expiresAt: { lt: now } } }),
+      // Сессии: истёкшие и закрытые — по ним уже нельзя войти
+      this.prisma.session.deleteMany({
+        where: { OR: [{ expiresAt: { lt: now } }, { revokedAt: { not: null } }] },
+      }),
     ]);
     const result: CleanupResult = {
       telegramUpdates: updates.count,
       idempotencyKeys: keys.count,
       outboxEvents: events.count,
       clientErrors: errors.count,
+      loginCodes: codes.count,
+      sessions: sessions.count,
     };
-    if (
-      result.telegramUpdates + result.idempotencyKeys + result.outboxEvents + result.clientErrors >
-      0
-    ) {
+    if (Object.values(result).some((count) => count > 0)) {
       this.logger.log(result, 'Cleanup done');
     }
     return result;

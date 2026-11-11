@@ -659,6 +659,8 @@ describe('Telegram-боты (e2e)', () => {
         idempotencyKeys: 1,
         outboxEvents: 1,
         clientErrors: 0,
+        loginCodes: 0,
+        sessions: 0,
       });
       expect((await prisma.outboxEvent.findMany()).map((e) => e.type).sort()).toEqual([
         'pending',

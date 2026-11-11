@@ -32,6 +32,12 @@ export const RATE_LIMIT_POLICIES = {
   supportRead: { limit: 120, ttl: MINUTE, tracker: 'device' },
   /** Отчёты об ошибках приложения: с одного устройства не больше 30 в час */
   clientError: { limit: 30, ttl: HOUR, tracker: 'device' },
+  /** Запрос кода входа: с одного IP не больше 10 в час (ещё лимит на почту — в `AuthService`) */
+  authStart: { limit: 10, ttl: HOUR, tracker: 'ip' },
+  /** Ввод кода: с одного IP не больше 30 попыток за 10 минут (и 5 на сам код) */
+  authVerify: { limit: 30, ttl: 10 * MINUTE, tracker: 'ip' },
+  /** Аккаунт: чтение, выход, удаление */
+  account: { limit: 120, ttl: MINUTE, tracker: 'ip' },
   /** Подключения к WebSocket `/support` — считает `SupportGateway`, не HTTP-guard */
   supportConnect: { limit: 30, ttl: MINUTE, tracker: 'ip' },
 } as const satisfies Record<string, RateLimitPolicy>;

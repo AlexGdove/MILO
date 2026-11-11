@@ -284,3 +284,60 @@ model ClientError {
   @@index([lastSeenAt])
   @@map("client_errors")
 }
+
+/// Тариф аккаунта (решение №68): бесплатный / платный с лимитом фото-ИИ / безлимитный.
+enum Plan {
+  free
+  plus
+  unlimited
+
+  @@map("plan")
+}
+
+/// Аккаунт (решения №60, №68): только почта и тариф — личные данные остаются на устройстве.
+model Account {
+  id          String    @id @default(uuid()) @db.Uuid
+  email       String    @unique @db.VarChar(254)
+  plan        Plan      @default(free)
+  planUntil   DateTime? @map("plan_until") @db.Timestamptz(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(6)
+  blockedAt   DateTime? @map("blocked_at") @db.Timestamptz(6)
+
+  sessions Session[]
+
+  @@map("accounts")
+}
+
+/// Одноразовый код входа по почте. Хранится только HMAC кода; связи с аккаунтом нет — код
+/// приходит и на новую почту (аккаунт создаётся при первом входе).
+model LoginCode {
+  id         String    @id @default(uuid()) @db.Uuid
+  email      String    @db.VarChar(254)
+  codeHash   String    @map("code_hash") @db.Char(64)
+  attempts   Int       @default(0)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([email, createdAt(sort: Desc)])
+  @@index([expiresAt])
+  @@map("login_codes")
+}
+
+/// Сессия входа: хранится только SHA-256 токена. Срок продлевается при активности (90 дней).
+model Session {
+  id         String    @id @default(uuid()) @db.Uuid
+  accountId  String    @map("account_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash") @db.Char(64)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastSeenAt DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+
+  account Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+  @@index([expiresAt])
+  @@map("sessions")
+}

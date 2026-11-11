@@ -16,6 +16,9 @@ export type NodeEnv = (typeof NODE_ENVS)[number];
 export const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const;
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
+export const EMAIL_TRANSPORTS = ['log'] as const;
+export type EmailTransport = (typeof EMAIL_TRANSPORTS)[number];
+
 /** Токен бота: `<id бота>:<секрет>` (значение в сообщения об ошибке не попадает). */
 const BOT_TOKEN_PATTERN = /^\d{5,15}:[A-Za-z0-9_-]{30,64}$/;
 /** Чат Telegram: целое число, у групп — отрицательное. */
@@ -101,6 +104,24 @@ export class EnvironmentVariables {
   @Matches(THREAD_ID_PATTERN, { message: 'TELEGRAM_MODERATION_THREAD_ID must be a topic id' })
   TELEGRAM_MODERATION_THREAD_ID?: string;
 
+  /**
+   * Аккаунты (решения №60, №68): секрет HMAC для кодов входа — не короче 32 символов.
+   * В production без него вход по почте выключен (`503 auth_unavailable`); вне production
+   * без него секрет создаётся случайно при запуске (коды живут до перезапуска).
+   */
+  @IsOptional()
+  @IsString()
+  @Matches(/^\S{32,256}$/, { message: 'AUTH_CODE_SECRET must be 32–256 characters' })
+  AUTH_CODE_SECRET?: string;
+
+  /**
+   * Как отправлять коды входа: `log` — в лог сервера (только разработка). Настоящий почтовый
+   * сервис ещё не выбран (№68); без значения в production вход по почте выключен.
+   */
+  @IsOptional()
+  @IsIn(EMAIL_TRANSPORTS)
+  EMAIL_TRANSPORT?: EmailTransport;
+
   /** Тема группы для сообщений об ошибках приложения (отправляет бот поддержки); без неё — тема поддержки */
   @IsOptional()
   @Matches(THREAD_ID_PATTERN, { message: 'TELEGRAM_ERRORS_THREAD_ID must be a topic id' })
@@ -146,6 +167,10 @@ export function validateEnv(config: Record<string, unknown>): EnvironmentVariabl
 
   if (env.NODE_ENV === 'production' && env.DEV_TOOLS === 'true') {
     problems.push('DEV_TOOLS: development tools must not be enabled in production');
+  }
+
+  if (env.NODE_ENV === 'production' && env.EMAIL_TRANSPORT === 'log') {
+    problems.push('EMAIL_TRANSPORT: login codes must not be written to logs in production');
   }
 
   if (problems.length > 0) {
