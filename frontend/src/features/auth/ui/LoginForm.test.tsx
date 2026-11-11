@@ -48,6 +48,19 @@ describe('LoginForm', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Неверная почта или пароль.');
   });
 
+  it('«глазик» показывает пароль и не отправляет форму', async () => {
+    const user = userEvent.setup();
+    const onSubmit = vi.fn<Submit>();
+    render(<LoginForm onSubmit={onSubmit} />);
+
+    await user.type(screen.getByLabelText('Пароль'), 'secret');
+    await user.click(screen.getByRole('button', { name: 'Показать пароль' }));
+
+    expect(screen.getByLabelText('Пароль')).toHaveAttribute('type', 'text');
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.queryByText('Введите почту')).toBeNull();
+  });
+
   it('defaultEmail подставляется в поле почты', () => {
     render(<LoginForm defaultEmail="anna@example.com" onSubmit={vi.fn<Submit>()} />);
     expect(screen.getByLabelText('Почта')).toHaveValue('anna@example.com');

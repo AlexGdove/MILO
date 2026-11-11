@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 
-import { Button, Input } from '@/shared/ui';
+import { Button, Input, PasswordInput } from '@/shared/ui';
 
 import styles from './AuthForm.module.css';
 import { FormError } from './FormError';
@@ -48,9 +48,8 @@ export const RegisterForm = ({ onSubmit }: RegisterFormProps) => {
         onChange={(event) => setEmail(event.target.value)}
         error={submitted ? errors.email : undefined}
       />
-      <Input
+      <PasswordInput
         label="Пароль"
-        type="password"
         name="password"
         autoComplete="new-password"
         value={password}
@@ -58,9 +57,8 @@ export const RegisterForm = ({ onSubmit }: RegisterFormProps) => {
         error={submitted ? errors.password : undefined}
       />
       <p className={styles.hint}>Не меньше {PASSWORD_MIN_LENGTH} символов</p>
-      <Input
+      <PasswordInput
         label="Повторите пароль"
-        type="password"
         name="repeat"
         autoComplete="new-password"
         value={repeat}
