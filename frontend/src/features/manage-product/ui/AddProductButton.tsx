@@ -8,6 +8,8 @@ import { ProductForm } from './ProductForm';
 interface AddProductButtonProps {
   /** Название, подставляемое в форму (например, из строки поиска) */
   initialName?: string;
+  /** Штрихкод, подставляемый в форму (например, отсканированный в поиске) */
+  initialBarcode?: string;
   /** Заполненная форма (например, продукт из Open Food Facts) */
   initialDraft?: ProductDraft;
   label?: string;
@@ -17,6 +19,7 @@ interface AddProductButtonProps {
 
 export const AddProductButton = ({
   initialName,
+  initialBarcode,
   initialDraft,
   label = '+ Продукт',
   onCreated,
@@ -34,6 +37,7 @@ export const AddProductButton = ({
           submitLabel="Добавить"
           initial={initialDraft}
           defaultName={initialName?.trim()}
+          defaultBarcode={initialBarcode}
           onSubmit={(draft) => {
             addProduct(draft);
             setOpen(false);

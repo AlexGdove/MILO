@@ -10,6 +10,8 @@ interface ProductFormProps {
   initial?: ProductDraft;
   /** Название для нового продукта (например, из строки поиска) */
   defaultName?: string;
+  /** Штрихкод для нового продукта (например, отсканированный в поиске) */
+  defaultBarcode?: string;
   submitLabel: string;
   onSubmit: (draft: ProductDraft) => void;
   onDelete?: () => void;
@@ -61,13 +63,19 @@ const validate = (values: FormValues, unit: Unit) => {
 export const ProductForm = ({
   initial,
   defaultName,
+  defaultBarcode,
   submitLabel,
   onSubmit,
   onDelete,
 }: ProductFormProps) => {
   const [values, setValues] = useState<FormValues>(() => {
     const base = toValues(initial);
-    return !initial && defaultName ? { ...base, name: defaultName } : base;
+    if (initial) return base;
+    return {
+      ...base,
+      ...(defaultName && { name: defaultName }),
+      ...(defaultBarcode && { barcode: defaultBarcode }),
+    };
   });
   const [unit, setUnit] = useState<Unit>(initial?.unit ?? 'g');
   const [submitted, setSubmitted] = useState(false);
