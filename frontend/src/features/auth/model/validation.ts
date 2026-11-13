@@ -6,11 +6,20 @@ export const PASSWORD_MAX_LENGTH = 128;
 export const emailError = (email: string): string | undefined =>
   email.trim().includes('@') ? undefined : 'Введите почту';
 
+/**
+ * Новый пароль — только латиница, цифры, знаки и пробел (печатные ASCII, как на сервере):
+ * кириллица в пароле — обычно ошибка раскладки. Вход это правило не проверяет.
+ */
+const PASSWORD_PATTERN = /^[\x20-\x7E]*$/;
+const CYRILLIC = /[Ѐ-ӿ]/;
+
 /** Новый пароль (регистрация, сброс). */
 export const newPasswordError = (password: string): string | undefined => {
   if (password.length < PASSWORD_MIN_LENGTH) return `Не меньше ${PASSWORD_MIN_LENGTH} символов`;
   if (password.length > PASSWORD_MAX_LENGTH) return `Не больше ${PASSWORD_MAX_LENGTH} символов`;
   if (!password.trim()) return 'Пароль не может состоять из пробелов';
+  if (CYRILLIC.test(password)) return 'Только латиница — похоже, включена русская раскладка';
+  if (!PASSWORD_PATTERN.test(password)) return 'Только латинские буквы, цифры и символы';
   return undefined;
 };
 

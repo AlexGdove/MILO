@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEmail, IsString, Length, Matches, MaxLength } from 'class-validator';
 
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH } from '../password.js';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, PASSWORD_PATTERN } from '../password.js';
 
 /** Строка без пробелов по краям; не строка остаётся как есть — её отклонит `IsString`. */
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
@@ -19,7 +19,7 @@ export class EmailDto {
   email!: string;
 }
 
-/** Регистрация: почта и пароль (пробелы в пароле значимы — не обрезаются). */
+/** Регистрация: почта и пароль (пробелы значимы — не обрезаются; только латиница — PASSWORD_PATTERN). */
 export class RegisterDto extends EmailDto {
   @ApiProperty({
     format: 'password',
@@ -30,6 +30,9 @@ export class RegisterDto extends EmailDto {
   @IsString()
   @Length(PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH)
   @Matches(/\S/, { message: 'password must not be blank' })
+  @Matches(PASSWORD_PATTERN, {
+    message: 'password must contain only latin letters, digits and symbols',
+  })
   password!: string;
 }
 
@@ -61,6 +64,9 @@ export class ResetPasswordDto extends VerifyEmailDto {
   @IsString()
   @Length(PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH)
   @Matches(/\S/, { message: 'password must not be blank' })
+  @Matches(PASSWORD_PATTERN, {
+    message: 'password must contain only latin letters, digits and symbols',
+  })
   password!: string;
 }
 
