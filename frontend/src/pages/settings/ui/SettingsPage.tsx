@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
-import { selectAccount, useSessionStore } from '@/entities/account';
+import { selectAccount, selectToken, useSessionStore } from '@/entities/account';
+import { ChangePassword, DeleteAccount } from '@/features/auth';
 import { ErrorReportsToggle } from '@/features/report-errors';
 import { LanguageSwitcher } from '@/features/switch-language';
 import { ThemeSwitcher } from '@/features/switch-theme';
@@ -9,20 +10,21 @@ import { BackLink, Card, PageLayout, PrivacyNotice } from '@/shared/ui';
 
 import styles from './SettingsPage.module.css';
 
-/** Аккаунт (решение №69): почта, если вошли; иначе — вход и регистрация. */
+/**
+ * Аккаунт (просьба владельца 2026-11-13): только для вошедшего — смена пароля и удаление.
+ * Вход и регистрация — на «Профиле» (задача 9.2a), здесь их нет.
+ */
 const AccountCard = () => {
+  const token = useSessionStore(selectToken);
   const account = useSessionStore(selectAccount);
+  if (!token || !account) return null;
+
   return (
     <Card className={styles.section}>
       <h2 className={styles.title}>Аккаунт</h2>
-      <p className={styles.hint}>
-        {account
-          ? `Вы вошли как ${account.email}`
-          : 'Нужен только для тарифа — данные остаются на этом устройстве.'}
-      </p>
-      <Link to={ROUTES.account} className={styles.link}>
-        {account ? 'Управление аккаунтом' : 'Войти или зарегистрироваться'}
-      </Link>
+      <p className={styles.hint}>Вы вошли как {account.email}</p>
+      <ChangePassword email={account.email} />
+      <DeleteAccount token={token} />
     </Card>
   );
 };
