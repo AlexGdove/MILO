@@ -209,6 +209,8 @@ describe('Аккаунты (e2e)', () => {
       ['пароль короче 8', { email: EMAIL, password: '1234567' }],
       ['пароль длиннее 128', { email: EMAIL, password: 'a'.repeat(129) }],
       ['пароль из пробелов', { email: EMAIL, password: '         ' }],
+      ['пароль кириллицей', { email: EMAIL, password: 'пароль12345' }],
+      ['пароль с эмодзи', { email: EMAIL, password: 'password\u{1F600}1' }],
       ['лишнее поле', { email: EMAIL, password: PASSWORD, plan: 'unlimited' }],
     ])('%s → 400 validation_failed', async (_name, body) => {
       const res = await post('register', body).expect(400);
@@ -281,6 +283,20 @@ describe('Аккаунты (e2e)', () => {
       await me(res.body.token as string).expect(200);
       await login().expect(401);
       await login(EMAIL, 'new strong password').expect(200);
+    });
+
+    it('новый пароль кириллицей → 400 validation_failed, старый пароль остаётся', async () => {
+      await signUp();
+      await post('password/forgot', { email: EMAIL }).expect(202);
+      const code = mail.last(EMAIL, 'reset_password');
+      const res = await post('password/reset', {
+        email: EMAIL,
+        code,
+        password: 'новый пароль',
+      }).expect(400);
+
+      expect(res.body.error.code).toBe('validation_failed');
+      await login().expect(200);
     });
 
     it('«забыли пароль» для неизвестной или неподтверждённой почты — тот же ответ без письма', async () => {
