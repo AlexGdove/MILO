@@ -14,6 +14,6 @@ COPY frontend/ frontend/
 ENV VITE_API_URL=/api/v1
 RUN npm run build -w frontend
 
-FROM caddy:2.10-alpine
+FROM caddy:2.11-alpine
 COPY docker/web/Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/frontend/dist /srv
