@@ -30,8 +30,22 @@ describe('RegisterForm', () => {
     await fill('test@test.com', '1234567');
     expect(onSubmit).not.toHaveBeenCalled();
     expect(screen.getByLabelText('Пароль')).toHaveAttribute('aria-invalid', 'true');
-    // Подсказка и ошибка поля — один и тот же текст
-    expect(screen.getAllByText('Не меньше 8 символов')).toHaveLength(2);
+    // Ошибка поля — отдельно от подсказки под полем (в подсказке ещё и про латиницу)
+    expect(screen.getByText('Не меньше 8 символов')).toBeInTheDocument();
+    expect(
+      screen.getByText('Не меньше 8 символов, латинскими буквами, цифрами и знаками'),
+    ).toBeInTheDocument();
+  });
+
+  it('пароль кириллицей не принимается — подсказка про раскладку', async () => {
+    const onSubmit = vi.fn<Submit>();
+    render(<RegisterForm onSubmit={onSubmit} />);
+    await fill('test@test.com', 'пароль12345');
+    expect(
+      screen.getByText('Только латиница — похоже, включена русская раскладка'),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Пароль')).toHaveAttribute('aria-invalid', 'true');
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it('пароль из пробелов не принимается', async () => {

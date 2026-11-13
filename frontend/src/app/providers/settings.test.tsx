@@ -1,8 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { useSessionStore, type Account } from '@/entities/account';
 import { ProfilePage } from '@/pages/profile';
 import { SettingsPage } from '@/pages/settings';
 import { APP_VERSION, ROUTES } from '@/shared/config';
@@ -89,5 +90,43 @@ describe('Настройки (решение №43)', () => {
       screen.getByRole('heading', { name: 'Данные и конфиденциальность' }),
     ).toBeInTheDocument();
     expect(screen.getByText(/почта, пароль в зашифрованном виде и тариф/)).toBeInTheDocument();
+  });
+});
+
+describe('Аккаунт в настройках (просьба владельца 2026-11-13)', () => {
+  const TOKEN = `ms_${'A'.repeat(43)}`;
+  const ACCOUNT: Account = { id: 'a1', email: 'anna@example.com', plan: 'free', planUntil: null };
+
+  beforeEach(() => {
+    localStorage.clear();
+    useSessionStore.setState({ token: null, account: null });
+  });
+
+  afterEach(() => {
+    useSessionStore.setState({ token: null, account: null });
+  });
+
+  it('не вошли — карточки аккаунта нет, вход только на «Профиле»', () => {
+    renderAt(ROUTES.settings);
+
+    expect(screen.queryByRole('heading', { name: 'Аккаунт' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Войти или зарегистрироваться' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Управление аккаунтом' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Сменить пароль' })).not.toBeInTheDocument();
+  });
+
+  it('вошли — смена пароля и удаление аккаунта', () => {
+    useSessionStore.setState({ token: TOKEN, account: ACCOUNT });
+    renderAt(ROUTES.settings);
+
+    expect(screen.getByRole('heading', { name: 'Аккаунт' })).toBeInTheDocument();
+    expect(screen.getByText('Вы вошли как anna@example.com')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Сменить пароль' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Удалить аккаунт' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Войти или зарегистрироваться' }),
+    ).not.toBeInTheDocument();
   });
 });

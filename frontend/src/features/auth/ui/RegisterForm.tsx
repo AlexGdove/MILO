@@ -56,7 +56,9 @@ export const RegisterForm = ({ onSubmit }: RegisterFormProps) => {
         onChange={(event) => setPassword(event.target.value)}
         error={submitted ? errors.password : undefined}
       />
-      <p className={styles.hint}>Не меньше {PASSWORD_MIN_LENGTH} символов</p>
+      <p className={styles.hint}>
+        Не меньше {PASSWORD_MIN_LENGTH} символов, латинскими буквами, цифрами и знаками
+      </p>
       <PasswordInput
         label="Повторите пароль"
         name="repeat"

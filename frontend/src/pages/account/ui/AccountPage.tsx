@@ -9,8 +9,9 @@ import {
   useSessionStore,
 } from '@/entities/account';
 import {
-  authErrorText,
+  ChangePassword,
   CodeForm,
+  DeleteAccount,
   ForgotPasswordForm,
   LoginForm,
   RegisterForm,
@@ -18,7 +19,7 @@ import {
 } from '@/features/auth';
 import { ApiError } from '@/shared/api';
 import { ROUTES } from '@/shared/config';
-import { BackLink, Button, Card, Modal, PageLayout } from '@/shared/ui';
+import { BackLink, Button, Card, PageLayout } from '@/shared/ui';
 
 import styles from './AccountPage.module.css';
 
@@ -176,9 +177,7 @@ const SignedIn = ({ token }: { token: string }) => {
   const account = useSessionStore(selectAccount);
   const setAccount = useSessionStore((state) => state.setAccount);
   const signOut = useSessionStore((state) => state.signOut);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<unknown>(null);
 
   // Свежий тариф с сервера; сессия больше не действует — выйти локально
   useEffect(() => {
@@ -205,18 +204,6 @@ const SignedIn = ({ token }: { token: string }) => {
     signOut();
   };
 
-  const remove = async () => {
-    setPending(true);
-    setError(null);
-    try {
-      await accountApi.remove(token);
-      signOut();
-    } catch (failure) {
-      setError(failure);
-      setPending(false);
-    }
-  };
-
   return (
     <Card className={styles.section}>
       <h2 className={styles.title}>{account.email}</h2>
@@ -227,25 +214,8 @@ const SignedIn = ({ token }: { token: string }) => {
       <Button variant="secondary" disabled={pending} onClick={() => void logout()}>
         Выйти
       </Button>
-      <Button variant="ghost" disabled={pending} onClick={() => setConfirmDelete(true)}>
-        Удалить аккаунт
-      </Button>
-      <Modal open={confirmDelete} title="Удалить аккаунт?" onClose={() => setConfirmDelete(false)}>
-        <div className={styles.section}>
-          <p className={styles.hint}>
-            Аккаунт и оплаченный тариф будут удалены без возможности восстановления. Данные на этом
-            устройстве останутся.
-          </p>
-          {error !== null && (
-            <p role="alert" className={styles.error}>
-              {authErrorText(error)}
-            </p>
-          )}
-          <Button variant="danger" disabled={pending} onClick={() => void remove()}>
-            Удалить навсегда
-          </Button>
-        </div>
-      </Modal>
+      <ChangePassword email={account.email} />
+      <DeleteAccount token={token} />
     </Card>
   );
 };
