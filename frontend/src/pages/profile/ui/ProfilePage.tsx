@@ -6,6 +6,7 @@ import { ProfileForm, useApplyProfileNorm } from '@/features/edit-profile';
 import { DailyGoalForm } from '@/features/set-daily-goal';
 import { formatKcal } from '@/shared/lib';
 import { Button, Card, Collapsible, PageLayout } from '@/shared/ui';
+import { AccountCard } from '@/widgets/account-card';
 
 import styles from './ProfilePage.module.css';
 
@@ -62,12 +63,14 @@ const NormSection = () => {
  * Профиль — вкладка нижней навигации (решение №28); данные и норма — решение №30.
  * «Мои данные» — аккордеон (решение №33): заполненный профиль свёрнут до краткой сводки.
  * Оформление перенесено в «Настройки» (решение №43); кнопка настроек — в общей шапке (№63).
+ * Аккаунт — первой карточкой (задача 9.2a), а не только в «Настройки → Аккаунт».
  */
 export const ProfilePage = () => {
   const profile = useUserProfileStore(selectProfile);
 
   return (
     <PageLayout title="Профиль">
+      <AccountCard />
       <Collapsible
         title="Мои данные"
         summary={profile ? describeProfile(profile) : 'Не заполнено'}

@@ -1,4 +1,5 @@
 export {
+  accountPath,
   ANDROID_APK_URL,
   APP_VERSION,
   LEGACY_ROUTES,
