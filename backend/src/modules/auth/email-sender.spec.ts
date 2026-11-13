@@ -1,5 +1,6 @@
 import { createTransport, type SendMailOptions, type Transporter } from 'nodemailer';
 
+import { EMAIL_LOGO_CID } from './email-content.js';
 import { EmailRejectedError, maskEmails, SmtpEmailSender } from './email-sender.js';
 
 const SMTP = { host: 'mail', port: 587, from: 'MILO <noreply@milo-app.ru>' };
@@ -43,6 +44,27 @@ describe('Отправка писем через SMTP', () => {
     };
     expect(message.subject).toBe('Код подтверждения MILO: 123456');
     expect(message.to[0]!.address).toBe('anna@example.com');
+  });
+
+  it('знак MILO уходит картинкой внутри письма (cid), html ссылается на неё', async () => {
+    const { transport, calls } = recording();
+    await new SmtpEmailSender(SMTP, transport).sendCode(
+      'anna@example.com',
+      '123456',
+      'verify_email',
+    );
+
+    const attachments = calls[0]!.attachments ?? [];
+    expect(attachments).toHaveLength(1);
+    expect(attachments[0]).toEqual(
+      expect.objectContaining({
+        filename: 'milo.png',
+        contentType: 'image/png',
+        cid: EMAIL_LOGO_CID,
+      }),
+    );
+
+    expect(calls[0]!.html).toContain(`src="cid:${EMAIL_LOGO_CID}"`);
   });
 
   it('ошибка отправки пробрасывается (сервис ответит 503)', async () => {

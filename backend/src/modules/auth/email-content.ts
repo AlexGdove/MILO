@@ -1,10 +1,29 @@
+import { EMAIL_LOGO_PNG_BASE64 } from './email-logo.js';
 import type { CodePurpose } from '../../generated/prisma/client.js';
+
+/** Картинка внутри письма: в HTML на неё ссылаются как `cid:<cid>` (формат вложений nodemailer) */
+export interface InlineImage {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+  cid: string;
+}
 
 export interface CodeEmail {
   subject: string;
   text: string;
   html: string;
+  attachments: InlineImage[];
 }
+
+/** Знак MILO вложением в письмо — без внешних ссылок (они повышают риск попасть в «Спам») */
+export const EMAIL_LOGO_CID = 'logo@milo-app.ru';
+const LOGO: InlineImage = {
+  filename: 'milo.png',
+  content: Buffer.from(EMAIL_LOGO_PNG_BASE64, 'base64'),
+  contentType: 'image/png',
+  cid: EMAIL_LOGO_CID,
+};
 
 const escapeHtml = (value: string) =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -18,7 +37,6 @@ const SIGNATURE = '— MILO, milo-app.ru';
 const COLOR = {
   primary: '#2F3BD9',
   primarySoft: '#EEF0FF',
-  mint: '#3CCB9A',
   text: '#12131C',
   muted: '#5E6280',
   bg: '#F4F5FA',
@@ -31,9 +49,9 @@ const DISPLAY_FONT = "Unbounded, 'Arial Black', Arial, sans-serif";
 const TABLE = 'role="presentation" cellpadding="0" cellspacing="0" border="0"';
 
 /**
- * Письмо с кодом (решение №69): тема, текст и HTML в стиле MILO (палитра «Орбита», знак «м»
- * текстом) — без картинок, ссылок и внешних шрифтов. Вёрстка таблицами со стилями в атрибутах —
- * так её одинаково показывают Gmail, Mail.ru, Яндекс и Outlook.
+ * Письмо с кодом (решение №69): тема, текст и HTML в стиле MILO (палитра «Орбита», знак MILO —
+ * картинкой внутри письма) — без внешних картинок, ссылок и шрифтов. Вёрстка таблицами со стилями
+ * в атрибутах — так её одинаково показывают Gmail, Mail.ru, Яндекс и Outlook.
  */
 export function buildCodeEmail(code: string, purpose: CodePurpose): CodeEmail {
   const verify = purpose === 'verify_email';
@@ -69,7 +87,7 @@ export function buildCodeEmail(code: string, purpose: CodePurpose): CodeEmail {
     // Шапка: знак «м» с мятной точкой и слово MILO
     '<tr><td style="padding-bottom:20px;">',
     `<table ${TABLE}><tr>`,
-    `<td style="width:44px;height:44px;background:${COLOR.primary};border-radius:12px;text-align:center;vertical-align:middle;font-family:${DISPLAY_FONT};font-size:24px;font-weight:700;line-height:44px;color:#FFFFFF;">м<span style="display:inline-block;width:7px;height:7px;margin:14px 0 0 2px;border-radius:50%;background:${COLOR.mint};vertical-align:top;"></span></td>`,
+    `<td style="width:44px;height:44px;vertical-align:middle;"><img src="cid:${EMAIL_LOGO_CID}" width="44" height="44" alt="MILO" style="display:block;width:44px;height:44px;border:0;border-radius:10px;"></td>`,
     `<td style="padding-left:12px;font-family:${DISPLAY_FONT};font-size:22px;font-weight:700;letter-spacing:1px;color:${COLOR.text};">MILO</td>`,
     '</tr></table>',
     '</td></tr>',
@@ -94,5 +112,5 @@ export function buildCodeEmail(code: string, purpose: CodePurpose): CodeEmail {
     '</html>',
   ].join('\n');
 
-  return { subject, text, html };
+  return { subject, text, html, attachments: [LOGO] };
 }
