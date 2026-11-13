@@ -42,6 +42,18 @@ export const SHOPPING_PATH = `/pantry?tab=shopping`;
 /** Адрес переписки по обращению в поддержку. */
 export const supportTicketPath = (id: string) => `/settings/support/${encodeURIComponent(id)}`;
 
+/**
+ * Адрес страницы аккаунта (задача 9.2a): `step: 'register'` — сразу регистрация,
+ * `from: 'profile'` — пришли с «Профиля», ссылка «назад» ведёт туда, а не в «Настройки».
+ */
+export const accountPath = ({ step, from }: { step?: 'register'; from?: 'profile' } = {}) => {
+  const params = new URLSearchParams();
+  if (step) params.set('step', step);
+  if (from) params.set('from', from);
+  const query = params.toString();
+  return query ? `${ROUTES.account}?${query}` : ROUTES.account;
+};
+
 /** Адрес страницы конкретного рецепта. */
 export const recipePath = (id: string) => `/recipes/${encodeURIComponent(id)}`;
 

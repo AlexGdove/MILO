@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import {
   accountApi,
+  PLAN_LABEL,
   selectAccount,
   selectToken,
   useSessionStore,
-  type Plan,
 } from '@/entities/account';
 import {
   authErrorText,
@@ -23,34 +24,40 @@ import styles from './AccountPage.module.css';
 
 type Step = 'login' | 'register' | 'verify' | 'forgot' | 'reset';
 
-const PLAN_LABEL: Record<Plan, string> = {
-  free: 'Бесплатный',
-  plus: 'Plus',
-  unlimited: 'Безлимитный',
-};
-
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
 
 /**
  * Аккаунт (решение №69): регистрация с подтверждением почты кодом, вход паролем, сброс пароля
  * кодом. Аккаунт необязателен — нужен только для тарифа; данные остаются на устройстве.
+ * С «Профиля» (задача 9.2a): `?step=register` — сразу регистрация, `?from=profile` — назад в «Профиль».
  */
 export const AccountPage = () => {
   const token = useSessionStore(selectToken);
   const account = useSessionStore(selectAccount);
+  const [params] = useSearchParams();
+  const back =
+    params.get('from') === 'profile' ? (
+      <BackLink to={ROUTES.profile} label="Профиль" />
+    ) : (
+      <BackLink to={ROUTES.settings} label="Настройки" />
+    );
 
   return (
-    <PageLayout title="Аккаунт" eyebrow={<BackLink to={ROUTES.settings} label="Настройки" />}>
-      {token && account ? <SignedIn token={token} /> : <SignInFlow />}
+    <PageLayout title="Аккаунт" eyebrow={back}>
+      {token && account ? (
+        <SignedIn token={token} />
+      ) : (
+        <SignInFlow initialStep={params.get('step') === 'register' ? 'register' : 'login'} />
+      )}
     </PageLayout>
   );
 };
 
 /** Вход, регистрация, подтверждение почты и сброс пароля — шаги на одной странице. */
-const SignInFlow = () => {
+const SignInFlow = ({ initialStep }: { initialStep: 'login' | 'register' }) => {
   const signIn = useSessionStore((state) => state.signIn);
-  const [step, setStep] = useState<Step>('login');
+  const [step, setStep] = useState<Step>(initialStep);
   const [email, setEmail] = useState('');
 
   const go = (next: Step, nextEmail = email) => {

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { accountApi, useSessionStore, type Account } from '@/entities/account';
 import { ApiError } from '@/shared/api';
+import { accountPath } from '@/shared/config';
 
 import { AccountPage } from './AccountPage';
 
@@ -168,6 +169,39 @@ describe('AccountPage', () => {
       expect(remove).toHaveBeenCalledTimes(2);
       expect(await screen.findByRole('heading', { name: 'Вход' })).toBeInTheDocument();
       expect(useSessionStore.getState().token).toBeNull();
+    });
+  });
+
+  describe('переход с «Профиля» (задача 9.2a)', () => {
+    const renderAt = (path: string) =>
+      render(
+        <MemoryRouter initialEntries={[path]}>
+          <AccountPage />
+        </MemoryRouter>,
+      );
+
+    it('без параметров — вход и «← Настройки»', () => {
+      renderAt(accountPath());
+
+      expect(screen.getByRole('heading', { name: 'Вход' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: '← Настройки' })).toHaveAttribute(
+        'href',
+        '/settings',
+      );
+    });
+
+    it('step=register — сразу регистрация; from=profile — назад в «Профиль»', () => {
+      renderAt(accountPath({ step: 'register', from: 'profile' }));
+
+      expect(screen.getByRole('heading', { name: 'Регистрация' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: '← Профиль' })).toHaveAttribute('href', '/profile');
+    });
+
+    it('from=profile без step — вход', () => {
+      renderAt(accountPath({ from: 'profile' }));
+
+      expect(screen.getByRole('heading', { name: 'Вход' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: '← Профиль' })).toBeInTheDocument();
     });
   });
 });
