@@ -4,5 +4,6 @@ import type { Plan } from './types';
 export const PLAN_LABEL: Record<Plan, string> = {
   free: 'Бесплатный',
   plus: 'Plus',
-  unlimited: 'Безлимитный',
+  // Внутреннее имя `unlimited` осталось, но у тарифа есть суточный предел фото (№76)
+  unlimited: 'Pro',
 };

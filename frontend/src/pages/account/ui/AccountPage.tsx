@@ -19,6 +19,7 @@ import {
 } from '@/features/auth';
 import { ApiError } from '@/shared/api';
 import { ROUTES } from '@/shared/config';
+import { paidFeaturesAvailable } from '@/shared/lib';
 import { BackLink, Button, Card, PageLayout } from '@/shared/ui';
 
 import styles from './AccountPage.module.css';
@@ -207,10 +208,13 @@ const SignedIn = ({ token }: { token: string }) => {
   return (
     <Card className={styles.section}>
       <h2 className={styles.title}>{account.email}</h2>
-      <p className={styles.plan}>
-        Тариф: <strong>{PLAN_LABEL[account.plan]}</strong>
-        {account.planUntil && ` до ${formatDate(account.planUntil)}`}
-      </p>
+      {/* В приложении из App Store о тарифах не говорим (№76, правило Apple 3.1.3) */}
+      {paidFeaturesAvailable() && (
+        <p className={styles.plan}>
+          Тариф: <strong>{PLAN_LABEL[account.plan]}</strong>
+          {account.planUntil && ` до ${formatDate(account.planUntil)}`}
+        </p>
+      )}
       <Button variant="secondary" disabled={pending} onClick={() => void logout()}>
         Выйти
       </Button>

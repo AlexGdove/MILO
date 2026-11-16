@@ -67,11 +67,16 @@ class RecognizedIngredientDto {
 }
 
 class PhotoUsageDto {
-  @ApiProperty({ type: Number, nullable: true, description: 'Распознаваний за сутки' })
-  used!: number | null;
+  @ApiProperty({ description: 'Распознаваний за период' })
+  used!: number;
 
-  @ApiProperty({ type: Number, nullable: true, description: 'Суточный лимит; null — без лимита' })
-  limit!: number | null;
+  @ApiProperty({
+    description: 'Предел за период: Plus — 20 и Pro — 50 в сутки, бесплатный — 3 в неделю',
+  })
+  limit!: number;
+
+  @ApiProperty({ enum: ['day', 'week'], description: 'Период предела' })
+  period!: 'day' | 'week';
 }
 
 class RecognitionDto {
@@ -101,7 +106,7 @@ export class PhotoAiController {
   @ApiResponse({
     status: 403,
     type: ErrorResponseDto,
-    description: 'code: photo_ai_plan_required — нужен платный тариф',
+    description: 'code: photo_ai_plan_required — бесплатные фото выключены настройкой',
   })
   @ApiResponse({
     status: 422,

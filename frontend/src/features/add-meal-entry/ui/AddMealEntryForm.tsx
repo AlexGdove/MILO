@@ -4,7 +4,13 @@ import { selectCookedDishes, useCookedDishStore, type CookedDish } from '@/entit
 import type { MealType } from '@/entities/meal-entry';
 import { filterProducts, selectProducts, useProductStore, type Product } from '@/entities/product';
 import { isApiEnabled } from '@/shared/api';
-import { formatAmount, formatKcal, formatPortions, type IsoDate } from '@/shared/lib';
+import {
+  formatAmount,
+  formatKcal,
+  formatPortions,
+  paidFeaturesAvailable,
+  type IsoDate,
+} from '@/shared/lib';
 import { Input } from '@/shared/ui';
 
 import styles from './AddMealEntryForm.module.css';
@@ -84,7 +90,7 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
 
   return (
     <div className={styles.picker} ref={pickerRef}>
-      {isApiEnabled() && (
+      {isApiEnabled() && paidFeaturesAvailable() && (
         <button
           type="button"
           className={styles.photoButton}

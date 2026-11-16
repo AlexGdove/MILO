@@ -16,7 +16,7 @@ export {
   sumNutrients,
 } from './nutrition';
 export type { Nutrients } from './nutrition';
-export { isIos, isNativeApp } from './platform';
+export { isIos, isNativeApp, paidFeaturesAvailable } from './platform';
 export { createBarcodeReader, pickBarcode, SCAN_FORMATS } from './barcodeScanner';
 export type { BarcodeReader } from './barcodeScanner';
 export { adjacentSection, detectSwipe } from './swipe';

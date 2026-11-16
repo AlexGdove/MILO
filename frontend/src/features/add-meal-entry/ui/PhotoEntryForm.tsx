@@ -3,12 +3,13 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent 
 import { selectAccount, selectToken, useSessionStore } from '@/entities/account';
 import { MEAL_TYPES, useMealEntryStore, type MealType } from '@/entities/meal-entry';
 import { selectProducts, useProductStore } from '@/entities/product';
+import { ApiError } from '@/shared/api';
 import { createId, formatGrams, formatKcal, type IsoDate } from '@/shared/lib';
 import { Button, Input, SegmentedControl, Select } from '@/shared/ui';
 
 import styles from './AddMealEntryForm.module.css';
 import { PhotoCamera } from './PhotoCamera';
-import { photoAiApi, photoErrorText } from '../api/photoAiApi';
+import { FREE_LIMIT_TEXT, photoAiApi, photoErrorText } from '../api/photoAiApi';
 import {
   canSaveDish,
   dishTotals,
@@ -94,16 +95,7 @@ export const PhotoEntryForm = ({
       </div>
     );
   }
-  if (account.plan === 'free') {
-    return (
-      <div className={styles.form}>
-        <p className={styles.note}>
-          Распознавание блюда по фото доступно на платном тарифе. Сейчас у вас бесплатный.
-        </p>
-        {back}
-      </div>
-    );
-  }
+  const isFree = account.plan === 'free';
 
   const choosePhoto = (next: Blob) => {
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
@@ -136,7 +128,11 @@ export const PhotoEntryForm = ({
       setUsage(recognition.usage);
       setStep('review');
     } catch (caught) {
-      setError(photoErrorText(caught));
+      setError(
+        isFree && caught instanceof ApiError && caught.code === 'photo_ai_limit'
+          ? FREE_LIMIT_TEXT
+          : photoErrorText(caught),
+      );
       setStep('pick');
     }
   };
@@ -211,6 +207,11 @@ export const PhotoEntryForm = ({
           onChange={(event) => setHint(event.target.value)}
           disabled={loading}
         />
+        {isFree && (
+          <p className={styles.note}>
+            На бесплатном тарифе — 3 распознавания в неделю. Больше — на тарифе Plus.
+          </p>
+        )}
         <p className={styles.note}>
           Описание помогает: похожие на вид блюда модель путает. Фото отправляется на сервер только
           для распознавания и не сохраняется.
@@ -343,9 +344,10 @@ export const PhotoEntryForm = ({
         {formatGrams(totals.nutrients.carbs)}
       </p>
 
-      {usage && usage.limit !== null && usage.used !== null && (
+      {usage && (
         <p className={styles.note}>
-          Распознаваний за сутки: {usage.used} из {usage.limit}
+          Распознаваний за {usage.period === 'week' ? 'неделю' : 'сутки'}: {usage.used} из{' '}
+          {usage.limit}
         </p>
       )}
 

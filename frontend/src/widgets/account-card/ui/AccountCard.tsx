@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 
 import { PLAN_LABEL, selectAccount, selectToken, useSessionStore } from '@/entities/account';
 import { accountPath } from '@/shared/config';
+import { paidFeaturesAvailable } from '@/shared/lib';
 import { Card } from '@/shared/ui';
 
 import styles from './AccountCard.module.css';
@@ -37,9 +38,12 @@ export const AccountCard = () => {
   return (
     <Card className={styles.section}>
       <h2 className={styles.title}>{account.email}</h2>
-      <p className={styles.plan}>
-        Тариф: <strong>{PLAN_LABEL[account.plan]}</strong>
-      </p>
+      {/* В приложении из App Store о тарифах не говорим (№76, правило Apple 3.1.3) */}
+      {paidFeaturesAvailable() && (
+        <p className={styles.plan}>
+          Тариф: <strong>{PLAN_LABEL[account.plan]}</strong>
+        </p>
+      )}
       <Link to={accountPath({ from: 'profile' })} className={styles.manage}>
         Управление аккаунтом →
       </Link>
