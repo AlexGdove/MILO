@@ -16,6 +16,7 @@ import { DeviceKeysModule } from './modules/device-keys/device-keys.module.js';
 import { FoodCatalogModule } from './modules/food-catalog/food-catalog.module.js';
 import { MaintenanceModule } from './modules/maintenance/maintenance.module.js';
 import { ModerationModule } from './modules/moderation/moderation.module.js';
+import { PhotoAiModule } from './modules/photo-ai/photo-ai.module.js';
 import { ProductsModule } from './modules/products/products.module.js';
 import { RateLimitModule } from './modules/rate-limit/rate-limit.module.js';
 import { SupportModule } from './modules/support/support.module.js';
@@ -50,6 +51,7 @@ import { RedisModule } from './redis/redis.module.js';
     SupportModule,
     ClientErrorsModule,
     AuthModule,
+    PhotoAiModule,
     TelegramModule,
     MaintenanceModule,
     // Служебные маршруты разработки: доступны только при DEV_TOOLS=true вне production (DevToolsGuard)

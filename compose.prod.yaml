@@ -104,6 +104,13 @@ services:
       TELEGRAM_MODERATION_CHAT_ID: ${TELEGRAM_MODERATION_CHAT_ID:-}
       TELEGRAM_MODERATION_THREAD_ID: ${TELEGRAM_MODERATION_THREAD_ID:-}
       TELEGRAM_ERRORS_THREAD_ID: ${TELEGRAM_ERRORS_THREAD_ID:-}
+      # Фото-ИИ (№68, №75): без провайдера и адреса модели распознавание отвечает 503
+      PHOTO_AI_PROVIDER: ${PHOTO_AI_PROVIDER:-}
+      PHOTO_AI_BASE_URL: ${PHOTO_AI_BASE_URL:-}
+      PHOTO_AI_MODEL: ${PHOTO_AI_MODEL:-}
+      PHOTO_AI_API_KEY: ${PHOTO_AI_API_KEY:-}
+      PHOTO_AI_PROJECT: ${PHOTO_AI_PROJECT:-}
+      PHOTO_AI_DAILY_LIMIT: ${PHOTO_AI_DAILY_LIMIT:-}
       # Аккаунты (№60, №68): без обоих значений вход по почте отвечает 503 auth_unavailable
       AUTH_CODE_SECRET: ${AUTH_CODE_SECRET:-}
       EMAIL_TRANSPORT: ${EMAIL_TRANSPORT:-}

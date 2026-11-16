@@ -17,13 +17,19 @@ describe('PrivacyNotice (решение №50)', () => {
     expect(screen.queryAllByRole('listitem')).toHaveLength(0);
   });
 
-  it('подробно: пять пунктов — устройство, необязательный аккаунт, что уходит на сервер, отчёты об ошибках, перенос', () => {
+  it('подробно: шесть пунктов — устройство, необязательный аккаунт, что уходит на сервер, фото для распознавания, отчёты об ошибках, перенос', () => {
     render(<PrivacyNotice variant="full" />);
-    expect(screen.getAllByRole('listitem')).toHaveLength(5);
+    expect(screen.getAllByRole('listitem')).toHaveLength(6);
     expect(screen.getByText(/только на этом устройстве/)).toBeInTheDocument();
     expect(screen.getByText(/почта, пароль в зашифрованном виде и тариф/)).toBeInTheDocument();
     expect(
       screen.getByText(/обращения в поддержку и предложенные продукты, анонимно/),
+    ).toBeInTheDocument();
+    // Решение №75: фото блюда уходит на сервер только для распознавания
+    expect(
+      screen.getByText(
+        /снимок и описание уходят на сервер только для распознавания и не сохраняются/,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByText(/технический отчёт об ошибке — без ваших данных.*отключить в настройках/),

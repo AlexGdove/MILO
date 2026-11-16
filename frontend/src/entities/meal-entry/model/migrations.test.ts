@@ -56,6 +56,31 @@ describe('migrateMealEntries', () => {
     expect(migrateMealEntries({ entries: [v2Entry] }, 2).entries).toEqual([v2Entry]);
   });
 
+  it('v2: сохраняет запись блюда, распознанного по фото (решение №75)', () => {
+    const photoEntry = {
+      id: 'e3',
+      date: '2026-11-16',
+      mealType: 'lunch',
+      source: { type: 'photo', id: 'ph1' },
+      productName: 'Гречневая каша с маслом',
+      per100g: { kcal: 140, protein: 4, fat: 5, carbs: 20 },
+      amount: 210,
+      unit: 'g',
+      grams: 210,
+      stockDeducted: 0,
+      createdAt: 3,
+    };
+    expect(migrateMealEntries({ entries: [photoEntry] }, 2).entries).toEqual([photoEntry]);
+  });
+
+  it('незнакомый источник считается продуктом', () => {
+    const odd = { ...v1Entry, productId: undefined, source: { type: 'whatever', id: 'x1' } };
+    expect(migrateMealEntries({ entries: [odd] }, 2).entries[0]?.source).toEqual({
+      type: 'product',
+      id: 'x1',
+    });
+  });
+
   it('неизвестный приём пищи становится перекусом', () => {
     const { entries } = migrateMealEntries({ entries: [{ ...v1Entry, mealType: 'brunch' }] }, 1);
     expect(entries[0]?.mealType).toBe('snack');

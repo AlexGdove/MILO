@@ -17,8 +17,14 @@
 {$DOMAIN} {
 	encode zstd gzip
 
-	# Тело запроса: API принимает не больше 64 КБ — больше сюда не пропускаем вовсе
-	request_body {
+	# Тело запроса: API принимает не больше 64 КБ — больше сюда не пропускаем вовсе.
+	# Исключение — фото блюда для распознавания (решение №75): сжатый снимок в base64, до 3 МБ
+	@photo path /api/v1/photo-ai/recognize
+	@notPhoto not path /api/v1/photo-ai/recognize
+	request_body @photo {
+		max_size 3MB
+	}
+	request_body @notPhoto {
 		max_size 1MB
 	}
 
