@@ -12,8 +12,9 @@ services:
       # Только для локальной разработки; в production пароль задаётся секретом
       POSTGRES_PASSWORD: milo
       POSTGRES_DB: milo
+    # Только с этого компьютера: без 127.0.0.1 база с паролем «milo» открыта всей локальной сети
     ports:
-      - '${POSTGRES_PORT:-5432}:5432'
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     volumes:
       - milo-postgres:/var/lib/postgresql/data
       # Создаёт вторую базу milo_test для автотестов (только при первом запуске тома)
@@ -30,8 +31,9 @@ services:
     image: redis:8-alpine
     restart: unless-stopped
     command: ['redis-server', '--save', '', '--appendonly', 'no']
+    # Только с этого компьютера: у Redis нет пароля
     ports:
-      - '${REDIS_PORT:-6379}:6379'
+      - '127.0.0.1:${REDIS_PORT:-6379}:6379'
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s

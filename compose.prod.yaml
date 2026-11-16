@@ -141,6 +141,9 @@ services:
       POSTFIX_mynetworks: 127.0.0.0/8 [::1]/128 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 [fc00::]/7
       POSTFIX_smtp_address_preference: ipv4
       POSTFIX_message_size_limit: '1048576'
+      # Уведомления об отказе (bounce) шлются на noreply@ — у домена нет приёма почты, они
+      # только копились в очереди по 5 дней. 0 — одна попытка, затем удалить (TASKS 9.2b)
+      POSTFIX_bounce_queue_lifetime: '0'
       DKIM_BACKEND: opendkim
       DKIM_AUTOGENERATE: 'true'
       DKIM_SELECTOR: mail
