@@ -32,7 +32,7 @@ const row = (overrides: Partial<DishIngredient> = {}): DishIngredient => ({
 const recognition = (ingredients: Recognition['ingredients']): Recognition => ({
   dish: 'Блюдо',
   ingredients,
-  usage: { used: null, limit: null },
+  usage: { used: 1, limit: 20, period: 'day' },
 });
 
 describe('toDishIngredients', () => {

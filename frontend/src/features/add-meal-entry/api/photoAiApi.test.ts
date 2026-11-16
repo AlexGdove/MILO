@@ -5,7 +5,7 @@ import { ApiError, NETWORK_ERROR } from '@/shared/api';
 import { PHOTO_REQUEST_TIMEOUT_MS, photoAiApi, photoErrorText } from './photoAiApi';
 
 const TOKEN = `ms_${'a'.repeat(43)}`;
-const RECOGNITION = { dish: 'Суп', ingredients: [], usage: { used: 1, limit: 20 } };
+const RECOGNITION = { dish: 'Суп', ingredients: [], usage: { used: 1, limit: 20, period: 'day' } };
 
 describe('photoAiApi.recognize', () => {
   const fetchMock = vi.fn<typeof fetch>();

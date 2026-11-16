@@ -157,9 +157,9 @@ interface SupportMessage {
 | `POST /photo-ai/recognize` | сессия | `200 Recognition` | распознаёт блюдо по фото и считает КБЖУ ингредиентов по справочнику |
 
 - Тело запроса: `image` — фото в base64 без префикса `data:` (JPEG, PNG или WebP, до 2 МБ; тип проверяется по первым байтам файла); `hint` — необязательное описание блюда от пользователя, до 200 символов. Предел тела запроса для этого маршрута — 3 МБ (для остальных — 64 КБ).
-- Ответ `Recognition`: `dish` — название блюда; `ingredients` — не больше 20 объектов `{ name, grams, matchedName, per100g }`; `usage` — `{ used, limit }`: распознаваний за сутки и суточный лимит, оба `null` для тарифа без лимита.
+- Ответ `Recognition`: `dish` — название блюда; `ingredients` — не больше 20 объектов `{ name, grams, matchedName, per100g }`; `usage` — `{ used, limit, period }`: распознаваний и предел за период (`period`: `day` — платные тарифы, `week` — бесплатный).
 - Ингредиент: `name` — как продукт назвала модель; `grams` — целое от 1 до 3000; `matchedName` — запись справочника или `null`; `per100g` — `{ kcal, protein, fat, carbs }` или `null`, если продукта нет в справочнике (тогда КБЖУ выбирает пользователь из своих продуктов).
-- Тарифы: `free` — отказ `403 photo_ai_plan_required`; `plus` — суточный лимит на аккаунт (скользящие 24 часа), по умолчанию 20, настройка `PHOTO_AI_DAILY_LIMIT`, после лимита — `429 photo_ai_limit`; `unlimited` — без суточного лимита. Оплаченный тариф с истёкшим сроком (`planUntil` в прошлом) считается `free`.
+- Тарифы (решение №76): `free` — 3 распознавания за скользящие 7 дней (`PHOTO_AI_FREE_WEEKLY_LIMIT`; `0` — отказ `403 photo_ai_plan_required`); `plus` — 20 за скользящие 24 часа (`PHOTO_AI_DAILY_LIMIT`); `unlimited` (в интерфейсе «Pro») — 50 за 24 часа (`PHOTO_AI_PRO_DAILY_LIMIT`). Сверх предела — `429 photo_ai_limit`. Счётчики бесплатного и платных тарифов раздельные. Оплаченный тариф с истёкшим сроком (`planUntil` в прошлом) считается `free`.
 - Лимит с IP: 30 запросов за 10 минут.
 - Очередь: модель отвечает на один запрос за раз, запросы выполняются по очереди; если ждут уже 5 запросов — `503 photo_ai_busy` (попытка лимита при этом не тратится).
 - Провайдер модели выбирается настройкой: `PHOTO_AI_PROVIDER=openai` и `PHOTO_AI_BASE_URL` — сервер с OpenAI-совместимым `POST /v1/chat/completions` и приёмом картинок (сейчас — Yandex AI Studio с Qwen3.6 35B, запасной — локальная Strata); дополнительно `PHOTO_AI_MODEL`, `PHOTO_AI_API_KEY`, `PHOTO_AI_PROJECT` (заголовок `OpenAI-Project`, у Yandex — идентификатор каталога), `PHOTO_AI_TIMEOUT_MS` (по умолчанию 120000). Модели всегда передаётся `chat_template_kwargs: { enable_thinking: false }`. Без `PHOTO_AI_PROVIDER` маршрут отвечает `503 photo_ai_unavailable`.
@@ -180,7 +180,7 @@ interface SupportMessage {
 | `account_blocked`                            | 403    | аккаунт заблокирован                                                        |
 | `email_taken`                                | 409    | почта уже зарегистрирована                                                  |
 | `auth_unavailable`                           | 503    | регистрация и письма выключены на сервере                                   |
-| `photo_ai_plan_required`                     | 403    | распознавание по фото: нужен платный тариф                                  |
+| `photo_ai_plan_required`                     | 403    | распознавание по фото: бесплатные фото выключены настройкой                 |
 | `photo_invalid`                              | 422    | файл не JPEG, PNG или WebP либо больше 2 МБ                                 |
 | `photo_no_food`                              | 422    | на фото не найдена еда                                                      |
 | `photo_ai_limit`                             | 429    | суточный лимит распознаваний исчерпан                                       |

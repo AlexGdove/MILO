@@ -39,13 +39,13 @@ const RECOGNITION: Recognition = {
       per100g: { kcal: 748, protein: 0.5, fat: 82.5, carbs: 0.8 },
     },
   ],
-  usage: { used: 3, limit: 20 },
+  usage: { used: 3, limit: 20, period: 'day' },
 };
 
 const UNKNOWN: Recognition = {
   dish: 'Марсианское блюдо',
   ingredients: [{ name: 'марсианский соус', grams: 30, matchedName: null, per100g: null }],
-  usage: { used: null, limit: null },
+  usage: { used: 1, limit: 50, period: 'day' },
 };
 
 const signIn = (plan: Plan) =>
@@ -111,12 +111,38 @@ describe('PhotoEntryForm', () => {
     expect(onChangeSource).toHaveBeenCalledOnce();
   });
 
-  it('бесплатный тариф: объясняет, что нужен платный', () => {
+  // Было «бесплатный тариф: нужен платный»; решение владельца 2026-11-16 (№76): 3 фото в неделю бесплатно
+  it('бесплатный тариф: фото доступно, рядом — про недельную квоту', async () => {
+    const user = userEvent.setup();
     signIn('free');
+    recognize.mockResolvedValue({ ...RECOGNITION, usage: { used: 1, limit: 3, period: 'week' } });
     renderForm();
 
-    expect(screen.queryByLabelText('Фото из галереи')).not.toBeInTheDocument();
-    expect(screen.getByText(/доступно на платном тарифе/)).toBeInTheDocument();
+    expect(screen.getByText(/3 распознавания в неделю/)).toBeInTheDocument();
+    await recognizePhoto(user);
+    expect(await screen.findByText('Распознаваний за неделю: 1 из 3')).toBeInTheDocument();
+  });
+
+  it('бесплатный тариф: квота кончилась — предлагает Plus', async () => {
+    const user = userEvent.setup();
+    signIn('free');
+    recognize.mockRejectedValue(new ApiError(429, 'photo_ai_limit', 'x'));
+    renderForm();
+    await recognizePhoto(user);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Бесплатные распознавания на этой неделе закончились',
+    );
+  });
+
+  it('платный тариф: при пределе — обычный текст про лимит на сегодня', async () => {
+    const user = userEvent.setup();
+    signIn('plus');
+    recognize.mockRejectedValue(new ApiError(429, 'photo_ai_limit', 'x'));
+    renderForm();
+    await recognizePhoto(user);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Лимит распознаваний на сегодня');
   });
 
   it.each<Plan>(['plus', 'unlimited'])(
