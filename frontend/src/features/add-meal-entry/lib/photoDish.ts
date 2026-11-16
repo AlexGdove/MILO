@@ -19,8 +19,8 @@ export interface RecognizedIngredient {
 export interface Recognition {
   dish: string;
   ingredients: RecognizedIngredient[];
-  /** Суточный лимит тарифа: `limit: null` — без лимита */
-  usage: { used: number | null; limit: number | null };
+  /** Использовано и предел за период: платные — сутки, бесплатный — неделя (№76) */
+  usage: { used: number; limit: number; period: 'day' | 'week' };
 }
 
 /** Свой продукт пользователя, из которого можно взять КБЖУ. */

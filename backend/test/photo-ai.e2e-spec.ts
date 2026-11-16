@@ -21,6 +21,9 @@ type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-ex
 
 const DAY_MS = 24 * 60 * 60_000;
 const DAILY_LIMIT = 3;
+/** Больше Plus и не меньше 5: тест очереди держит 5 ждущих запросов одного Pro-аккаунта */
+const PRO_DAILY_LIMIT = 6;
+const FREE_WEEKLY_LIMIT = 2;
 const ROUTE = '/api/v1/photo-ai/recognize';
 
 /** Начало настоящего JPEG; содержимое картинки подменённой модели не важно */
@@ -69,6 +72,8 @@ describe('Фото-ИИ (e2e)', () => {
     process.env.PHOTO_AI_PROVIDER = 'openai';
     process.env.PHOTO_AI_BASE_URL = 'http://127.0.0.1:1';
     process.env.PHOTO_AI_DAILY_LIMIT = String(DAILY_LIMIT);
+    process.env.PHOTO_AI_PRO_DAILY_LIMIT = String(PRO_DAILY_LIMIT);
+    process.env.PHOTO_AI_FREE_WEEKLY_LIMIT = String(FREE_WEEKLY_LIMIT);
     app = await createApp(vision);
     prisma = app.get(PrismaService);
   });
@@ -115,17 +120,35 @@ describe('Фото-ИИ (e2e)', () => {
     expect(vision.requests).toHaveLength(0);
   });
 
-  it('бесплатный тариф — 403 photo_ai_plan_required', async () => {
-    const response = await recognize(await signIn('free'));
-    expect(response.status).toBe(403);
-    expect(response.body.error.code).toBe('photo_ai_plan_required');
-    expect(vision.requests).toHaveLength(0);
+  // Было «бесплатный тариф — 403»; решение владельца 2026-11-16 (№76): несколько фото в неделю бесплатно
+  it('бесплатный тариф: недельная квота, после неё — 429', async () => {
+    const token = await signIn('free');
+    for (let i = 1; i <= FREE_WEEKLY_LIMIT; i += 1) {
+      const response = await recognize(token);
+      expect(response.status).toBe(200);
+      expect(response.body.usage).toEqual({ used: i, limit: FREE_WEEKLY_LIMIT, period: 'week' });
+    }
+    const blocked = await recognize(token);
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.error.code).toBe('photo_ai_limit');
+    expect(vision.requests).toHaveLength(FREE_WEEKLY_LIMIT);
   });
 
-  it('оплаченный, но истёкший тариф считается бесплатным', async () => {
+  // Было «истёкший тариф — 403»: теперь он получает бесплатную квоту, а не суточный предел Plus
+  it('оплаченный, но истёкший тариф считается бесплатным — недельная квота', async () => {
     const response = await recognize(await signIn('plus', new Date(Date.now() - 1000)));
-    expect(response.status).toBe(403);
-    expect(response.body.error.code).toBe('photo_ai_plan_required');
+    expect(response.status).toBe(200);
+    expect(response.body.usage).toEqual({ used: 1, limit: FREE_WEEKLY_LIMIT, period: 'week' });
+  });
+
+  it('после оплаты среди недели — полный суточный предел, а не остаток бесплатной квоты', async () => {
+    const token = await signIn('free');
+    for (let i = 0; i < FREE_WEEKLY_LIMIT; i += 1) await recognize(token);
+    await prisma.account.updateMany({ data: { plan: 'plus' } });
+
+    const response = await recognize(token);
+    expect(response.status).toBe(200);
+    expect(response.body.usage).toEqual({ used: 1, limit: DAILY_LIMIT, period: 'day' });
   });
 
   it('платный тариф: блюдо, ингредиенты и КБЖУ по справочнику', async () => {
@@ -151,7 +174,7 @@ describe('Фото-ИИ (e2e)', () => {
         // Нет в справочнике: КБЖУ не выдумывается — продукт выберет пользователь
         { name: 'марсианский соус', grams: 30, matchedName: null, per100g: null },
       ],
-      usage: { used: 1, limit: DAILY_LIMIT },
+      usage: { used: 1, limit: DAILY_LIMIT, period: 'day' },
     });
   });
 
@@ -176,7 +199,7 @@ describe('Фото-ИИ (e2e)', () => {
     for (let i = 1; i <= DAILY_LIMIT; i += 1) {
       const response = await recognize(token);
       expect(response.status).toBe(200);
-      expect(response.body.usage).toEqual({ used: i, limit: DAILY_LIMIT });
+      expect(response.body.usage).toEqual({ used: i, limit: DAILY_LIMIT, period: 'day' });
     }
     const blocked = await recognize(token);
     expect(blocked.status).toBe(429);
@@ -192,13 +215,17 @@ describe('Фото-ИИ (e2e)', () => {
     expect(response.body.usage.used).toBe(1);
   });
 
-  it('тариф unlimited: без суточного лимита', async () => {
+  // Было «unlimited — без суточного лимита»; решение владельца 2026-11-16 (№76): у Pro свой предел
+  it('тариф Pro (unlimited): свой предел больше, чем у Plus, после него — 429', async () => {
     const token = await signIn('unlimited');
-    for (let i = 0; i <= DAILY_LIMIT; i += 1) {
+    for (let i = 1; i <= PRO_DAILY_LIMIT; i += 1) {
       const response = await recognize(token);
       expect(response.status).toBe(200);
-      expect(response.body.usage).toEqual({ used: null, limit: null });
+      expect(response.body.usage).toEqual({ used: i, limit: PRO_DAILY_LIMIT, period: 'day' });
     }
+    const blocked = await recognize(token);
+    expect(blocked.status).toBe(429);
+    expect(blocked.body.error.code).toBe('photo_ai_limit');
   });
 
   it('не картинка — 422 photo_invalid, попытка не тратится', async () => {
@@ -336,6 +363,47 @@ describe('Фото-ИИ выключен (e2e)', () => {
         .send({ image: jpeg() });
       expect(response.status).toBe(503);
       expect(response.body.error.code).toBe('photo_ai_unavailable');
+      expect(vision.requests).toHaveLength(0);
+    } finally {
+      await app.close();
+      process.env = saved;
+    }
+  });
+});
+
+describe('Бесплатные фото выключены настройкой (e2e)', () => {
+  it('PHOTO_AI_FREE_WEEKLY_LIMIT=0 — бесплатному тарифу 403 photo_ai_plan_required', async () => {
+    const saved = { ...process.env };
+    process.env.PHOTO_AI_PROVIDER = 'openai';
+    process.env.PHOTO_AI_BASE_URL = 'http://127.0.0.1:1';
+    process.env.PHOTO_AI_FREE_WEEKLY_LIMIT = '0';
+    const vision = new FakeVisionProvider();
+    const app = await createApp(vision);
+    try {
+      const prisma = app.get(PrismaService);
+      await resetData(prisma);
+      await resetRedis(app.get(RedisService));
+      const token = generateSessionToken();
+      await prisma.account.create({
+        data: {
+          email: 'free-off@example.com',
+          passwordHash: 'x',
+          emailVerifiedAt: new Date(),
+          plan: 'free',
+          sessions: {
+            create: {
+              tokenHash: hashSessionToken(token),
+              expiresAt: new Date(Date.now() + DAY_MS),
+            },
+          },
+        },
+      });
+      const response = await request(app.getHttpServer())
+        .post(ROUTE)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ image: jpeg() });
+      expect(response.status).toBe(403);
+      expect(response.body.error.code).toBe('photo_ai_plan_required');
       expect(vision.requests).toHaveLength(0);
     } finally {
       await app.close();

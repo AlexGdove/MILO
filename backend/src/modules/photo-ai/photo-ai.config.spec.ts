@@ -1,6 +1,8 @@
 import {
   DEFAULT_PHOTO_AI_DAILY_LIMIT,
+  DEFAULT_PHOTO_AI_FREE_WEEKLY_LIMIT,
   DEFAULT_PHOTO_AI_MAX_WAITING,
+  DEFAULT_PHOTO_AI_PRO_DAILY_LIMIT,
   DEFAULT_PHOTO_AI_TIMEOUT_MS,
   toPhotoAiConfig,
 } from './photo-ai.config.js';
@@ -16,6 +18,8 @@ describe('toPhotoAiConfig', () => {
       project: null,
       timeoutMs: DEFAULT_PHOTO_AI_TIMEOUT_MS,
       dailyLimit: DEFAULT_PHOTO_AI_DAILY_LIMIT,
+      proDailyLimit: DEFAULT_PHOTO_AI_PRO_DAILY_LIMIT,
+      freeWeeklyLimit: DEFAULT_PHOTO_AI_FREE_WEEKLY_LIMIT,
       maxWaiting: DEFAULT_PHOTO_AI_MAX_WAITING,
     });
   });
@@ -41,9 +45,17 @@ describe('toPhotoAiConfig', () => {
   });
 
   it('числа из окружения приходят строками — приводятся к числам', () => {
-    const config = toPhotoAiConfig({ PHOTO_AI_TIMEOUT_MS: '5000', PHOTO_AI_DAILY_LIMIT: '3' });
+    const config = toPhotoAiConfig({
+      PHOTO_AI_TIMEOUT_MS: '5000',
+      PHOTO_AI_DAILY_LIMIT: '3',
+      PHOTO_AI_PRO_DAILY_LIMIT: '10',
+      PHOTO_AI_FREE_WEEKLY_LIMIT: '0',
+    });
     expect(config.timeoutMs).toBe(5000);
     expect(config.dailyLimit).toBe(3);
+    expect(config.proDailyLimit).toBe(10);
+    // 0 — допустимо: бесплатные фото выключены
+    expect(config.freeWeeklyLimit).toBe(0);
   });
 
   it('переносит модель, ключ и проект', () => {

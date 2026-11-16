@@ -13,6 +13,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { RedisRateLimitStorage } from '../rate-limit/rate-limit.storage.js';
 
 const DAY_MS = 24 * 60 * 60_000;
+const WEEK_MS = 7 * DAY_MS;
 
 export interface RecognizedIngredientView {
   /** Как продукт назвала модель */
@@ -23,11 +24,16 @@ export interface RecognizedIngredientView {
   per100g: Per100g | null;
 }
 
+export type QuotaPeriod = 'day' | 'week';
+
 export interface RecognitionView {
   dish: string;
   ingredients: RecognizedIngredientView[];
-  /** Суточный лимит тарифа: `limit: null` — без лимита */
-  usage: { used: number | null; limit: number | null };
+  /**
+   * Использовано и предел за период: платные тарифы — сутки (Plus 20, Pro 50),
+   * бесплатный — неделя (3), решение №76
+   */
+  usage: { used: number; limit: number; period: QuotaPeriod };
 }
 
 const fail = (status: HttpStatus, code: string, message: string) =>
@@ -70,7 +76,23 @@ export class PhotoAiService {
       throw fail(HttpStatus.UNAUTHORIZED, 'session_invalid', 'Session is invalid');
     }
     const plan = effectivePlan(account.plan, account.planUntil, now);
-    if (plan === 'free') {
+    // Квота по тарифу (№76): бесплатный — несколько фото в неделю, платные — предел в сутки.
+    // Счётчики разные: оплата среди недели даёт полный суточный предел, а не остаток недельного
+    const quota =
+      plan === 'free'
+        ? {
+            key: `photoAiFree:${accountId}`,
+            windowMs: WEEK_MS,
+            limit: this.config.freeWeeklyLimit,
+            period: 'week' as const,
+          }
+        : {
+            key: `photoAi:${accountId}`,
+            windowMs: DAY_MS,
+            limit: plan === 'plus' ? this.config.dailyLimit : this.config.proDailyLimit,
+            period: 'day' as const,
+          };
+    if (quota.limit === 0) {
       throw fail(HttpStatus.FORBIDDEN, 'photo_ai_plan_required', 'A paid plan is required');
     }
 
@@ -88,15 +110,15 @@ export class PhotoAiService {
       throw fail(HttpStatus.SERVICE_UNAVAILABLE, 'photo_ai_busy', 'Photo AI is busy');
     }
 
-    let usage: RecognitionView['usage'] = { used: null, limit: null };
-    if (plan === 'plus') {
-      const limit = this.config.dailyLimit;
-      const hit = await this.limits.hit(`photoAi:${accountId}`, DAY_MS, limit);
-      if (hit.blocked) {
-        throw fail(HttpStatus.TOO_MANY_REQUESTS, 'photo_ai_limit', 'Daily photo limit is reached');
-      }
-      usage = { used: hit.hits, limit };
+    const hit = await this.limits.hit(quota.key, quota.windowMs, quota.limit);
+    if (hit.blocked) {
+      throw fail(HttpStatus.TOO_MANY_REQUESTS, 'photo_ai_limit', 'Photo limit is reached');
     }
+    const usage: RecognitionView['usage'] = {
+      used: hit.hits,
+      limit: quota.limit,
+      period: quota.period,
+    };
 
     const hint = input.hint?.trim() ?? '';
     const raw = await this.enqueue(() =>
