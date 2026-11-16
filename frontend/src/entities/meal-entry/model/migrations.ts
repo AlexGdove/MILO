@@ -40,7 +40,10 @@ const normalizeEntry = (raw: unknown): MealEntry | null => {
     id: raw.id,
     date: raw.date,
     mealType: isMealType(raw.mealType) ? raw.mealType : 'snack',
-    source: { type: source.type === 'recipe' ? 'recipe' : 'product', id: source.id },
+    source: {
+      type: source.type === 'recipe' || source.type === 'photo' ? source.type : 'product',
+      id: source.id,
+    },
     productName: typeof raw.productName === 'string' ? raw.productName : '',
     per100g: {
       kcal: toNumber(per100g.kcal),

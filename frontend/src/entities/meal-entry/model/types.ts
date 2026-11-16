@@ -2,9 +2,12 @@ import type { IsoDate, Nutrients, Unit } from '@/shared/lib';
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
-/** Откуда запись: продукт из кладовой или приготовленное блюдо (id — у `entities/cooked-dish`). */
+/**
+ * Откуда запись: продукт из кладовой, приготовленное блюдо (id — у `entities/cooked-dish`) или
+ * блюдо, распознанное по фото (решение №75; id — свой, с кладовой не связано, остатки не списаны).
+ */
 export interface MealEntrySource {
-  type: 'product' | 'recipe';
+  type: 'product' | 'recipe' | 'photo';
   id: string;
 }
 

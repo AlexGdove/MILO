@@ -3,11 +3,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { selectCookedDishes, useCookedDishStore, type CookedDish } from '@/entities/cooked-dish';
 import type { MealType } from '@/entities/meal-entry';
 import { filterProducts, selectProducts, useProductStore, type Product } from '@/entities/product';
+import { isApiEnabled } from '@/shared/api';
 import { formatAmount, formatKcal, formatPortions, type IsoDate } from '@/shared/lib';
 import { Input } from '@/shared/ui';
 
 import styles from './AddMealEntryForm.module.css';
 import { DishEntryForm } from './DishEntryForm';
+import { PhotoEntryForm } from './PhotoEntryForm';
 import { ProductEntryForm } from './ProductEntryForm';
 
 interface AddMealEntryFormProps {
@@ -16,11 +18,16 @@ interface AddMealEntryFormProps {
   onDone: () => void;
 }
 
-type Selection = { kind: 'dish'; dish: CookedDish } | { kind: 'product'; product: Product };
+type Selection =
+  { kind: 'dish'; dish: CookedDish } | { kind: 'product'; product: Product } | { kind: 'photo' };
 
 /** Ключ варианта в списке — чтобы после «← Другой …» вернуться к нему. */
-const optionKey = (selection: Selection) =>
-  selection.kind === 'dish' ? `dish:${selection.dish.id}` : `product:${selection.product.id}`;
+const optionKey = (selection: Selection) => {
+  if (selection.kind === 'photo') return 'photo';
+  return selection.kind === 'dish'
+    ? `dish:${selection.dish.id}`
+    : `product:${selection.product.id}`;
+};
 
 const matches = (name: string, query: string) =>
   name.toLocaleLowerCase('ru-RU').includes(query.trim().toLocaleLowerCase('ru-RU'));
@@ -28,6 +35,7 @@ const matches = (name: string, query: string) =>
 /**
  * «Добавить еду» (решения №27, №45): приготовленные блюда и продукты в одном поиске.
  * Рецепты сюда не попадают: неприготовленное не съесть — сначала «Приготовить» в «Рецептах».
+ * Третий путь — «Распознать блюдо по фото» (решение №75), если приложение связано с сервером.
  * После выбора — своя форма для каждого источника. «← Другой …» возвращает к тому же поиску:
  * запрос сохраняется, список прокручен к выбранному варианту, фокус — на нём.
  */
@@ -63,6 +71,7 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
       onDone,
       onChangeSource: () => setSelection(null),
     };
+    if (selection.kind === 'photo') return <PhotoEntryForm {...common} />;
     if (selection.kind === 'dish') return <DishEntryForm dish={selection.dish} {...common} />;
     return <ProductEntryForm product={selection.product} {...common} />;
   }
@@ -75,6 +84,16 @@ export const AddMealEntryForm = ({ date, initialMealType, onDone }: AddMealEntry
 
   return (
     <div className={styles.picker} ref={pickerRef}>
+      {isApiEnabled() && (
+        <button
+          type="button"
+          className={styles.photoButton}
+          data-option="photo"
+          onClick={() => choose({ kind: 'photo' })}
+        >
+          Распознать блюдо по фото
+        </button>
+      )}
       <Input
         type="search"
         placeholder="Продукт или приготовленное блюдо"

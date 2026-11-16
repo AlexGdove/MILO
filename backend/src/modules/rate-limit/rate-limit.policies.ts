@@ -42,6 +42,8 @@ export const RATE_LIMIT_POLICIES = {
   authLogin: { limit: 20, ttl: 10 * MINUTE, tracker: 'ip' },
   /** Аккаунт: чтение, выход, удаление */
   account: { limit: 120, ttl: MINUTE, tracker: 'ip' },
+  /** Распознавание по фото: защита от перебора с одного IP; суточный лимит тарифа — в `PhotoAiService` */
+  photoAi: { limit: 30, ttl: 10 * MINUTE, tracker: 'ip' },
   /** Подключения к WebSocket `/support` — считает `SupportGateway`, не HTTP-guard */
   supportConnect: { limit: 30, ttl: MINUTE, tracker: 'ip' },
 } as const satisfies Record<string, RateLimitPolicy>;
