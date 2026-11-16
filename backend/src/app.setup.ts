@@ -1,3 +1,5 @@
+import type { IncomingMessage } from 'node:http';
+
 import type { NestApplicationOptions } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
@@ -9,9 +11,17 @@ import { ErrorResponseDto } from './common/errors/error-response.dto.js';
 import { REQUEST_ID_HEADER, requestIdMiddleware } from './common/logging/logger.options.js';
 import { MiloIoAdapter } from './common/websocket/milo-io.adapter.js';
 import { type AppConfig, getAppConfig } from './config/app-config.js';
+import { PHOTO_BODY_LIMIT } from './modules/photo-ai/photo-ai.config.js';
 
 export const API_PREFIX = 'api/v1';
 export const BODY_LIMIT = '64kb';
+/** Единственный маршрут с большим телом: фото в base64 (решение №75) */
+export const PHOTO_ROUTE = `/${API_PREFIX}/photo-ai/recognize`;
+
+const isJson = (req: IncomingMessage): boolean =>
+  (req.headers['content-type'] ?? '').toLowerCase().includes('application/json');
+const isPhotoRoute = (req: IncomingMessage): boolean =>
+  (req.url ?? '').split('?')[0] === PHOTO_ROUTE;
 
 /** Общие опции создания приложения — и для `main.ts`, и для e2e-тестов. */
 export const APP_OPTIONS: NestApplicationOptions = { bufferLogs: true, bodyParser: false };
@@ -25,7 +35,15 @@ export function configureApp(app: NestExpressApplication): AppConfig {
   // IP клиента (ключ лимитов) — из X-Forwarded-For только за доверенными прокси (TRUST_PROXY)
   app.set('trust proxy', config.trustProxy);
   app.use(requestIdMiddleware);
-  app.useBodyParser('json', { limit: BODY_LIMIT });
+  // Тело больше 64 КБ принимает только маршрут фото; остальные — с прежним пределом
+  app.useBodyParser('json', {
+    limit: PHOTO_BODY_LIMIT,
+    type: (req: IncomingMessage) => isPhotoRoute(req) && isJson(req),
+  });
+  app.useBodyParser('json', {
+    limit: BODY_LIMIT,
+    type: (req: IncomingMessage) => !isPhotoRoute(req) && isJson(req),
+  });
   // CSP мешает Swagger UI; там, где UI включён (не production), CSP не ставим
   app.use(helmet({ contentSecurityPolicy: config.swaggerEnabled ? false : undefined }));
   app.enableCors({

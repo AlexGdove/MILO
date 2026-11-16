@@ -16,6 +16,9 @@ export type NodeEnv = (typeof NODE_ENVS)[number];
 export const LOG_LEVELS = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'] as const;
 export type LogLevel = (typeof LOG_LEVELS)[number];
 
+export const PHOTO_AI_PROVIDERS = ['off', 'openai'] as const;
+export type PhotoAiProviderName = (typeof PHOTO_AI_PROVIDERS)[number];
+
 export const EMAIL_TRANSPORTS = ['log', 'smtp'] as const;
 export type EmailTransport = (typeof EMAIL_TRANSPORTS)[number];
 
@@ -146,6 +149,48 @@ export class EnvironmentVariables {
   @IsOptional()
   @Matches(THREAD_ID_PATTERN, { message: 'TELEGRAM_ERRORS_THREAD_ID must be a topic id' })
   TELEGRAM_ERRORS_THREAD_ID?: string;
+
+  /**
+   * Распознавание блюд по фото (решения №68, №75): `off` или пусто — выключено; `openai` —
+   * сервер с OpenAI-совместимым `/v1/chat/completions` (локальная Strata, позже облачная модель).
+   */
+  @IsOptional()
+  @IsIn(PHOTO_AI_PROVIDERS)
+  PHOTO_AI_PROVIDER?: PhotoAiProviderName;
+
+  /** Адрес сервера модели без `/v1`, например `http://127.0.0.1:8080` */
+  @IsOptional()
+  @Matches(/^https?:\/\/\S+$/, { message: 'PHOTO_AI_BASE_URL must be an http(s) URL' })
+  PHOTO_AI_BASE_URL?: string;
+
+  @IsOptional()
+  @IsString()
+  PHOTO_AI_MODEL?: string;
+
+  /** Ключ облачного провайдера; локальной модели не нужен */
+  @IsOptional()
+  @IsString()
+  PHOTO_AI_API_KEY?: string;
+
+  /** Заголовок `OpenAI-Project`: у Yandex AI Studio — идентификатор каталога */
+  @IsOptional()
+  @Matches(/^[A-Za-z0-9_-]{1,64}$/, { message: 'PHOTO_AI_PROJECT must be a folder or project id' })
+  PHOTO_AI_PROJECT?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1000)
+  @Max(600000)
+  PHOTO_AI_TIMEOUT_MS?: number;
+
+  /** Распознаваний в сутки на тарифе `plus`; `unlimited` — без лимита */
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(10000)
+  PHOTO_AI_DAILY_LIMIT?: number;
 }
 
 /** Служебные маршруты разработки включены (`DevToolsGuard` проверяет на каждом запросе). */
@@ -189,6 +234,9 @@ export function validateEnv(config: Record<string, unknown>): EnvironmentVariabl
     problems.push('DEV_TOOLS: development tools must not be enabled in production');
   }
 
+  if (env.PHOTO_AI_PROVIDER === 'openai' && !env.PHOTO_AI_BASE_URL) {
+    problems.push('PHOTO_AI_PROVIDER: openai requires PHOTO_AI_BASE_URL');
+  }
   if (env.EMAIL_TRANSPORT === 'smtp' && (!env.SMTP_HOST || !env.EMAIL_FROM)) {
     problems.push('EMAIL_TRANSPORT: smtp requires SMTP_HOST and EMAIL_FROM');
   }
