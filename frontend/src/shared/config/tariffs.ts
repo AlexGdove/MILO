@@ -14,6 +14,6 @@ export interface Tariff {
 
 export const TARIFFS: readonly Tariff[] = [
   { id: 'free', name: 'Бесплатный', pricePerMonth: 0, photoLimit: '3 распознавания в неделю' },
-  { id: 'plus', name: 'Plus', pricePerMonth: 200, photoLimit: 'до 20 распознаваний в сутки' },
-  { id: 'unlimited', name: 'Pro', pricePerMonth: 349, photoLimit: 'до 50 распознаваний в сутки' },
+  { id: 'plus', name: 'Plus', pricePerMonth: 200, photoLimit: 'до 20 распознаваний в неделю' },
+  { id: 'unlimited', name: 'Pro', pricePerMonth: 349, photoLimit: 'до 50 распознаваний в неделю' },
 ];

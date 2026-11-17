@@ -135,14 +135,14 @@ describe('PhotoEntryForm', () => {
     );
   });
 
-  it('платный тариф: при пределе — обычный текст про лимит на сегодня', async () => {
+  it('платный тариф: при пределе — текст про недельный лимит (№79)', async () => {
     const user = userEvent.setup();
     signIn('plus');
     recognize.mockRejectedValue(new ApiError(429, 'photo_ai_limit', 'x'));
     renderForm();
     await recognizePhoto(user);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Лимит распознаваний на сегодня');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Лимит распознаваний за неделю исчерпан');
   });
 
   it.each<Plan>(['plus', 'unlimited'])(
@@ -222,7 +222,7 @@ describe('PhotoEntryForm', () => {
   it.each([
     [
       new ApiError(429, 'photo_ai_limit', 'x'),
-      'Лимит распознаваний на сегодня исчерпан — попробуйте завтра',
+      'Лимит распознаваний за неделю исчерпан — попробуйте через несколько дней',
     ],
     [
       new ApiError(422, 'photo_no_food', 'x'),
