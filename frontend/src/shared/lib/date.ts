@@ -33,3 +33,15 @@ export const formatDayLabel = (isoDate: IsoDate): string => {
   if (isoDate === shiftIsoDate(today, 1)) return 'Завтра';
   return dayFormatter.format(fromIsoDate(isoDate));
 };
+
+/** Понедельник недели (Пн–Вс), в которую входит дата. */
+export const startOfWeek = (isoDate: IsoDate): IsoDate => {
+  const day = fromIsoDate(isoDate).getDay(); // 0 = воскресенье
+  return shiftIsoDate(isoDate, day === 0 ? -6 : 1 - day);
+};
+
+/** Семь дат недели с понедельника по воскресенье. */
+export const weekDays = (isoDate: IsoDate): IsoDate[] => {
+  const monday = startOfWeek(isoDate);
+  return Array.from({ length: 7 }, (_, index) => shiftIsoDate(monday, index));
+};
