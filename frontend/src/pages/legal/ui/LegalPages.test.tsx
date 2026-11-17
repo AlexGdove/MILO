@@ -33,19 +33,26 @@ describe('страницы документов (решение №77)', () => {
     ]);
   });
 
-  it('реквизиты: ФИО, ИНН и статус самозанятого видны', () => {
+  it('реквизиты: ФИО, ИНН, телефон и статус самозанятого видны', () => {
     renderPage(<RequisitesPage />, ROUTES.requisites);
 
     expect(screen.getByText(SELLER.fullName)).toBeInTheDocument();
     expect(screen.getByText(SELLER.inn)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: SELLER.email })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: SELLER.phone })).toHaveAttribute(
       'href',
-      `mailto:${SELLER.email}`,
+      'tel:+79520078936',
     );
     expect(screen.queryByText('уточняется')).not.toBeInTheDocument();
     expect(
       screen.getByText('Плательщик налога на профессиональный доход (самозанятый)'),
     ).toBeInTheDocument();
+  });
+
+  it('тарифы на сайте: «Оплатить» только у платных тарифов', () => {
+    renderPage(<TariffsPage />, ROUTES.tariffs);
+
+    expect(screen.getAllByRole('button', { name: 'Оплатить' })).toHaveLength(2);
+    expect(screen.queryByText(/подключается/)).not.toBeInTheDocument();
   });
 
   it('тарифы: три тарифа с ценами и ссылка на оферту', () => {

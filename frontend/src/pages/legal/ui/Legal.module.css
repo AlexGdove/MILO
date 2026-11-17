@@ -124,6 +124,11 @@
   font-weight: var(--weight-semibold);
 }
 
+.tariffAction {
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
+
 .tariffLimit {
   font-size: var(--text-sm);
   color: var(--color-text-muted);

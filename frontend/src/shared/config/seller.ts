@@ -7,6 +7,7 @@ interface Seller {
   fullName: string;
   inn: string;
   email: string;
+  phone: string;
   status: string;
   site: string;
 }
@@ -16,8 +17,10 @@ export const SELLER: Readonly<Seller> = {
   fullName: 'Голубятников Александр Владимирович',
   /** ИНН, 12 цифр */
   inn: '222516559475',
-  /** Почта для обращений покупателей */
-  email: 'fumcka@mail.ru',
+  /** Почта для обращений покупателей; пусто — строки с почтой на страницах нет */
+  email: '',
+  /** Телефон для обращений (требование ЮKassa) */
+  phone: '+7 952 007-89-36',
   status: 'Плательщик налога на профессиональный доход (самозанятый)',
   site: 'https://milo-app.ru',
 };
