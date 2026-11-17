@@ -6,7 +6,7 @@ import { ErrorReportsToggle } from '@/features/report-errors';
 import { LanguageSwitcher } from '@/features/switch-language';
 import { ThemeSwitcher } from '@/features/switch-theme';
 import { APP_VERSION, ROUTES } from '@/shared/config';
-import { BackLink, Card, PageLayout, PrivacyNotice } from '@/shared/ui';
+import { BackLink, Card, LegalLinks, PageLayout, PrivacyNotice } from '@/shared/ui';
 
 import styles from './SettingsPage.module.css';
 
@@ -57,6 +57,10 @@ export const SettingsPage = () => (
     <Card className={styles.section}>
       <h2 className={styles.title}>Данные и конфиденциальность</h2>
       <PrivacyNotice variant="full" />
+    </Card>
+    <Card className={styles.section}>
+      <h2 className={styles.title}>Документы</h2>
+      <LegalLinks />
     </Card>
     <p className={styles.version}>MILO {APP_VERSION}</p>
   </PageLayout>

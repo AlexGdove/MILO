@@ -18,3 +18,4 @@ export { Stepper } from './Stepper/Stepper';
 export { BackLink } from './BackLink/BackLink';
 export { PasswordInput } from './PasswordInput/PasswordInput';
 export { PrivacyNotice } from './PrivacyNotice/PrivacyNotice';
+export { LegalLinks } from './LegalLinks/LegalLinks';

@@ -10,3 +10,6 @@ export {
   supportTicketPath,
 } from './routes';
 export type { AppRoute } from './routes';
+export { SELLER, sellerValue } from './seller';
+export { TARIFFS } from './tariffs';
+export type { Tariff } from './tariffs';

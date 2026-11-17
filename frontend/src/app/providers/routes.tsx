@@ -22,6 +22,10 @@ const lazyPage = {
   supportTicket: async () => ({ Component: (await import('@/pages/support')).SupportTicketPage }),
   account: async () => ({ Component: (await import('@/pages/account')).AccountPage }),
   app: async () => ({ Component: (await import('@/pages/app')).AppPage }),
+  tariffs: async () => ({ Component: (await import('@/pages/legal')).TariffsPage }),
+  requisites: async () => ({ Component: (await import('@/pages/legal')).RequisitesPage }),
+  offer: async () => ({ Component: (await import('@/pages/legal')).OfferPage }),
+  privacy: async () => ({ Component: (await import('@/pages/legal')).PrivacyPage }),
 };
 
 /** Пока при первом открытии догружается страница — пустой фон (из кэша это доли секунды). */
@@ -31,6 +35,11 @@ const Loading = () => null;
 export const appRoutes: RouteObject[] = [
   // Анкета первого запуска — без шапки и нижней навигации
   { path: ROUTES.welcome, lazy: lazyPage.welcome, HydrateFallback: Loading },
+  // Документы — без анкеты и навигации: их открывают по прямой ссылке (ЮKassa, покупатели)
+  { path: ROUTES.tariffs, lazy: lazyPage.tariffs, HydrateFallback: Loading },
+  { path: ROUTES.requisites, lazy: lazyPage.requisites, HydrateFallback: Loading },
+  { path: ROUTES.offer, lazy: lazyPage.offer, HydrateFallback: Loading },
+  { path: ROUTES.privacy, lazy: lazyPage.privacy, HydrateFallback: Loading },
   {
     HydrateFallback: Loading,
     element: (
