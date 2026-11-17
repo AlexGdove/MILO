@@ -16,6 +16,11 @@ export const ROUTES = {
   account: '/settings/account',
   /** Первый запуск: приветствие и анкета (решение №30) */
   welcome: '/welcome',
+  /** Документы для покупателей и ЮKassa (решение №77): открываются без анкеты и без входа */
+  tariffs: '/tariffs',
+  requisites: '/requisites',
+  offer: '/offer',
+  privacy: '/privacy',
 } as const;
 
 /**

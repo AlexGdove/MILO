@@ -62,4 +62,12 @@ describe('страницы по требованию (слабые устрой�
     renderAt(ROUTES.support);
     expect(await screen.findByRole('heading', { name: 'Техподдержка' })).toBeInTheDocument();
   });
+
+  it('документы открываются по прямой ссылке без анкеты первого запуска (№77)', async () => {
+    useUserProfileStore.setState({ onboarding: undefined });
+    renderAt(ROUTES.requisites);
+    expect(
+      await screen.findByRole('heading', { name: 'Реквизиты и контакты' }),
+    ).toBeInTheDocument();
+  });
 });
