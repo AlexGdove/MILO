@@ -3,7 +3,7 @@ import type { ReactElement } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 
-import { ROUTES } from '@/shared/config';
+import { ROUTES, SELLER } from '@/shared/config';
 
 import { OfferPage } from './OfferPage';
 import { PrivacyPage } from './PrivacyPage';
@@ -33,10 +33,16 @@ describe('страницы документов (решение №77)', () => {
     ]);
   });
 
-  it('реквизиты: пока не указаны — «уточняется», статус самозанятого виден', () => {
+  it('реквизиты: ФИО, ИНН и статус самозанятого видны', () => {
     renderPage(<RequisitesPage />, ROUTES.requisites);
 
-    expect(screen.getAllByText('уточняется').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByText(SELLER.fullName)).toBeInTheDocument();
+    expect(screen.getByText(SELLER.inn)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: SELLER.email })).toHaveAttribute(
+      'href',
+      `mailto:${SELLER.email}`,
+    );
+    expect(screen.queryByText('уточняется')).not.toBeInTheDocument();
     expect(
       screen.getByText('Плательщик налога на профессиональный доход (самозанятый)'),
     ).toBeInTheDocument();

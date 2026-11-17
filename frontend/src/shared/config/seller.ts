@@ -13,11 +13,11 @@ interface Seller {
 
 export const SELLER: Readonly<Seller> = {
   /** ФИО полностью */
-  fullName: '',
+  fullName: 'Голубятников Александр Владимирович',
   /** ИНН, 12 цифр */
-  inn: '',
+  inn: '222516559475',
   /** Почта для обращений покупателей */
-  email: '',
+  email: 'fumcka@mail.ru',
   status: 'Плательщик налога на профессиональный доход (самозанятый)',
   site: 'https://milo-app.ru',
 };
