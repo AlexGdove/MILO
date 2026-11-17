@@ -142,7 +142,9 @@ describe('PhotoEntryForm', () => {
     renderForm();
     await recognizePhoto(user);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Лимит распознаваний за неделю исчерпан');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Лимит распознаваний за неделю исчерпан',
+    );
   });
 
   it.each<Plan>(['plus', 'unlimited'])(
