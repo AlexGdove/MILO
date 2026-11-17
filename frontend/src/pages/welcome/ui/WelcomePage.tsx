@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { ProfileWizard } from '@/features/edit-profile';
 import { ROUTES } from '@/shared/config';
-import { MiloMark, PrivacyNotice } from '@/shared/ui';
+import { LegalLinks, MiloMark, PrivacyNotice } from '@/shared/ui';
 
 import styles from './WelcomePage.module.css';
 
@@ -22,6 +22,7 @@ export const WelcomePage = () => {
         <PrivacyNotice variant="brief" />
       </div>
       <ProfileWizard onFinish={() => navigate(ROUTES.dashboard, { replace: true })} />
+      <LegalLinks />
     </main>
   );
 };
