@@ -184,21 +184,21 @@ export class EnvironmentVariables {
   @Max(600000)
   PHOTO_AI_TIMEOUT_MS?: number;
 
-  /** Распознаваний в сутки на тарифе `plus` (по умолчанию 20) */
+  /** Распознаваний за 7 дней на тарифе `plus` (по умолчанию 20), №79 */
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(10000)
-  PHOTO_AI_DAILY_LIMIT?: number;
+  PHOTO_AI_PLUS_WEEKLY_LIMIT?: number;
 
-  /** Распознаваний в сутки на тарифе Pro (`unlimited`), по умолчанию 50 — защита от злоупотреблений */
+  /** Распознаваний за 7 дней на тарифе Pro (`unlimited`), по умолчанию 50 — защита от злоупотреблений */
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(10000)
-  PHOTO_AI_PRO_DAILY_LIMIT?: number;
+  PHOTO_AI_PRO_WEEKLY_LIMIT?: number;
 
   /** Бесплатных распознаваний в неделю (по умолчанию 3); 0 — на бесплатном тарифе фото нет */
   @IsOptional()

@@ -30,8 +30,8 @@ export interface RecognitionView {
   dish: string;
   ingredients: RecognizedIngredientView[];
   /**
-   * Использовано и предел за период: платные тарифы — сутки (Plus 20, Pro 50),
-   * бесплатный — неделя (3), решение №76
+   * Использовано и предел за скользящие 7 дней: Plus 20, Pro 50, бесплатный 3 (решения №76, №79).
+   * `day` остаётся в типе для совместимости с приложениями старых версий
    */
   usage: { used: number; limit: number; period: QuotaPeriod };
 }
@@ -40,7 +40,7 @@ const fail = (status: HttpStatus, code: string, message: string) =>
   new AppException(status, code, message);
 
 /**
- * Распознавание блюда по фото (решения №68, №75): тариф и суточный лимит → очередь к модели →
+ * Распознавание блюда по фото (решения №68, №75): тариф и недельный лимит → очередь к модели →
  * разбор ответа → КБЖУ по справочнику. Фото и подсказка не сохраняются и не пишутся в лог.
  */
 @Injectable()
@@ -76,8 +76,8 @@ export class PhotoAiService {
       throw fail(HttpStatus.UNAUTHORIZED, 'session_invalid', 'Session is invalid');
     }
     const plan = effectivePlan(account.plan, account.planUntil, now);
-    // Квота по тарифу (№76): бесплатный — несколько фото в неделю, платные — предел в сутки.
-    // Счётчики разные: оплата среди недели даёт полный суточный предел, а не остаток недельного
+    // Квота по тарифу (№76, №79): все пределы — за скользящие 7 дней. Счётчики бесплатного и
+    // платных тарифов разные: оплата среди недели даёт полный недельный предел тарифа
     const quota =
       plan === 'free'
         ? {
@@ -87,10 +87,11 @@ export class PhotoAiService {
             period: 'week' as const,
           }
         : {
-            key: `photoAi:${accountId}`,
-            windowMs: DAY_MS,
-            limit: plan === 'plus' ? this.config.dailyLimit : this.config.proDailyLimit,
-            period: 'day' as const,
+            // Новый ключ: старые суточные счётчики `photoAi:` не смешиваются с недельными
+            key: `photoAiPaid:${accountId}`,
+            windowMs: WEEK_MS,
+            limit: plan === 'plus' ? this.config.plusWeeklyLimit : this.config.proWeeklyLimit,
+            period: 'week' as const,
           };
     if (quota.limit === 0) {
       throw fail(HttpStatus.FORBIDDEN, 'photo_ai_plan_required', 'A paid plan is required');
