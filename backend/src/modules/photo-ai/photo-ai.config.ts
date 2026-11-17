@@ -4,13 +4,16 @@ import type { PhotoAiProviderName } from '../../config/env.validation.js';
 
 /** Сколько ждать ответа модели: локальная отвечает за 10–20 с, с запасом на очередь */
 export const DEFAULT_PHOTO_AI_TIMEOUT_MS = 120_000;
-/** Распознаваний в сутки на тарифе `plus` (решение №68: лимиты — в настройках, не в коде) */
-export const DEFAULT_PHOTO_AI_DAILY_LIMIT = 20;
 /**
- * Распознаваний в сутки на тарифе Pro (`unlimited`): защита от злоупотреблений, решение владельца
- * 2026-11-16 (№76) — фото стоит ≈ 0,5 ₽, Pro 500 ₽ в месяц окупается до ~30 фото в день
+ * Распознаваний за скользящие 7 дней на тарифе `plus` (решение №68: лимиты — в настройках;
+ * неделя вместо суток — решение владельца 2026-11-17, №79)
  */
-export const DEFAULT_PHOTO_AI_PRO_DAILY_LIMIT = 50;
+export const DEFAULT_PHOTO_AI_PLUS_WEEKLY_LIMIT = 20;
+/**
+ * Распознаваний за скользящие 7 дней на тарифе Pro (`unlimited`): защита от злоупотреблений,
+ * №76 и №79 — фото стоит ≈ 0,5 ₽, 50 в неделю ≈ 110 ₽ в месяц при цене Pro 349 ₽
+ */
+export const DEFAULT_PHOTO_AI_PRO_WEEKLY_LIMIT = 50;
 /**
  * Бесплатных распознаваний в неделю для вошедших на бесплатном тарифе (№76): попробовать главную
  * функцию, ≈ 6 ₽ в месяц на пользователя. 0 — на бесплатном тарифе фото нет
@@ -35,9 +38,9 @@ export interface PhotoAiConfig {
   /** Заголовок `OpenAI-Project` — у Yandex AI Studio это идентификатор каталога */
   project: string | null;
   timeoutMs: number;
-  dailyLimit: number;
+  plusWeeklyLimit: number;
   /** Предел тарифа Pro (`unlimited`) */
-  proDailyLimit: number;
+  proWeeklyLimit: number;
   /** Бесплатный тариф: распознаваний в неделю (0 — нельзя) */
   freeWeeklyLimit: number;
   maxWaiting: number;
@@ -50,8 +53,8 @@ interface PhotoAiEnv {
   PHOTO_AI_API_KEY?: string;
   PHOTO_AI_PROJECT?: string;
   PHOTO_AI_TIMEOUT_MS?: number | string;
-  PHOTO_AI_DAILY_LIMIT?: number | string;
-  PHOTO_AI_PRO_DAILY_LIMIT?: number | string;
+  PHOTO_AI_PLUS_WEEKLY_LIMIT?: number | string;
+  PHOTO_AI_PRO_WEEKLY_LIMIT?: number | string;
   PHOTO_AI_FREE_WEEKLY_LIMIT?: number | string;
 }
 
@@ -73,8 +76,8 @@ export function toPhotoAiConfig(env: PhotoAiEnv): PhotoAiConfig {
     project: env.PHOTO_AI_PROJECT ?? null,
     // `ConfigService` отдаёт значение из `process.env` строкой — приводим к числу сами
     timeoutMs: Number(env.PHOTO_AI_TIMEOUT_MS ?? DEFAULT_PHOTO_AI_TIMEOUT_MS),
-    dailyLimit: Number(env.PHOTO_AI_DAILY_LIMIT ?? DEFAULT_PHOTO_AI_DAILY_LIMIT),
-    proDailyLimit: Number(env.PHOTO_AI_PRO_DAILY_LIMIT ?? DEFAULT_PHOTO_AI_PRO_DAILY_LIMIT),
+    plusWeeklyLimit: Number(env.PHOTO_AI_PLUS_WEEKLY_LIMIT ?? DEFAULT_PHOTO_AI_PLUS_WEEKLY_LIMIT),
+    proWeeklyLimit: Number(env.PHOTO_AI_PRO_WEEKLY_LIMIT ?? DEFAULT_PHOTO_AI_PRO_WEEKLY_LIMIT),
     freeWeeklyLimit: Number(env.PHOTO_AI_FREE_WEEKLY_LIMIT ?? DEFAULT_PHOTO_AI_FREE_WEEKLY_LIMIT),
     maxWaiting: DEFAULT_PHOTO_AI_MAX_WAITING,
   };
@@ -88,8 +91,8 @@ export function getPhotoAiConfig(config: ConfigService): PhotoAiConfig {
     PHOTO_AI_API_KEY: config.get('PHOTO_AI_API_KEY'),
     PHOTO_AI_PROJECT: config.get('PHOTO_AI_PROJECT'),
     PHOTO_AI_TIMEOUT_MS: config.get('PHOTO_AI_TIMEOUT_MS'),
-    PHOTO_AI_DAILY_LIMIT: config.get('PHOTO_AI_DAILY_LIMIT'),
-    PHOTO_AI_PRO_DAILY_LIMIT: config.get('PHOTO_AI_PRO_DAILY_LIMIT'),
+    PHOTO_AI_PLUS_WEEKLY_LIMIT: config.get('PHOTO_AI_PLUS_WEEKLY_LIMIT'),
+    PHOTO_AI_PRO_WEEKLY_LIMIT: config.get('PHOTO_AI_PRO_WEEKLY_LIMIT'),
     PHOTO_AI_FREE_WEEKLY_LIMIT: config.get('PHOTO_AI_FREE_WEEKLY_LIMIT'),
   });
 }

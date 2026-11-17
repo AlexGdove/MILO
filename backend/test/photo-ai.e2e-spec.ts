@@ -20,9 +20,9 @@ import { RedisService } from '../src/redis/redis.service.js';
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 const DAY_MS = 24 * 60 * 60_000;
-const DAILY_LIMIT = 3;
+const PLUS_WEEKLY_LIMIT = 3;
 /** Больше Plus и не меньше 5: тест очереди держит 5 ждущих запросов одного Pro-аккаунта */
-const PRO_DAILY_LIMIT = 6;
+const PRO_WEEKLY_LIMIT = 6;
 const FREE_WEEKLY_LIMIT = 2;
 const ROUTE = '/api/v1/photo-ai/recognize';
 
@@ -71,8 +71,8 @@ describe('Фото-ИИ (e2e)', () => {
   beforeAll(async () => {
     process.env.PHOTO_AI_PROVIDER = 'openai';
     process.env.PHOTO_AI_BASE_URL = 'http://127.0.0.1:1';
-    process.env.PHOTO_AI_DAILY_LIMIT = String(DAILY_LIMIT);
-    process.env.PHOTO_AI_PRO_DAILY_LIMIT = String(PRO_DAILY_LIMIT);
+    process.env.PHOTO_AI_PLUS_WEEKLY_LIMIT = String(PLUS_WEEKLY_LIMIT);
+    process.env.PHOTO_AI_PRO_WEEKLY_LIMIT = String(PRO_WEEKLY_LIMIT);
     process.env.PHOTO_AI_FREE_WEEKLY_LIMIT = String(FREE_WEEKLY_LIMIT);
     app = await createApp(vision);
     prisma = app.get(PrismaService);
@@ -148,7 +148,7 @@ describe('Фото-ИИ (e2e)', () => {
 
     const response = await recognize(token);
     expect(response.status).toBe(200);
-    expect(response.body.usage).toEqual({ used: 1, limit: DAILY_LIMIT, period: 'day' });
+    expect(response.body.usage).toEqual({ used: 1, limit: PLUS_WEEKLY_LIMIT, period: 'week' });
   });
 
   it('платный тариф: блюдо, ингредиенты и КБЖУ по справочнику', async () => {
@@ -174,7 +174,7 @@ describe('Фото-ИИ (e2e)', () => {
         // Нет в справочнике: КБЖУ не выдумывается — продукт выберет пользователь
         { name: 'марсианский соус', grams: 30, matchedName: null, per100g: null },
       ],
-      usage: { used: 1, limit: DAILY_LIMIT, period: 'day' },
+      usage: { used: 1, limit: PLUS_WEEKLY_LIMIT, period: 'week' },
     });
   });
 
@@ -194,22 +194,22 @@ describe('Фото-ИИ (e2e)', () => {
     expect(vision.requests[0]?.prompt).not.toContain('Пользователь описал');
   });
 
-  it('тариф plus: после суточного лимита — 429 photo_ai_limit', async () => {
+  it('тариф plus: после недельного лимита — 429 photo_ai_limit', async () => {
     const token = await signIn('plus');
-    for (let i = 1; i <= DAILY_LIMIT; i += 1) {
+    for (let i = 1; i <= PLUS_WEEKLY_LIMIT; i += 1) {
       const response = await recognize(token);
       expect(response.status).toBe(200);
-      expect(response.body.usage).toEqual({ used: i, limit: DAILY_LIMIT, period: 'day' });
+      expect(response.body.usage).toEqual({ used: i, limit: PLUS_WEEKLY_LIMIT, period: 'week' });
     }
     const blocked = await recognize(token);
     expect(blocked.status).toBe(429);
     expect(blocked.body.error.code).toBe('photo_ai_limit');
-    expect(vision.requests).toHaveLength(DAILY_LIMIT);
+    expect(vision.requests).toHaveLength(PLUS_WEEKLY_LIMIT);
   });
 
   it('лимит считается на аккаунт: другой аккаунт не затронут', async () => {
     const first = await signIn('plus');
-    for (let i = 0; i < DAILY_LIMIT; i += 1) await recognize(first);
+    for (let i = 0; i < PLUS_WEEKLY_LIMIT; i += 1) await recognize(first);
     const response = await recognize(await signIn('plus'));
     expect(response.status).toBe(200);
     expect(response.body.usage.used).toBe(1);
@@ -218,10 +218,10 @@ describe('Фото-ИИ (e2e)', () => {
   // Было «unlimited — без суточного лимита»; решение владельца 2026-11-16 (№76): у Pro свой предел
   it('тариф Pro (unlimited): свой предел больше, чем у Plus, после него — 429', async () => {
     const token = await signIn('unlimited');
-    for (let i = 1; i <= PRO_DAILY_LIMIT; i += 1) {
+    for (let i = 1; i <= PRO_WEEKLY_LIMIT; i += 1) {
       const response = await recognize(token);
       expect(response.status).toBe(200);
-      expect(response.body.usage).toEqual({ used: i, limit: PRO_DAILY_LIMIT, period: 'day' });
+      expect(response.body.usage).toEqual({ used: i, limit: PRO_WEEKLY_LIMIT, period: 'week' });
     }
     const blocked = await recognize(token);
     expect(blocked.status).toBe(429);
