@@ -4,7 +4,15 @@ export { parseNumber } from './number';
 export { plural } from './plural';
 export { formatPortions, roundPortions } from './portions';
 export { persistStorage, storageKey } from './storage';
-export { formatDayLabel, fromIsoDate, shiftIsoDate, todayIsoDate, toIsoDate } from './date';
+export {
+  formatDayLabel,
+  fromIsoDate,
+  shiftIsoDate,
+  startOfWeek,
+  todayIsoDate,
+  toIsoDate,
+  weekDays,
+} from './date';
 export type { IsoDate } from './date';
 export { formatAmount, isUnit, roundAmount, toGrams, unitLabel, UNITS } from './units';
 export type { Unit } from './units';
