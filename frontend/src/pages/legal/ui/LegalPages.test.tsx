@@ -33,7 +33,7 @@ describe('страницы документов (решение №77)', () => {
     ]);
   });
 
-  it('реквизиты: ФИО, ИНН, телефон и статус самозанятого видны', () => {
+  it('реквизиты: ФИО, ИНН, почта, телефон и статус самозанятого видны', () => {
     renderPage(<RequisitesPage />, ROUTES.requisites);
 
     expect(screen.getByText(SELLER.fullName)).toBeInTheDocument();
@@ -41,6 +41,10 @@ describe('страницы документов (решение №77)', () => {
     expect(screen.getByRole('link', { name: SELLER.phone })).toHaveAttribute(
       'href',
       'tel:+79520078936',
+    );
+    expect(screen.getByRole('link', { name: SELLER.email })).toHaveAttribute(
+      'href',
+      `mailto:${SELLER.email}`,
     );
     expect(screen.queryByText('уточняется')).not.toBeInTheDocument();
     expect(
